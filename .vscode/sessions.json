@@ -12,21 +12,27 @@
           "autoExecuteCommands": true,
           "icon": "person",
           "color": "terminal.ansiGreen",
-          "commands": ["cd apps/frontend"]
+          "commands": [
+            "cd apps/frontend"
+          ]
         },
         {
           "name": "backend:console",
           "autoExecuteCommands": true,
           "icon": "person",
           "color": "terminal.ansiGreen",
-          "commands": ["cd apps/backend"]
+          "commands": [
+            "cd apps/backend"
+          ]
         }
       ],
       [
         {
           "name": "frontend:dev",
           "icon": "terminal",
-          "commands": ["cd apps/frontend && npm run dev"]
+          "commands": [
+            "cd apps/frontend && npm run dev"
+          ]
         },
         {
           "name": "backend:dev",
@@ -38,7 +44,9 @@
         {
           "name": "supabase:db",
           "icon": "terminal",
-          "commands": ["supabase start"]
+          "commands": [
+            "supabase start"
+          ]
         }
       ]
     ],
@@ -46,7 +54,9 @@
       {
         "name": "claude",
         "icon": "terminal",
-        "commands": ["claude"]
+        "commands": [
+          "claude"
+        ]
       }
     ]
   }
