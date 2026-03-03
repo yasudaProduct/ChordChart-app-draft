@@ -1,10 +1,10 @@
 # バックエンドアーキテクチャ
 
-ASP.NET Core 8 を使用したバックエンドの設計を説明します。
+Hono (TypeScript) を使用したバックエンドの設計を説明します。
 
-## Clean Architecture
+## アーキテクチャ概要
 
-バックエンドは Clean Architecture パターンを採用しています。
+シンプルなレイヤードアーキテクチャを採用しています。
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -13,200 +13,143 @@ ASP.NET Core 8 を使用したバックエンドの設計を説明します。
 └───────────────────────────┬─────────────────────────────────────┘
                             │
 ┌───────────────────────────▼─────────────────────────────────────┐
-│                    ChordBook.Api                                │
-│                   (プレゼンテーション層)                          │
+│                      Routes 層                                  │
 │  ┌─────────────────────────────────────────────────────────┐   │
-│  │  Controllers  │  Middleware  │  Filters  │  Program.cs  │   │
+│  │  routes/songs.ts  │  routes/health.ts  │  middleware/    │   │
+│  │  (Zodバリデーション)                     │  (JWT認証)      │   │
 │  └─────────────────────────────────────────────────────────┘   │
 └───────────────────────────┬─────────────────────────────────────┘
-                            │ 依存
+                            │
 ┌───────────────────────────▼─────────────────────────────────────┐
-│                 ChordBook.Application                           │
-│                   (アプリケーション層)                            │
+│                     Service 層                                  │
 │  ┌─────────────────────────────────────────────────────────┐   │
-│  │  Commands  │  Queries  │  DTOs  │  Interfaces  │  ...   │   │
+│  │  services/song.service.ts                                │   │
+│  │  (ビジネスロジック・クエリ構築)                              │   │
 │  └─────────────────────────────────────────────────────────┘   │
 └───────────────────────────┬─────────────────────────────────────┘
-                            │ 依存
+                            │
 ┌───────────────────────────▼─────────────────────────────────────┐
-│                   ChordBook.Domain                              │
-│                     (ドメイン層)                                 │
+│                       DB 層                                     │
 │  ┌─────────────────────────────────────────────────────────┐   │
-│  │  Entities  │  Value Objects  │  Enums  │  Domain Events │   │
+│  │  db/schema.ts (Drizzle スキーマ)  │  db/index.ts (接続)  │   │
 │  └─────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────┘
+```
 
-┌─────────────────────────────────────────────────────────────────┐
-│               ChordBook.Infrastructure                          │
-│                  (インフラストラクチャ層)                         │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │  DbContext  │  Repositories  │  External Services  │ ... │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│                            │                                    │
-│              Application層のインターフェースを実装                 │
-└─────────────────────────────────────────────────────────────────┘
+## ディレクトリ構成
+
+```
+apps/backend-hono/src/
+├── index.ts              # エントリポイント（サーバー起動）
+├── app.ts                # Hono アプリ定義（CORS, logger, エラーハンドラ）
+├── routes/
+│   ├── health.ts         # GET /api/health
+│   └── songs.ts          # Song CRUD + 検索（Zodバリデーション）
+├── middleware/
+│   └── auth.ts           # Supabase JWT 認証（jose）
+├── services/
+│   └── song.service.ts   # ビジネスロジック
+├── db/
+│   ├── schema.ts         # Drizzle ORM スキーマ（4テーブル）
+│   └── index.ts          # DB クライアント初期化
+└── types/
+    └── index.ts          # Visibility 定数・型定義
 ```
 
 ## 各層の責務
 
-### Domain 層（ChordBook.Domain）
+### Routes 層
 
-ビジネスルールの中核。外部依存なし。
+HTTP リクエストの受付、バリデーション、レスポンス返却を担当。
 
-```
-ChordBook.Domain/
-├── Common/
-│   └── BaseEntity.cs         # 共通基底クラス（Id, CreatedAt, UpdatedAt）
-├── Entities/
-│   ├── Song.cs               # 楽曲エンティティ
-│   ├── User.cs               # ユーザーエンティティ
-│   ├── Bookmark.cs           # ブックマークエンティティ
-│   └── SongShare.cs          # 共有リンクエンティティ
-└── Enums/
-    └── Visibility.cs         # 公開設定列挙型
-```
+```typescript
+// routes/songs.ts
+const createSongSchema = z.object({
+  title: z.string().min(1),
+  artist: z.string().nullable().optional(),
+  key: z.string().nullable().optional(),
+  bpm: z.number().int().nullable().optional(),
+  timeSignature: z.string().optional().default("4/4"),
+});
 
-**設計方針**:
-- エンティティはファクトリメソッド（`Create`）で生成
-- プロパティは `private set` で外部からの直接変更を防止
-- ビジネスロジックをエンティティ内にカプセル化
-
-```csharp
-// 例: Song エンティティ
-public class Song : BaseEntity
-{
-    public string Title { get; private set; }
-
-    private Song() { }  // EF Core 用
-
-    public static Song Create(Guid userId, string title, ...)
-    {
-        return new Song { UserId = userId, Title = title, ... };
-    }
-
-    public void UpdateMeta(string title, ...)
-    {
-        Title = title;
-        SetUpdatedAt();
-    }
-}
+songs.post("/", authMiddleware(), zValidator("json", createSongSchema, ...), async (c) => {
+  const userId = c.get("userId")!;
+  const data = c.req.valid("json");
+  const song = await createSong(userId, data);
+  return c.json(song, 201);
+});
 ```
 
-### Application 層（ChordBook.Application）
+### Middleware 層
 
-ユースケースの実装。MediatR による CQRS パターン。
+認証処理を担当。Supabase の JWKS を使用して JWT を検証。
 
+```typescript
+// middleware/auth.ts
+
+// 認証必須
+export const authMiddleware = () => async (c, next) => {
+  const token = extractToken(c.req.header("Authorization"));
+  if (!token) return c.json({ error: "Unauthorized" }, 401);
+
+  const { payload } = await jwtVerify(token, getJWKS(), {
+    issuer: `${SUPABASE_URL}/auth/v1`,
+    audience: "authenticated",
+  });
+  c.set("userId", payload.sub);
+  await next();
+};
+
+// 認証オプション（匿名アクセス許可）
+export const optionalAuthMiddleware = () => async (c, next) => {
+  // トークンがあれば検証、なければスルー
+};
 ```
-ChordBook.Application/
-├── Common/
-│   └── Interfaces/
-│       └── IApplicationDbContext.cs   # DB コンテキストインターフェース
-├── Songs/
-│   ├── Commands/                      # 書き込み操作
-│   │   ├── CreateSong/
-│   │   ├── UpdateSong/
-│   │   └── DeleteSong/
-│   ├── Queries/                       # 読み取り操作
-│   │   ├── GetSong/
-│   │   └── GetSongs/
-│   └── DTOs/
-│       └── SongDto.cs                 # データ転送オブジェクト
-└── DependencyInjection.cs             # DI 設定
-```
 
-**MediatR パターン**:
+### Service 層
 
-```csharp
-// Command（書き込み）
-public record CreateSongCommand(string Title, string? Artist) : IRequest<Guid>;
+ビジネスロジックとデータアクセスを担当。
 
-public class CreateSongCommandHandler : IRequestHandler<CreateSongCommand, Guid>
-{
-    public async Task<Guid> Handle(CreateSongCommand request, CancellationToken ct)
-    {
-        var song = Song.Create(...);
-        // 保存処理
-        return song.Id;
-    }
+```typescript
+// services/song.service.ts
+
+export async function listSongs(userId?: string) {
+  if (userId) {
+    return db.select({ ... }).from(songs).where(eq(songs.userId, userId));
+  }
+  return db.select({ ... }).from(songs).where(eq(songs.visibility, Visibility.Public));
 }
 
-// Query（読み取り）
-public record GetSongQuery(Guid Id) : IRequest<SongDto?>;
-```
-
-### Infrastructure 層（ChordBook.Infrastructure）
-
-外部システムとの接続。Application 層のインターフェースを実装。
-
-```
-ChordBook.Infrastructure/
-├── Persistence/
-│   ├── ApplicationDbContext.cs        # EF Core DbContext
-│   └── Configurations/
-│       └── SongConfiguration.cs       # Fluent API 設定
-└── DependencyInjection.cs             # DI 設定
-```
-
-**Entity Framework Core 設定**:
-
-```csharp
-public class ApplicationDbContext : DbContext, IApplicationDbContext
-{
-    public DbSet<Song> Songs => Set<Song>();
-    public DbSet<User> Users => Set<User>();
+export async function createSong(userId: string, data: CreateSongInput) {
+  const [song] = await db.insert(songs).values({
+    userId,
+    title: data.title,
+    artist: data.artist,
     // ...
+  }).returning();
+  return song;
 }
 ```
 
-### Api 層（ChordBook.Api）
+### DB 層
 
-HTTP リクエストの処理。Controller と DI 構成。
+Drizzle ORM によるスキーマ定義とデータベース接続。
 
-```
-ChordBook.Api/
-├── Controllers/
-│   ├── HealthController.cs
-│   └── SongsController.cs
-├── Program.cs                         # アプリケーション構成
-└── appsettings.json                   # 設定ファイル
-```
-
-## 依存性注入（DI）
-
-各層は拡張メソッドで DI を構成:
-
-```csharp
-// Program.cs
-builder.Services.AddApplication();      // Application 層の登録
-builder.Services.AddInfrastructure(configuration);  // Infrastructure 層の登録
-```
-
-**Application 層の DI**:
-
-```csharp
-public static IServiceCollection AddApplication(this IServiceCollection services)
-{
-    services.AddMediatR(cfg =>
-        cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
-    return services;
-}
-```
-
-**Infrastructure 層の DI**:
-
-```csharp
-public static IServiceCollection AddInfrastructure(
-    this IServiceCollection services,
-    IConfiguration configuration)
-{
-    services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
-
-    services.AddScoped<IApplicationDbContext>(provider =>
-        provider.GetRequiredService<ApplicationDbContext>());
-
-    return services;
-}
+```typescript
+// db/schema.ts
+export const songs = pgTable("Songs", {
+  id: uuid("Id").primaryKey().defaultRandom(),
+  userId: uuid("UserId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  title: varchar("Title", { length: 200 }).notNull(),
+  artist: varchar("Artist", { length: 200 }),
+  key: varchar("Key", { length: 10 }),
+  bpm: integer("Bpm"),
+  timeSignature: varchar("TimeSignature", { length: 10 }).default("4/4"),
+  content: text("Content").default("[]"),
+  visibility: integer("Visibility").default(0),
+  createdAt: timestamp("CreatedAt").defaultNow(),
+  updatedAt: timestamp("UpdatedAt").defaultNow(),
+});
 ```
 
 ## リクエスト処理フロー
@@ -216,44 +159,74 @@ HTTP Request
     │
     ▼
 ┌─────────────────┐
-│   Controller    │  リクエストを受け取り、MediatR に委譲
-└────────┬────────┘
-         │ Send(command/query)
-         ▼
-┌─────────────────┐
-│    MediatR      │  適切な Handler にルーティング
+│   Middleware     │  CORS, Logger
 └────────┬────────┘
          │
          ▼
 ┌─────────────────┐
-│    Handler      │  ビジネスロジックの実行
+│   Auth          │  JWT 検証（必須 or オプション）
 └────────┬────────┘
          │
          ▼
 ┌─────────────────┐
-│   DbContext     │  データベース操作
+│   Zod Validator │  リクエストボディのバリデーション
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   Route Handler │  Service 呼び出し・レスポンス構築
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   Service       │  ビジネスロジック
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   Drizzle ORM   │  データベース操作
 └────────┬────────┘
          │
          ▼
 HTTP Response
 ```
 
-## プロジェクト参照
+## 認証フロー
+
+Supabase Auth が発行した JWT を JWKS（JSON Web Key Set）で検証します。
 
 ```
-ChordBook.Api
-    └── ChordBook.Application
-    └── ChordBook.Infrastructure
-
-ChordBook.Application
-    └── ChordBook.Domain
-
-ChordBook.Infrastructure
-    └── ChordBook.Application
-    └── ChordBook.Domain
+1. クライアント → Supabase Auth でログイン → access_token 取得
+2. クライアント → Authorization: Bearer {access_token} でAPIリクエスト
+3. バックエンド → JWKS エンドポイントから公開鍵を取得（キャッシュ）
+4. バックエンド → jose.jwtVerify() で検証
+   - issuer: {SUPABASE_URL}/auth/v1
+   - audience: "authenticated"
+5. 検証成功 → payload.sub を userId として利用
 ```
 
-**依存の方向**: 外側 → 内側（Domain が最も内側で依存なし）
+### 2種類のミドルウェア
+
+| ミドルウェア | 用途 | 使用エンドポイント |
+|---|---|---|
+| `authMiddleware()` | 認証必須（401を返す） | POST, PUT, DELETE |
+| `optionalAuthMiddleware()` | 認証オプション（匿名許可） | GET（一覧・詳細・検索） |
+
+## 主要な設計判断
+
+### Hono を選択した理由
+
+- TypeScript ネイティブで型安全
+- 軽量・高速（Web Standard API ベース）
+- ミドルウェア / バリデーション の組み込みサポート
+- フロントエンドと同じ TypeScript で統一
+
+### Drizzle ORM を選択した理由
+
+- 型安全なクエリビルダー
+- スキーマファーストのアプローチ
+- 軽量で高速
+- SQL に近い直感的な API
 
 ## 関連ドキュメント
 

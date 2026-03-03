@@ -11,7 +11,7 @@
 | レイヤー | 技術 |
 |----------|------|
 | フロントエンド | Next.js 14 (App Router), Tailwind CSS, shadcn/ui, Zustand |
-| バックエンド | ASP.NET Core 8 Web API, Entity Framework Core |
+| バックエンド | Hono, Drizzle ORM, Zod, jose (JWT検証) |
 | データベース | PostgreSQL (Supabase) |
 | 認証 | Supabase Auth |
 | ホスティング | Vercel (FE), Railway (BE) |
@@ -19,14 +19,14 @@
 ## プロジェクト構成
 
 ```
-chord-book/
+chord-chart/
 ├── apps/
-│   ├── frontend/      # Next.js フロントエンド
-│   └── backend/       # ASP.NET Core バックエンド
+│   ├── frontend/        # Next.js フロントエンド
+│   └── backend-hono/    # Hono バックエンド (TypeScript)
 ├── supabase/
-│   └── migrations/    # DBマイグレーション（テーブル・RLS・トリガー）
-├── docs/              # ドキュメント
-└── .github/           # GitHub Actions
+│   └── migrations/      # DBマイグレーション（テーブル・RLS・トリガー）
+├── docs/                # ドキュメント
+└── .github/             # GitHub Actions
 ```
 
 ## 開発環境のセットアップ
@@ -35,8 +35,7 @@ chord-book/
 
 - Node.js 20+
 - pnpm
-- .NET 8 SDK
-- Supabaseプロジェクト（[supabase.com](https://supabase.com) で作成）
+- Docker Desktop（ローカル Supabase 用）
 
 ### 1. リポジトリのクローン
 
@@ -51,31 +50,33 @@ cd chord-chart
 ```bash
 cd apps/frontend
 pnpm install
-```
-
-`.env.local` を作成して環境変数を設定します。
-
-```bash
 cp .env.local.example .env.local
 ```
 
+ローカル Supabase を使う場合、`.env.local` はデフォルト値のままで動作します。
+
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://<your-project>.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
-NEXT_PUBLIC_API_URL=http://localhost:5000/api
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<supabase status で表示される anon key>
+NEXT_PUBLIC_API_URL=http://localhost:8080/api
 ```
 
 ### 3. バックエンドのセットアップ
 
-`appsettings.Development.json.example` をコピーして `appsettings.Development.json` を作成します。
-
 ```bash
-cd apps/backend/src/ChordBook.Api
-cp appsettings.Development.json.example appsettings.Development.json
+cd apps/backend-hono
+pnpm install
+cp .env.example .env
 ```
 
-`JwtSecret` には `supabase status` で表示される **Authentication Keys > Secret** の値を設定してください。
-その他の値はローカル Supabase のデフォルト値が設定済みです。
+ローカル Supabase を使う場合、`.env` はデフォルト値のままで動作します。
+
+```env
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres
+SUPABASE_URL=http://127.0.0.1:54321
+ALLOWED_ORIGINS=http://localhost:3000
+PORT=8080
+```
 
 ### 4. 開発サーバーの起動
 
@@ -83,10 +84,9 @@ cp appsettings.Development.json.example appsettings.Development.json
 
 ```bash
 # ターミナル1: バックエンド
-cd apps/backend/src/ChordBook.Api
-dotnet run
-# http://localhost:5000
-# Swagger: http://localhost:5000/swagger
+cd apps/backend-hono
+pnpm dev
+# http://localhost:8080
 ```
 
 ```bash
@@ -96,12 +96,7 @@ pnpm dev
 # http://localhost:3000
 ```
 
-### 5.Supabase ローカル開発フロー
-
-#### 前提
-
-- Docker Desktop がインストール・起動していること
-- Supabase プロジェクトが作成済みであること（[supabase.com](https://supabase.com)）
+### 5. Supabase ローカル開発フロー
 
 #### 初回セットアップ
 

@@ -1,13 +1,12 @@
 # バックエンドデプロイ（Railway）
 
-ASP.NET Core バックエンドを Railway にデプロイする手順です。
+Hono (TypeScript) バックエンドを Railway にデプロイする手順です。
 
 ## 前提条件
 
 - GitHub アカウント
 - Railway アカウント
 - リポジトリが GitHub にプッシュ済み
-- Dockerfile が `apps/backend/` に存在
 
 ---
 
@@ -27,9 +26,9 @@ ASP.NET Core バックエンドを Railway にデプロイする手順です。
 
 | 項目 | 値 |
 |------|-----|
-| Root Directory | apps/backend |
-| Builder | Dockerfile |
-| Dockerfile Path | Dockerfile |
+| Root Directory | apps/backend-hono |
+| Build Command | pnpm build |
+| Start Command | pnpm start |
 
 ### 4. 環境変数の設定
 
@@ -37,9 +36,10 @@ ASP.NET Core バックエンドを Railway にデプロイする手順です。
 
 | 変数名 | 値 |
 |--------|-----|
-| ASPNETCORE_ENVIRONMENT | Production |
-| ConnectionStrings__DefaultConnection | Host=xxx;Database=xxx;... |
-| AllowedOrigins | https://chordbook.vercel.app |
+| DATABASE_URL | postgresql://postgres:xxx@db.xxx.supabase.co:5432/postgres |
+| SUPABASE_URL | https://xxx.supabase.co |
+| ALLOWED_ORIGINS | https://chordbook.vercel.app |
+| PORT | 8080 |
 
 ### 5. デプロイ
 
@@ -47,67 +47,48 @@ ASP.NET Core バックエンドを Railway にデプロイする手順です。
 
 ---
 
-## Dockerfile
-
-```dockerfile
-# apps/backend/Dockerfile
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /src
-
-# 依存関係の復元
-COPY ["src/ChordBook.Api/ChordBook.Api.csproj", "src/ChordBook.Api/"]
-COPY ["src/ChordBook.Application/ChordBook.Application.csproj", "src/ChordBook.Application/"]
-COPY ["src/ChordBook.Domain/ChordBook.Domain.csproj", "src/ChordBook.Domain/"]
-COPY ["src/ChordBook.Infrastructure/ChordBook.Infrastructure.csproj", "src/ChordBook.Infrastructure/"]
-RUN dotnet restore "src/ChordBook.Api/ChordBook.Api.csproj"
-
-# ビルド
-COPY . .
-RUN dotnet build "src/ChordBook.Api/ChordBook.Api.csproj" -c Release -o /app/build
-
-# 発行
-FROM build AS publish
-RUN dotnet publish "src/ChordBook.Api/ChordBook.Api.csproj" -c Release -o /app/publish
-
-# 実行
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
-WORKDIR /app
-COPY --from=publish /app/publish .
-ENV ASPNETCORE_URLS=http://+:$PORT
-EXPOSE $PORT
-ENTRYPOINT ["dotnet", "ChordBook.Api.dll"]
-```
-
----
-
 ## 環境変数の詳細
 
-### 接続文字列
+### DATABASE_URL
 
-Supabase PostgreSQL への接続:
+Supabase PostgreSQL への接続文字列:
 
 ```
-ConnectionStrings__DefaultConnection=Host=db.xxx.supabase.co;Database=postgres;Username=postgres;Password=YOUR_PASSWORD;Port=5432;SslMode=Require;Trust Server Certificate=true
+postgresql://postgres:YOUR_PASSWORD@db.xxx.supabase.co:5432/postgres
 ```
 
 | パラメータ | 説明 |
 |-----------|------|
-| Host | Supabase のホスト |
-| Database | データベース名（通常 `postgres`） |
-| Username | ユーザー名 |
-| Password | パスワード |
-| Port | ポート番号（5432） |
-| SslMode | SSL 必須 |
+| ユーザー名 | `postgres` |
+| パスワード | Supabase のデータベースパスワード |
+| ホスト | `db.xxx.supabase.co` |
+| ポート | `5432` |
+| データベース | `postgres` |
 
-### CORS 設定
+SSL 接続が必要な場合:
+```
+postgresql://postgres:xxx@db.xxx.supabase.co:5432/postgres?sslmode=require
+```
+
+### SUPABASE_URL
+
+JWT 検証に使用する Supabase のプロジェクト URL:
 
 ```
-AllowedOrigins=https://chordbook.vercel.app
+https://xxx.supabase.co
+```
+
+### ALLOWED_ORIGINS
+
+CORS 許可オリジン（カンマ区切り）:
+
+```
+https://chordbook.vercel.app
 ```
 
 複数オリジンの場合:
 ```
-AllowedOrigins=https://chordbook.vercel.app,https://preview.chordbook.vercel.app
+https://chordbook.vercel.app,https://preview.chordbook.vercel.app
 ```
 
 ---
@@ -124,7 +105,7 @@ GitHub 連携により自動デプロイ:
 ### トリガー設定
 
 1. プロジェクト設定 → **Deployments**
-2. **Watch Paths** で `apps/backend/**` を設定
+2. **Watch Paths** で `apps/backend-hono/**` を設定
 
 ---
 
@@ -146,16 +127,14 @@ GitHub 連携により自動デプロイ:
 
 Railway は自動でヘルスチェックを行います。
 
-```csharp
-// HealthController.cs
-[HttpGet]
-public IActionResult Get()
+エンドポイント: `GET /api/health`
+
+```json
 {
-    return Ok(new { status = "healthy", timestamp = DateTime.UtcNow });
+  "status": "healthy",
+  "timestamp": "2024-01-15T10:30:00Z"
 }
 ```
-
-エンドポイント: `GET /api/health`
 
 ---
 
@@ -167,7 +146,7 @@ Settings → **Resources**:
 
 | 項目 | 推奨値 |
 |------|--------|
-| Memory | 512MB - 1GB |
+| Memory | 256MB - 512MB |
 | CPU | 0.5 - 1 vCPU |
 
 ### 自動スリープ
@@ -215,7 +194,7 @@ railway login
 railway link
 
 # ローカルで環境変数を使って実行
-railway run dotnet run
+railway run pnpm dev
 
 # デプロイ
 railway up
@@ -228,10 +207,10 @@ railway up
 ### ビルドエラー
 
 ```bash
-# ローカルでDockerビルド確認
-cd apps/backend
-docker build -t chordbook-api .
-docker run -p 5000:5000 chordbook-api
+# ローカルでビルド確認
+cd apps/backend-hono
+pnpm build
+pnpm start
 ```
 
 ### 接続エラー
@@ -244,16 +223,10 @@ docker run -p 5000:5000 chordbook-api
 
 Railway は `PORT` 環境変数でポートを指定:
 
-```csharp
-// Program.cs
-var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
-builder.WebHost.UseUrls($"http://*:{port}");
-```
-
-または Dockerfile で:
-
-```dockerfile
-ENV ASPNETCORE_URLS=http://+:$PORT
+```typescript
+// index.ts
+const port = process.env.PORT || "8080";
+serve({ fetch: app.fetch, port: Number(port) });
 ```
 
 ---

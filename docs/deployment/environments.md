@@ -10,7 +10,7 @@ ChordBook の環境変数一覧と設定方法です。
 |--------|------|-----|
 | NEXT_PUBLIC_SUPABASE_URL | Supabase プロジェクトURL | https://xxx.supabase.co |
 | NEXT_PUBLIC_SUPABASE_ANON_KEY | Supabase 匿名キー | eyJhbGciOiJIUzI1NiIsInR5cCI... |
-| NEXT_PUBLIC_API_URL | バックエンドAPI URL | http://localhost:5000/api |
+| NEXT_PUBLIC_API_URL | バックエンドAPI URL | http://localhost:8080/api |
 
 ### 設定方法
 
@@ -20,9 +20,9 @@ ChordBook の環境変数一覧と設定方法です。
 
 ```bash
 # frontend/.env.local
-NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-NEXT_PUBLIC_API_URL=http://localhost:5000/api
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<supabase status で表示される anon key>
+NEXT_PUBLIC_API_URL=http://localhost:8080/api
 ```
 
 #### Vercel（本番）
@@ -33,42 +33,34 @@ Vercel ダッシュボードで設定:
 
 ---
 
-## バックエンド（ASP.NET Core）
+## バックエンド（Hono）
 
 ### 必須環境変数
 
 | 変数名 | 説明 | 例 |
 |--------|------|-----|
-| ConnectionStrings__DefaultConnection | PostgreSQL 接続文字列 | Host=xxx;Database=xxx;... |
-| AllowedOrigins | CORS 許可オリジン | https://chordbook.vercel.app |
+| DATABASE_URL | PostgreSQL 接続文字列 | postgresql://postgres:postgres@127.0.0.1:54322/postgres |
+| SUPABASE_URL | Supabase URL（JWT検証用） | http://127.0.0.1:54321 |
+| ALLOWED_ORIGINS | CORS 許可オリジン（カンマ区切り） | http://localhost:3000 |
 
 ### オプション環境変数
 
 | 変数名 | 説明 | デフォルト |
 |--------|------|-----------|
-| ASPNETCORE_ENVIRONMENT | 実行環境 | Production |
-| Logging__LogLevel__Default | ログレベル | Information |
+| PORT | サーバーポート | 8080 |
 
 ### 設定方法
 
 #### ローカル開発
 
-`appsettings.Development.json` を編集:
-
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Database=chordbook;Username=postgres;Password=postgres"
-  },
-  "AllowedOrigins": "http://localhost:3000"
-}
-```
-
-または環境変数で設定:
+`.env` ファイルを作成:
 
 ```bash
-export ConnectionStrings__DefaultConnection="Host=localhost;Database=chordbook;..."
-export AllowedOrigins="http://localhost:3000"
+# backend-hono/.env
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres
+SUPABASE_URL=http://127.0.0.1:54321
+ALLOWED_ORIGINS=http://localhost:3000
+PORT=8080
 ```
 
 #### Railway（本番）
@@ -78,9 +70,10 @@ Railway ダッシュボードで設定:
 2. 各変数を追加
 
 ```
-ConnectionStrings__DefaultConnection=Host=xxx.railway.app;Database=railway;Username=postgres;Password=xxx;Port=5432
-AllowedOrigins=https://chordbook.vercel.app
-ASPNETCORE_ENVIRONMENT=Production
+DATABASE_URL=postgresql://postgres:xxx@db.xxx.supabase.co:5432/postgres?sslmode=require
+SUPABASE_URL=https://xxx.supabase.co
+ALLOWED_ORIGINS=https://chordbook.vercel.app
+PORT=8080
 ```
 
 ---
@@ -93,18 +86,18 @@ Supabase ダッシュボードから以下の情報を取得:
 
 | 項目 | 用途 |
 |------|------|
-| Project URL | NEXT_PUBLIC_SUPABASE_URL |
+| Project URL | NEXT_PUBLIC_SUPABASE_URL, SUPABASE_URL |
 | anon (public) key | NEXT_PUBLIC_SUPABASE_ANON_KEY |
 
 ### Project Settings → Database
 
 | 項目 | 用途 |
 |------|------|
-| Connection string | ConnectionStrings__DefaultConnection |
+| Connection string (URI) | DATABASE_URL |
 
 接続文字列の形式:
 ```
-Host=db.xxx.supabase.co;Database=postgres;Username=postgres;Password=YOUR_PASSWORD;Port=5432
+postgresql://postgres:YOUR_PASSWORD@db.xxx.supabase.co:5432/postgres
 ```
 
 ---
@@ -116,8 +109,8 @@ Host=db.xxx.supabase.co;Database=postgres;Username=postgres;Password=YOUR_PASSWO
 | サービス | 設定値 |
 |----------|--------|
 | フロントエンド URL | http://localhost:3000 |
-| バックエンド URL | http://localhost:5000 |
-| データベース | localhost または Supabase |
+| バックエンド URL | http://localhost:8080 |
+| データベース | localhost:54322（ローカル Supabase） |
 | CORS | http://localhost:3000 |
 
 ### 本番環境（Production）
@@ -134,8 +127,8 @@ Host=db.xxx.supabase.co;Database=postgres;Username=postgres;Password=YOUR_PASSWO
 ## セキュリティ注意事項
 
 1. **秘密情報をコミットしない**
-   - `.env.local` は `.gitignore` に含まれている
-   - `appsettings.Development.json` に本番の認証情報を入れない
+   - `.env.local` / `.env` は `.gitignore` に含まれている
+   - `.env.example` には実際の値を入れない
 
 2. **NEXT_PUBLIC_ プレフィックス**
    - このプレフィックスの変数はブラウザに公開される
@@ -143,10 +136,10 @@ Host=db.xxx.supabase.co;Database=postgres;Username=postgres;Password=YOUR_PASSWO
 
 3. **接続文字列**
    - 本番環境では SSL 接続を有効にする
-   - `sslmode=require` を追加
+   - `?sslmode=require` を追加
 
 ```
-Host=xxx;Database=xxx;Username=xxx;Password=xxx;Port=5432;SslMode=Require;Trust Server Certificate=true
+postgresql://postgres:xxx@db.xxx.supabase.co:5432/postgres?sslmode=require
 ```
 
 ## 関連ドキュメント
