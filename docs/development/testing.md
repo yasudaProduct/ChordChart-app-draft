@@ -18,115 +18,94 @@ ChordBook プロジェクトのテスト方針と実行方法です。
 
 | レベル | 対象 | ツール |
 |--------|------|--------|
-| ユニット | 関数・クラス単体 | xUnit (BE), Jest (FE) |
-| 統合 | API エンドポイント | WebApplicationFactory |
+| ユニット | 関数・モジュール単体 | vitest (BE), Jest (FE) |
+| 統合 | API エンドポイント | vitest + supertest |
 | E2E | ユーザーフロー | Playwright |
 
 ---
 
-## バックエンド（C#）
+## バックエンド（TypeScript/Hono）
 
 ### テストプロジェクト構成
 
 ```
-backend/
+apps/backend-hono/
 ├── src/
-│   ├── ChordBook.Api/
-│   ├── ChordBook.Application/
-│   ├── ChordBook.Domain/
-│   └── ChordBook.Infrastructure/
-└── tests/
-    ├── ChordBook.Domain.Tests/           # ドメイン層ユニットテスト
-    ├── ChordBook.Application.Tests/      # アプリケーション層テスト
-    └── ChordBook.Api.Tests/              # API 統合テスト
+│   ├── routes/
+│   ├── services/
+│   ├── middleware/
+│   └── db/
+└── tests/                     # テストファイル
+    ├── routes/                # ルートテスト
+    ├── services/              # サービステスト
+    └── setup.ts               # テストセットアップ
 ```
 
 ### ユニットテスト例
 
-```csharp
-// ChordBook.Domain.Tests/Entities/SongTests.cs
-public class SongTests
-{
-    [Fact]
-    public void Create_WithValidData_ReturnsSong()
-    {
-        // Arrange
-        var userId = Guid.NewGuid();
-        var title = "Test Song";
+```typescript
+// tests/services/song.service.test.ts
+import { describe, it, expect, vi } from 'vitest'
 
-        // Act
-        var song = Song.Create(userId, title);
-
-        // Assert
-        Assert.NotEqual(Guid.Empty, song.Id);
-        Assert.Equal(title, song.Title);
-        Assert.Equal(userId, song.UserId);
-    }
-
-    [Fact]
-    public void UpdateMeta_UpdatesPropertiesAndTimestamp()
-    {
-        // Arrange
-        var song = Song.Create(Guid.NewGuid(), "Original");
-        var originalUpdatedAt = song.UpdatedAt;
-
-        // Act
-        Thread.Sleep(10); // 時間差を作る
-        song.UpdateMeta("Updated", "Artist", "C", 120, "4/4");
-
-        // Assert
-        Assert.Equal("Updated", song.Title);
-        Assert.True(song.UpdatedAt > originalUpdatedAt);
-    }
-}
+describe('song.service', () => {
+  it('listSongs returns public songs when no userId', async () => {
+    const songs = await listSongs()
+    expect(songs).toBeDefined()
+    expect(Array.isArray(songs)).toBe(true)
+  })
+})
 ```
 
 ### 統合テスト例
 
-```csharp
-// ChordBook.Api.Tests/Controllers/SongsControllerTests.cs
-public class SongsControllerTests : IClassFixture<WebApplicationFactory<Program>>
-{
-    private readonly HttpClient _client;
+```typescript
+// tests/routes/songs.test.ts
+import { describe, it, expect } from 'vitest'
+import { app } from '../../src/app'
 
-    public SongsControllerTests(WebApplicationFactory<Program> factory)
-    {
-        _client = factory.CreateClient();
-    }
+describe('GET /api/songs', () => {
+  it('returns 200 with song list', async () => {
+    const res = await app.request('/api/songs')
+    expect(res.status).toBe(200)
 
-    [Fact]
-    public async Task GetSongs_ReturnsOk()
-    {
-        // Act
-        var response = await _client.GetAsync("/api/songs");
+    const body = await res.json()
+    expect(Array.isArray(body)).toBe(true)
+  })
+})
 
-        // Assert
-        response.EnsureSuccessStatusCode();
-        Assert.Equal("application/json", response.Content.Headers.ContentType?.MediaType);
-    }
-}
+describe('POST /api/songs', () => {
+  it('returns 401 without auth token', async () => {
+    const res = await app.request('/api/songs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: 'Test' }),
+    })
+    expect(res.status).toBe(401)
+  })
+})
 ```
 
 ### テスト実行
 
 ```bash
+cd apps/backend-hono
+
 # 全テスト実行
-cd backend
-dotnet test
+pnpm test
 
-# 特定プロジェクトのみ
-dotnet test tests/ChordBook.Domain.Tests/
+# ウォッチモード
+pnpm test -- --watch
 
-# 詳細出力
-dotnet test --verbosity normal
+# カバレッジ
+pnpm test -- --coverage
 
-# カバレッジ付き（coverlet インストール後）
-dotnet test --collect:"XPlat Code Coverage"
+# 特定ファイル
+pnpm test -- songs.test.ts
 ```
 
 ---
 
-## フロントエンド（TypeScript）
+## フロントエンド（TypeScript/React）
 
 ### テストツール
 
@@ -211,7 +190,7 @@ export const handlers = [
 ### テスト実行
 
 ```bash
-cd frontend
+cd apps/frontend
 
 # 全テスト実行
 pnpm test
@@ -233,7 +212,7 @@ pnpm test SongCard.test.tsx
 ### セットアップ
 
 ```bash
-cd frontend
+cd apps/frontend
 pnpm add -D @playwright/test
 npx playwright install
 ```
@@ -288,9 +267,9 @@ npx playwright test --project=chromium
 
 | 優先度 | 対象 |
 |--------|------|
-| 高 | ビジネスロジック（Domain 層） |
+| 高 | ビジネスロジック（Service 層） |
 | 高 | API エンドポイントの正常系 |
-| 中 | バリデーション |
+| 中 | バリデーション（Zod スキーマ） |
 | 中 | エラーハンドリング |
 | 低 | UI のスタイル |
 
@@ -302,14 +281,12 @@ npx playwright test --project=chromium
 4. **実装ではなく振る舞い**をテストする
 5. **意味のあるテスト名**をつける
 
-```csharp
+```typescript
 // Good: 振る舞いを説明するテスト名
-[Fact]
-public void Create_WithEmptyTitle_ThrowsArgumentException()
+it('returns 404 when song does not exist', async () => { ... })
 
 // Bad: 実装詳細を含むテスト名
-[Fact]
-public void Create_CallsConstructor()
+it('calls db.select', async () => { ... })
 ```
 
 ---
@@ -325,10 +302,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-node@v4
         with:
-          dotnet-version: '8.0.x'
-      - run: dotnet test backend/ChordBook.sln
+          node-version: '20'
+      - run: |
+          cd apps/backend-hono
+          pnpm install
+          pnpm test
 
   frontend-test:
     runs-on: ubuntu-latest
@@ -338,7 +318,7 @@ jobs:
         with:
           node-version: '20'
       - run: |
-          cd frontend
+          cd apps/frontend
           pnpm install
           pnpm test
 ```

@@ -11,7 +11,7 @@
 ### アーキテクチャ
 
 - [システム概要](./architecture/overview.md) - システム全体の構成図と技術スタック
-- [バックエンド](./architecture/backend.md) - ASP.NET Core + Clean Architecture の詳細
+- [バックエンド](./architecture/backend.md) - Hono + Drizzle ORM の詳細
 - [フロントエンド](./architecture/frontend.md) - Next.js App Router の構成
 
 ### 開発ガイド

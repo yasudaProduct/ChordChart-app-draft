@@ -6,10 +6,9 @@ ChordBook の開発環境を構築する手順を説明します。
 
 | ツール | バージョン | 用途 |
 |--------|-----------|------|
-| Node.js | 20以上 | フロントエンド実行環境 |
+| Node.js | 20以上 | フロントエンド・バックエンド実行環境 |
 | pnpm | 8以上 | パッケージマネージャー |
-| .NET SDK | 8.0 | バックエンド実行環境 |
-| Docker | 最新 | ローカルDB（オプション） |
+| Docker Desktop | 最新 | ローカル Supabase |
 | Git | 最新 | バージョン管理 |
 
 ## インストール手順
@@ -17,8 +16,8 @@ ChordBook の開発環境を構築する手順を説明します。
 ### 1. リポジトリのクローン
 
 ```bash
-git clone https://github.com/yasudaProduct/ChordChart-app-draft.git
-cd ChordChart-app-draft
+git clone https://github.com/yasudaProduct/chord-chart.git
+cd chord-chart
 ```
 
 ### 2. フロントエンドのセットアップ
@@ -30,37 +29,46 @@ cd apps/frontend
 pnpm install
 
 # 環境変数ファイルの作成
-cp .env.example .env.local
+cp .env.local.example .env.local
 ```
 
 `.env.local` を編集して必要な環境変数を設定します（詳細は[環境変数](../deployment/environments.md)を参照）。
 
+ローカル Supabase を使う場合、デフォルト値のままで動作します。
+
 ### 3. バックエンドのセットアップ
 
 ```bash
-cd apps/backend/src/ChordBook.Api
+cd apps/backend-hono
 
-# 依存関係の復元
-dotnet restore
+# 依存関係のインストール
+pnpm install
 
-# 開発用設定の確認
-# appsettings.Development.json が存在することを確認
+# 環境変数ファイルの作成
+cp .env.example .env
 ```
 
-### 4. データベースの準備
+ローカル Supabase を使う場合、`.env` はデフォルト値のままで動作します。
 
-開発環境では Supabase のクラウド環境を使用します。
+```bash
+# .env
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres
+SUPABASE_URL=http://127.0.0.1:54321
+ALLOWED_ORIGINS=http://localhost:3000
+PORT=8080
+```
 
-1. [Supabase](https://supabase.com) でプロジェクトを作成
-2. 接続文字列を取得
-3. `appsettings.Development.json` に接続文字列を設定
+### 4. ローカル Supabase の起動
 
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Host=xxx.supabase.co;Database=postgres;Username=postgres;Password=xxx"
-  }
-}
+```bash
+# 初回のみ: Supabase にログイン
+supabase login
+
+# ローカル環境を起動（マイグレーションが自動適用される）
+supabase start
+
+# 接続情報を確認
+supabase status
 ```
 
 ## 開発サーバーの起動
@@ -77,20 +85,28 @@ http://localhost:3000 でアクセスできます。
 ### バックエンド
 
 ```bash
-cd apps/backend/src/ChordBook.Api
-dotnet run
+cd apps/backend-hono
+pnpm dev
 ```
 
-- API: http://localhost:5000
-- Swagger UI: http://localhost:5000/swagger
+http://localhost:8080 でアクセスできます。
 
 ## 開発ツール
 
 ### 推奨エディタ
 
-- **VS Code** - フロントエンド開発
-  - 推奨拡張機能: ESLint, Prettier, Tailwind CSS IntelliSense
-- **Visual Studio 2022** または **Rider** - バックエンド開発
+- **VS Code**
+  - 推奨拡張機能: ESLint, Prettier, Tailwind CSS IntelliSense, REST Client
+
+### API テスト
+
+VS Code の REST Client 拡張機能を使用:
+
+```
+apps/backend-hono/.http/
+├── auth.http     # サインアップ・サインイン
+└── songs.http    # Song CRUD
+```
 
 ### デバッグ
 
@@ -111,10 +127,11 @@ pnpm build
 
 ```bash
 # 開発モードで実行（ホットリロード有効）
-dotnet watch run
+cd apps/backend-hono
+pnpm dev
 
 # テスト実行
-dotnet test
+pnpm test
 ```
 
 ## トラブルシューティング
@@ -130,20 +147,10 @@ rm -rf node_modules
 pnpm install
 ```
 
-### dotnet restore が失敗する
-
-```bash
-# NuGet キャッシュをクリア
-dotnet nuget locals all --clear
-
-# 再度復元
-dotnet restore
-```
-
 ### ポートが使用中
 
 - フロントエンド: `PORT=3001 pnpm dev` で別ポートを指定
-- バックエンド: `launchSettings.json` でポートを変更
+- バックエンド: `.env` の `PORT` を変更
 
 ## 次のステップ
 

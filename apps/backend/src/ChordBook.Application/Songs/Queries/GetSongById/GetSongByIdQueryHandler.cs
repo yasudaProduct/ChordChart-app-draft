@@ -1,5 +1,6 @@
 using ChordBook.Application.Common.Interfaces;
 using ChordBook.Application.Songs.DTOs;
+using ChordBook.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
@@ -21,7 +22,12 @@ public class GetSongByIdQueryHandler
     {
         var song = await _context.Songs
             .FirstOrDefaultAsync(
-                s => s.Id == request.Id && s.UserId == request.UserId,
+                s => s.Id == request.Id &&
+                    (request.UserId.HasValue
+                        ? (s.UserId == request.UserId.Value
+                            || s.Visibility == Visibility.Public
+                            || s.Visibility == Visibility.UrlOnly)
+                        : s.Visibility == Visibility.Public),
                 cancellationToken);
 
         if (song is null) return null;

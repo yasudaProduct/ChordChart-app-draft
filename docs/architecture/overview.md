@@ -28,20 +28,18 @@ ChordBook のシステム全体構成を説明します。
 ┌───────────────────────────┐   ┌───────────────────────────────┐
 │        Supabase           │   │          Railway              │
 │  ┌─────────────────────┐  │   │  ┌─────────────────────────┐  │
-│  │   Supabase Auth     │  │   │  │  ASP.NET Core 8 Web API │  │
+│  │   Supabase Auth     │  │   │  │    Hono (TypeScript)    │  │
 │  │  (認証・認可)        │  │   │  │                         │  │
 │  └─────────────────────┘  │   │  │  ┌───────────────────┐  │  │
-│                           │   │  │  │    Controllers    │  │  │
+│                           │   │  │  │     Routes        │  │  │
 │  ┌─────────────────────┐  │   │  │  └─────────┬─────────┘  │  │
 │  │    PostgreSQL       │  │   │  │            │            │  │
 │  │   (データベース)      │◄─┼───┤  ┌─────────▼─────────┐  │  │
-│  └─────────────────────┘  │   │  │  │   Application     │  │  │
-│                           │   │  │  │   (MediatR)       │  │  │
-└───────────────────────────┘   │  │  └─────────┬─────────┘  │  │
-                                │  │            │            │  │
+│  └─────────────────────┘  │   │  │  │    Services       │  │  │
+│                           │   │  │  └─────────┬─────────┘  │  │
+└───────────────────────────┘   │  │            │            │  │
                                 │  │  ┌─────────▼─────────┐  │  │
-                                │  │  │  Infrastructure   │  │  │
-                                │  │  │  (EF Core)        │  │  │
+                                │  │  │   Drizzle ORM     │  │  │
                                 │  │  └───────────────────┘  │  │
                                 │  └─────────────────────────┘  │
                                 └───────────────────────────────┘
@@ -62,12 +60,14 @@ ChordBook のシステム全体構成を説明します。
 
 ### バックエンド
 
-| 技術 | バージョン | 用途 |
-|------|-----------|------|
-| ASP.NET Core | 8.0 | Web API フレームワーク |
-| Entity Framework Core | 8.0 | ORM |
-| MediatR | 最新 | CQRS パターン実装 |
-| FluentValidation | 最新 | バリデーション |
+| 技術 | 用途 |
+|------|------|
+| Hono | 軽量 Web フレームワーク |
+| Drizzle ORM | 型安全な ORM |
+| Zod | バリデーション |
+| jose | JWT 検証（Supabase Auth） |
+| tsup | ビルドツール |
+| vitest | テストフレームワーク |
 
 ### インフラ
 
@@ -87,16 +87,16 @@ ChordBook のシステム全体構成を説明します。
          ↓
 フロントエンド → Authorization ヘッダーに JWT を付与
          ↓
-バックエンド API → JWT 検証 → リクエスト処理
+バックエンド API → JWKS で JWT 検証 → リクエスト処理
 ```
 
 ### 2. データ取得フロー
 
 ```
-フロントエンド → API リクエスト (fetch/axios)
+フロントエンド → API リクエスト (fetch)
          ↓
 バックエンド API
-  └→ Controller → MediatR Handler → Repository → PostgreSQL
+  └→ Route Handler → Service → Drizzle ORM → PostgreSQL
          ↓
 レスポンス (JSON) → フロントエンド → 状態更新 (Zustand) → UI 更新
 ```
@@ -114,7 +114,7 @@ API リクエスト → バックエンド処理 → DB 更新
 ## ディレクトリ構成
 
 ```
-chord-book/
+chord-chart/
 ├── apps/
 │   ├── frontend/                 # Next.js フロントエンド
 │   │   └── src/
@@ -123,12 +123,15 @@ chord-book/
 │   │       ├── stores/           # Zustand ストア
 │   │       └── types/            # TypeScript 型定義
 │   │
-│   └── backend/                  # ASP.NET Core バックエンド
+│   └── backend-hono/             # Hono バックエンド
 │       └── src/
-│           ├── ChordBook.Api/          # Web API 層
-│           ├── ChordBook.Application/  # アプリケーション層
-│           ├── ChordBook.Domain/       # ドメイン層
-│           └── ChordBook.Infrastructure/ # インフラ層
+│           ├── index.ts          # エントリポイント
+│           ├── app.ts            # Hono アプリ定義
+│           ├── routes/           # ルート定義
+│           ├── middleware/       # 認証ミドルウェア
+│           ├── services/         # ビジネスロジック
+│           ├── db/               # Drizzle ORM スキーマ・接続
+│           └── types/            # 型定義
 │
 ├── docs/                     # ドキュメント
 └── .github/                  # GitHub Actions
@@ -136,6 +139,6 @@ chord-book/
 
 ## 関連ドキュメント
 
-- [バックエンドアーキテクチャ](./backend.md) - Clean Architecture の詳細
+- [バックエンドアーキテクチャ](./backend.md) - Hono + Drizzle ORM の詳細
 - [フロントエンドアーキテクチャ](./frontend.md) - Next.js 構成の詳細
 - [データベース設計](../database/er-diagram.md) - ER図とテーブル定義

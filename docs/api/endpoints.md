@@ -6,19 +6,25 @@ ChordBook バックエンド API のエンドポイント一覧です。
 
 | 項目 | 値 |
 |------|-----|
-| ベースURL（開発） | http://localhost:5000/api |
+| ベースURL（開発） | http://localhost:8080/api |
 | ベースURL（本番） | https://api.chordbook.example.com/api |
 | 形式 | REST API |
 | データ形式 | JSON |
-| 認証 | なし（MVPフロント準拠） |
-
-## OpenAPI（仕様の一次情報）
-
-API 仕様の一次情報は OpenAPI で管理します。
-
-- OpenAPI: `docs/api/openapi.yaml`
+| 認証 | Supabase Auth JWT |
 
 ## エンドポイント一覧
+
+| メソッド | パス | 認証 | 説明 |
+|----------|------|------|------|
+| GET | /api/health | 不要 | ヘルスチェック |
+| GET | /api/songs | オプション | 曲一覧取得 |
+| GET | /api/songs/search | オプション | 公開曲検索 |
+| GET | /api/songs/:id | オプション | 曲詳細取得 |
+| POST | /api/songs | 必須 | 曲作成 |
+| PUT | /api/songs/:id | 必須 | 曲更新 |
+| DELETE | /api/songs/:id | 必須 | 曲削除 |
+
+---
 
 ### Health Check
 
@@ -43,46 +49,63 @@ API 仕様の一次情報は OpenAPI で管理します。
 
 #### GET /api/songs
 
-楽曲一覧を取得します（MVPでは権限制御なし）。
+楽曲一覧を取得します。
 
-**認証**: なし
-
-**クエリパラメータ**
-
-| パラメータ | 型 | デフォルト | 説明 |
-|-----------|-----|-----------|------|
-| page | number | 1 | ページ番号 |
-| limit | number | 20 | 取得件数 |
-| sort | string | updatedAt | ソートキー |
-| order | string | desc | asc / desc |
+**認証**: オプション
+- 認証あり: 自分の曲一覧を返却
+- 認証なし: 公開曲（visibility = 3）のみ返却
 
 **レスポンス**
 
 ```json
-{
-  "items": [
-    {
-      "id": "550e8400-e29b-41d4-a716-446655440000",
-      "title": "サンプル曲",
-      "artist": "サンプルアーティスト",
-      "key": "C",
-      "updatedAt": "2024-01-15T10:30:00Z"
-    }
-  ],
-  "total": 1,
-  "page": 1,
-  "pageSize": 20,
-  "totalPages": 1
-}
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "title": "サンプル曲",
+    "artist": "サンプルアーティスト",
+    "key": "C",
+    "updatedAt": "2024-01-15T10:30:00Z"
+  }
+]
 ```
 
 ---
 
-#### GET /api/songs/{id}
+#### GET /api/songs/search
 
-指定した楽曲の詳細を取得します（MVPでは権限制御なし）。
+公開曲を検索します。
 
-**認証**: なし
+**認証**: オプション
+
+**クエリパラメータ**
+
+| パラメータ | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| q | string | Yes | 検索キーワード（タイトル・アーティスト・キーで部分一致） |
+
+**レスポンス**
+
+```json
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "title": "サンプル曲",
+    "artist": "サンプルアーティスト",
+    "key": "C",
+    "updatedAt": "2024-01-15T10:30:00Z"
+  }
+]
+```
+
+---
+
+#### GET /api/songs/:id
+
+指定した楽曲の詳細を取得します。
+
+**認証**: オプション
+- 認証あり: 自分の曲、公開曲、URL限定公開曲にアクセス可能
+- 認証なし: 公開曲のみ
 
 **パスパラメータ**
 
@@ -126,7 +149,7 @@ API 仕様の一次情報は OpenAPI で管理します。
 
 新しい楽曲を作成します。
 
-**認証**: なし
+**認証**: 必須
 
 **リクエストボディ**
 
@@ -142,13 +165,13 @@ API 仕様の一次情報は OpenAPI で管理します。
 
 | フィールド | 型 | 必須 | 説明 |
 |-----------|-----|------|------|
-| title | string | Yes | 曲名 |
-| artist | string | No | アーティスト名 |
-| key | string | No | キー（C, Am, etc.） |
-| bpm | number | No | テンポ |
+| title | string | Yes | 曲名（1文字以上） |
+| artist | string \| null | No | アーティスト名 |
+| key | string \| null | No | キー（C, Am, etc.） |
+| bpm | number \| null | No | テンポ（整数） |
 | timeSignature | string | No | 拍子（デフォルト: "4/4"） |
 
-**レスポンス**
+**レスポンス**: 201 Created
 
 ```json
 {
@@ -158,22 +181,20 @@ API 仕様の一次情報は OpenAPI で管理します。
   "key": "G",
   "bpm": 100,
   "timeSignature": "4/4",
-  "content": [],
+  "content": "[]",
   "visibility": 0,
   "createdAt": "2024-01-15T10:30:00Z",
   "updatedAt": "2024-01-15T10:30:00Z"
 }
 ```
 
-**ステータスコード**: 201 Created
-
 ---
 
-#### PUT /api/songs/{id}
+#### PUT /api/songs/:id
 
-楽曲を更新します（MVPでは権限制御なし）。
+楽曲を更新します（所有者のみ）。
 
-**認証**: なし
+**認証**: 必須
 
 **パスパラメータ**
 
@@ -190,40 +211,34 @@ API 仕様の一次情報は OpenAPI で管理します。
   "key": "Am",
   "bpm": 110,
   "timeSignature": "3/4",
-  "content": [
-    {
-      "id": "section-1",
-      "name": "Aメロ",
-      "type": "lyrics-chord",
-      "lines": [
-        {
-          "lyrics": "きょうも いちにち",
-          "chords": [{ "chord": "C", "position": 0 }]
-        }
-      ]
-    }
-  ]
+  "content": "[{\"id\":\"section-1\",\"name\":\"Aメロ\",\"type\":\"lyrics-chord\",\"lines\":[]}]"
 }
 ```
 
 | フィールド | 型 | 必須 | 説明 |
 |-----------|-----|------|------|
-| title | string | Yes | 曲名 |
-| artist | string | No | アーティスト名 |
-| key | string | No | キー |
-| bpm | number | No | テンポ |
-| timeSignature | string | Yes | 拍子 |
-| content | array | Yes | コード譜データ（セクション配列） |
+| title | string | Yes | 曲名（1文字以上） |
+| artist | string \| null | No | アーティスト名 |
+| key | string \| null | No | キー |
+| bpm | number \| null | No | テンポ（整数） |
+| timeSignature | string | No | 拍子 |
+| content | string | No | コード譜データ（JSON文字列） |
 
-**レスポンス**: 204 No Content
+**レスポンス**: 200 OK
+
+**エラーレスポンス**
+
+| ステータス | 説明 |
+|-----------|------|
+| 404 | 楽曲が見つからない（または権限なし） |
 
 ---
 
-#### DELETE /api/songs/{id}
+#### DELETE /api/songs/:id
 
-楽曲を削除します（MVPでは権限制御なし）。
+楽曲を削除します（所有者のみ）。
 
-**認証**: なし
+**認証**: 必須
 
 **パスパラメータ**
 
@@ -233,20 +248,38 @@ API 仕様の一次情報は OpenAPI で管理します。
 
 **レスポンス**: 204 No Content
 
+**エラーレスポンス**
+
+| ステータス | 説明 |
+|-----------|------|
+| 404 | 楽曲が見つからない（または権限なし） |
+
 ---
 
 ## 共通エラーレスポンス
 
-### エラー形式
+### バリデーションエラー（400）
 
 ```json
 {
-  "type": "https://tools.ietf.org/html/rfc7231#section-6.5.1",
-  "title": "Bad Request",
-  "status": 400,
-  "errors": {
-    "Title": ["タイトルは必須です"]
-  }
+  "error": "Validation failed",
+  "details": [
+    {
+      "code": "too_small",
+      "minimum": 1,
+      "type": "string",
+      "path": ["title"],
+      "message": "String must contain at least 1 character(s)"
+    }
+  ]
+}
+```
+
+### 認証エラー（401）
+
+```json
+{
+  "error": "Unauthorized"
 }
 ```
 
@@ -257,16 +290,19 @@ API 仕様の一次情報は OpenAPI で管理します。
 | 200 | 成功 |
 | 201 | 作成成功 |
 | 204 | 成功（レスポンスボディなし） |
-| 400 | リクエスト不正 |
+| 400 | バリデーションエラー |
+| 401 | 認証エラー |
 | 404 | リソースが見つからない |
 | 500 | サーバーエラー |
 
-## Swagger UI
+## API テスト
 
-開発環境では Swagger UI でAPIをテストできます。
+VS Code の REST Client 拡張機能でテストできます。
 
 ```
-http://localhost:5000/swagger
+apps/backend-hono/.http/
+├── auth.http     # サインアップ・サインイン
+└── songs.http    # Song CRUD
 ```
 
 ## 関連ドキュメント

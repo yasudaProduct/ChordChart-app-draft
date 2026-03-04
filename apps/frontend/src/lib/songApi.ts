@@ -1,5 +1,4 @@
 import { api } from '@/lib/api'
-import { mockSongsApi } from '@/lib/mockSongs'
 import { useAuthStore } from '@/stores/authStore'
 import type { Section, Song, SongListItem, SongMeta, SongVisibility } from '@/types/song'
 
@@ -85,24 +84,18 @@ const toContent = (sections: Section[]) => JSON.stringify({ sections })
 
 export const songApi = {
   async list(): Promise<SongListItem[]> {
-    if (!isAuthenticated()) {
-      return mockSongsApi.list()
-    }
     const response = await api.get<ApiSongListItemDto[]>('/songs')
     return response.map(toSongListItem)
   },
 
   async get(id: string): Promise<Song> {
-    if (!isAuthenticated()) {
-      return mockSongsApi.get(id)
-    }
     const dto = await api.get<ApiSongDto>(`/songs/${id}`)
     return toSong(dto)
   },
 
   async create(meta: SongMeta, visibility?: SongVisibility): Promise<Song> {
     if (!isAuthenticated()) {
-      return mockSongsApi.create(meta, visibility)
+      throw new Error('ログインが必要です')
     }
     const dto = await api.post<ApiSongDto>('/songs', {
       title: meta.title,
@@ -116,7 +109,7 @@ export const songApi = {
 
   async update(id: string, updates: Song): Promise<Song> {
     if (!isAuthenticated()) {
-      return mockSongsApi.update(id, updates)
+      throw new Error('ログインが必要です')
     }
     const dto = await api.put<ApiSongDto>(`/songs/${id}`, {
       title: updates.title ?? '',
@@ -130,9 +123,6 @@ export const songApi = {
   },
 
   async search(query?: string): Promise<SongListItem[]> {
-    if (!isAuthenticated()) {
-      return mockSongsApi.search(query)
-    }
     const params = query ? `?q=${encodeURIComponent(query)}` : ''
     const response = await api.get<ApiSongListItemDto[]>(`/songs/search${params}`)
     return response.map(toSongListItem)
@@ -140,7 +130,7 @@ export const songApi = {
 
   async remove(id: string): Promise<void> {
     if (!isAuthenticated()) {
-      return mockSongsApi.remove(id)
+      throw new Error('ログインが必要です')
     }
     await api.delete(`/songs/${id}`)
   },

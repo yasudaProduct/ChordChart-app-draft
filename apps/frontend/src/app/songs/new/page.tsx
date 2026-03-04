@@ -1,13 +1,17 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { songApi } from '@/lib/songApi'
+import { useAuthStore } from '@/stores/authStore'
 import { KEYS, TIME_SIGNATURES } from '@/lib/utils'
 
 export default function NewSongPage() {
   const router = useRouter()
+  const session = useAuthStore((s) => s.session)
+  const isLoading = useAuthStore((s) => s.isLoading)
   const [title, setTitle] = useState('')
   const [artist, setArtist] = useState('')
   const [key, setKey] = useState('C')
@@ -25,6 +29,38 @@ export default function NewSongPage() {
       timeSignature,
     })
     router.push(`/editor/${song.id}`)
+  }
+
+  if (!isLoading && !session) {
+    return (
+      <main className="min-h-screen">
+        <SiteHeader variant="app" />
+        <section className="mx-auto w-full max-w-4xl px-6 py-12">
+          <div className="rounded-3xl border border-white/60 bg-white/80 p-8 shadow-[0_30px_80px_-50px_rgba(15,23,42,0.5)] backdrop-blur text-center">
+            <h1 className="font-display text-2xl font-semibold text-slate-900">
+              ログインが必要です
+            </h1>
+            <p className="mt-2 text-sm text-slate-500">
+              楽曲を新規作成するにはログインしてください。
+            </p>
+            <div className="mt-6 flex items-center justify-center gap-3">
+              <Link
+                href="/login"
+                className="rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+              >
+                ログイン
+              </Link>
+              <Link
+                href="/register"
+                className="rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
+              >
+                新規登録
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
+    )
   }
 
   return (

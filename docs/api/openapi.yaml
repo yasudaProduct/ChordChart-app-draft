@@ -8,7 +8,7 @@ info:
     - 形式: JSON / UTF-8
     - 認証: なし（現在のフロント実装に合わせる）
 servers:
-  - url: http://localhost:5000
+  - url: http://localhost:8080
     description: 開発（ローカル）
   - url: https://api.chordbook.example.com
     description: 本番（例）

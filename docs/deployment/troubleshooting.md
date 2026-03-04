@@ -29,41 +29,44 @@ pnpm install
 
 ### バックエンドが起動しない
 
-**症状**: `dotnet run` でエラー
+**症状**: `pnpm dev` でエラー
 
 **確認事項**:
 ```bash
-# .NET バージョン確認
-dotnet --version  # 8.0以上が必要
+# Node.js バージョン確認
+node --version  # 20以上が必要
 
-# 依存関係の復元
-dotnet restore
+# 依存関係の再インストール
+cd apps/backend-hono
+rm -rf node_modules
+pnpm install
 ```
 
 **よくある原因**:
-- .NET SDK バージョンが古い
-- NuGet パッケージの破損
-- 接続文字列が未設定
+- `.env` ファイルが存在しない（`.env.example` からコピー）
+- `DATABASE_URL` が未設定または不正
+- `SUPABASE_URL` が未設定
+- ローカル Supabase が起動していない
 
 ---
 
 ### データベース接続エラー
 
-**症状**: `Npgsql.NpgsqlException`
+**症状**: サーバー起動時にDB接続エラー
 
 **確認事項**:
-1. 接続文字列の確認
-2. Supabase ダッシュボードで接続許可 IP を確認
-3. パスワードに特殊文字がある場合はエスケープ
+1. ローカル Supabase が起動しているか: `supabase status`
+2. `DATABASE_URL` の値が正しいか
+3. ローカルの場合ポートが `54322` になっているか
 
-**接続文字列の例**:
+**接続文字列の例（ローカル）**:
 ```
-Host=db.xxx.supabase.co;Database=postgres;Username=postgres;Password=xxx;Port=5432
+postgresql://postgres:postgres@127.0.0.1:54322/postgres
 ```
 
-**SSL 接続が必要な場合**:
+**接続文字列の例（本番）**:
 ```
-Host=xxx;...;SslMode=Require;Trust Server Certificate=true
+postgresql://postgres:xxx@db.xxx.supabase.co:5432/postgres?sslmode=require
 ```
 
 ---
@@ -73,16 +76,14 @@ Host=xxx;...;SslMode=Require;Trust Server Certificate=true
 **症状**: ブラウザコンソールに `CORS policy` エラー
 
 **確認事項**:
-1. `AllowedOrigins` の設定を確認
+1. `ALLOWED_ORIGINS` の設定を確認
 2. プロトコル（http/https）が一致しているか
 3. ポート番号が一致しているか
 
 **解決方法**:
-```csharp
-// appsettings.json
-{
-  "AllowedOrigins": "http://localhost:3000"
-}
+```bash
+# .env
+ALLOWED_ORIGINS=http://localhost:3000
 ```
 
 ---
@@ -94,7 +95,8 @@ Host=xxx;...;SslMode=Require;Trust Server Certificate=true
 **確認事項**:
 1. Supabase の設定が正しいか
 2. トークンが期限切れでないか
-3. Authorization ヘッダーの形式
+3. Authorization ヘッダーの形式（`Bearer <token>`）
+4. `SUPABASE_URL` が正しく設定されているか（JWKS取得に使用）
 
 **デバッグ**:
 ```typescript
@@ -114,7 +116,7 @@ console.log('Token:', session?.access_token)
 **確認事項**:
 ```bash
 # ローカルでビルド確認
-cd frontend
+cd apps/frontend
 pnpm build
 ```
 
@@ -132,25 +134,20 @@ pnpm build
 
 ### Railway ビルドエラー
 
-**症状**: Docker ビルド失敗
+**症状**: ビルド失敗
 
 **確認事項**:
 ```bash
-# ローカルで Docker ビルド
-cd backend
-docker build -t test .
+# ローカルでビルド確認
+cd apps/backend-hono
+pnpm build
+pnpm start
 ```
 
 **よくある原因**:
-- Dockerfile のパスが間違っている
-- NuGet の復元エラー
-- .NET バージョンの不一致
-
-**Dockerfile の確認**:
-```dockerfile
-# 正しい SDK バージョン
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-```
+- Root Directory の設定が `apps/backend-hono` になっていない
+- 環境変数が未設定
+- TypeScript のコンパイルエラー
 
 ---
 
@@ -181,16 +178,16 @@ railway logs
 3. 不要なデータを取得していないか
 
 **対策**:
-```csharp
-// Include で N+1 を防ぐ
-var songs = await _context.Songs
-    .Include(s => s.User)
-    .ToListAsync();
-
+```typescript
 // 必要なカラムのみ Select
-var songs = await _context.Songs
-    .Select(s => new { s.Id, s.Title })
-    .ToListAsync();
+const result = await db
+  .select({
+    id: songs.id,
+    title: songs.title,
+    artist: songs.artist,
+  })
+  .from(songs)
+  .where(eq(songs.visibility, Visibility.Public));
 ```
 
 ---
@@ -205,6 +202,7 @@ var songs = await _context.Songs
 **対策**:
 ```bash
 # バンドル分析
+cd apps/frontend
 pnpm build
 # .next/analyze を確認
 ```
@@ -219,15 +217,16 @@ pnpm build
 
 ```bash
 # .env.local に追加
-NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
 ```
 
 ### `Unable to connect to PostgreSQL`
 
 接続文字列が間違っているか、ネットワーク問題。
 
-1. Supabase ダッシュボードで接続情報を確認
-2. 許可 IP を確認（0.0.0.0/0 で全許可）
+1. `DATABASE_URL` を確認
+2. ローカル Supabase が起動しているか: `supabase status`
+3. 本番環境では SSL 接続を有効にする
 
 ### `JWT token is expired`
 
@@ -244,8 +243,6 @@ await supabase.auth.refreshSession()
 
 ```bash
 pnpm install
-# または
-dotnet restore
 ```
 
 ---
@@ -266,22 +263,19 @@ console.log('Editor state:', state)
 
 ### バックエンド
 
-```csharp
-// 開発環境でのログ
-if (app.Environment.IsDevelopment())
-{
-    app.UseDeveloperExceptionPage();
-}
+Hono の logger ミドルウェアが全リクエストをログ出力します。
 
-// ログ出力
-_logger.LogInformation("Song created: {SongId}", song.Id);
+```bash
+# 開発サーバー起動（ログ付き）
+cd apps/backend-hono
+pnpm dev
 ```
 
 ### ネットワーク
 
 ```bash
 # API の疎通確認
-curl http://localhost:5000/api/health
+curl http://localhost:8080/api/health
 
 # SSL 確認
 curl -v https://api.chordbook.railway.app/api/health

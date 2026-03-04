@@ -10,7 +10,7 @@ ChordBook - コード譜を作成・管理・共有できるWebアプリケー�
 
 ## 技術スタック
 - **フロントエンド:** Next.js 14 (App Router) + React 18 + TypeScript + Tailwind CSS + Zustand
-- **バックエンド:** ASP.NET Core 8 + Clean Architecture + MediatR + Entity Framework Core
+- **バックエンド:** Hono + Drizzle ORM + Zod + jose (JWT検証)
 - **データベース:** PostgreSQL (Supabase)
 - **認証:** Supabase Auth (JWT)
 - **ホスティング:** Vercel (FE), Railway (BE)
@@ -25,13 +25,13 @@ pnpm lint         # ESLint実行
 pnpm lint --fix   # ESLint自動修正
 ```
 
-### バックエンド (apps/backend)
+### バックエンド (apps/backend-hono)
 ```bash
-cd apps/backend/src/ChordBook.Api
-dotnet run                    # 開発サーバー起動
-dotnet watch run              # ホットリロード対応
-dotnet build ChordBook.sln    # ビルド
-dotnet test                   # テスト実行
+cd apps/backend-hono
+pnpm dev          # 開発サーバー起動 (tsx watch, localhost:8080)
+pnpm build        # 本番ビルド (tsup)
+pnpm start        # 本番起動 (node dist/index.js)
+pnpm test         # テスト実行 (vitest)
 ```
 
 ## アーキテクチャ
@@ -45,13 +45,23 @@ apps/frontend/src/
 └── types/        # TypeScript型定義
 ```
 
-### バックエンド構造 (Clean Architecture)
+### バックエンド構造 (Hono)
 ```
-apps/backend/src/
-├── ChordBook.Api/            # プレゼンテーション層 (Controllers, Program.cs)
-├── ChordBook.Application/    # アプリケーション層 (DTOs, Handlers, Interfaces)
-├── ChordBook.Domain/         # ドメイン層 (Entities, Enums, ビジネスロジック)
-└── ChordBook.Infrastructure/ # インフラ層 (DbContext, Repositories)
+apps/backend-hono/src/
+├── index.ts              # エントリポイント
+├── app.ts                # Honoアプリ定義（CORS, logger, エラーハンドラ）
+├── routes/
+│   ├── health.ts         # GET /api/health
+│   └── songs.ts          # Song CRUD + 検索（Zodバリデーション）
+├── middleware/
+│   └── auth.ts           # Supabase JWT認証（jose）
+├── db/
+│   ├── schema.ts         # Drizzle ORMスキーマ（4テーブル）
+│   └── index.ts          # DBクライアント初期化
+├── services/
+│   └── song.service.ts   # ビジネスロジック
+└── types/
+    └── index.ts          # Visibility定数・型定義
 ```
 
 ### 主要エンティティ
@@ -61,7 +71,7 @@ apps/backend/src/
 - `SongShare` - 楽曲共有
 
 ### データフロー
-Frontend (Zustand) → API Request → Backend (MediatR Handler) → Repository → PostgreSQL
+Frontend (Zustand) → API Request → Backend (Hono Route → Service) → Drizzle ORM → PostgreSQL
 
 ## コーディング規約
 
@@ -70,18 +80,19 @@ Frontend (Zustand) → API Request → Backend (MediatR Handler) → Repository 
 - インデント: スペース2
 - インポート順序: React → 外部ライブラリ → 内部モジュール → 型 → 相対パス
 
-### C#
-- クラス/メソッド: PascalCase
-- インターフェース: I prefix (例: `ISongRepository`)
-- 非同期メソッド: Async suffix + CancellationToken パラメータ
-- プライベートフィールド: _camelCase
-- インデント: スペース4
-
 ### Git コミットメッセージ
 ```
 <type>: <subject>
 ```
 Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+
+## 環境変数（バックエンド）
+```
+DATABASE_URL      # PostgreSQL接続文字列
+SUPABASE_URL      # Supabase URL
+ALLOWED_ORIGINS   # CORS許可オリジン（カンマ区切り）
+PORT              # サーバーポート（デフォルト: 8080）
+```
 
 ## 詳細ドキュメント
 `docs/` ディレクトリに包括的なドキュメントあり:
@@ -89,3 +100,4 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 - `development/` - 環境構築、コーディング規約、Git運用
 - `api/` - REST API仕様
 - `database/` - ER図、テーブル定義
+- `plans/` - 移行計画（backend-migration-to-hono.md）

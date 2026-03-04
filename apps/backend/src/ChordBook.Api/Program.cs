@@ -1,4 +1,3 @@
-using System.Text;
 using ChordBook.Api.Services;
 using ChordBook.Application;
 using ChordBook.Application.Common.Interfaces;
@@ -15,19 +14,22 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
+var supabaseUrl = builder.Configuration["Supabase:Url"]!;
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.Authority = supabaseUrl + "/auth/v1";
+        options.MetadataAddress = supabaseUrl + "/auth/v1/.well-known/openid-configuration";
+        options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["Supabase:Url"] + "/auth/v1",
+            ValidIssuer = supabaseUrl + "/auth/v1",
             ValidateAudience = true,
             ValidAudience = "authenticated",
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Supabase:JwtSecret"]!))
         };
     });
 

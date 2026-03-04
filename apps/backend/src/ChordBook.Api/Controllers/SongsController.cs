@@ -27,11 +27,11 @@ public class SongsController : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<SongListItemDto>>> GetSongs()
     {
-        if (_currentUser.UserId is null) return Unauthorized();
         var result = await _mediator.Send(
-            new GetSongsQuery(_currentUser.UserId.Value));
+            new GetSongsQuery(_currentUser.UserId));
         return Ok(result);
     }
 
@@ -45,11 +45,11 @@ public class SongsController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [AllowAnonymous]
     public async Task<ActionResult<SongDto>> GetSong(Guid id)
     {
-        if (_currentUser.UserId is null) return Unauthorized();
         var result = await _mediator.Send(
-            new GetSongByIdQuery(id, _currentUser.UserId.Value));
+            new GetSongByIdQuery(id, _currentUser.UserId));
         return result is null ? NotFound() : Ok(result);
     }
 

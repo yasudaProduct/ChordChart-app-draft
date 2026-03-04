@@ -1,85 +1,68 @@
 import { generateId } from '@/lib/utils'
-import type {
-  BarLine,
-  ChordPosition,
-  LyricsChordLine,
-  Section,
-  SectionLine,
-  SectionType,
-} from '@/types/song'
+import type { Section, SectionType } from '@/types/song'
 
 export type ChordBlock = {
   id: string
   chord: string
-  position: number
+  offset: number
 }
 
-export type LyricsLine = {
+export type SectionLine = {
   id: string
   lyrics: string
   chords: ChordBlock[]
 }
 
-export type BarSectionLine = {
-  id: string
-  bars: string[]
-}
-
 export type SectionContent = {
-  lines: Array<LyricsLine | BarSectionLine>
+  lines: SectionLine[]
 }
 
-const normalizeChord = (chord: unknown) => (typeof chord === 'string' ? chord : '')
-
-const normalizePosition = (position: unknown) => {
-  const value =
-    typeof position === 'number'
-      ? position
-      : typeof position === 'string'
-        ? Number(position)
-        : 0
-  if (Number.isNaN(value) || !Number.isFinite(value)) return 0
-  return Math.max(0, Math.floor(value))
-}
-
-const normalizeChordPosition = (chord: ChordPosition): ChordBlock => ({
-  id: chord.id ?? generateId(),
-  chord: normalizeChord(chord.chord),
-  position: normalizePosition(chord.position),
+export const createEmptyLine = (): SectionLine => ({
+  id: generateId(),
+  lyrics: '',
+  chords: [],
 })
-
-const normalizeLyricsLine = (line: LyricsChordLine): LyricsLine => ({
-  id: line.id ?? generateId(),
-  lyrics: line.lyrics ?? '',
-  chords: (line.chords ?? [])
-    .map((chord) => normalizeChordPosition(chord))
-    .sort((a, b) => a.position - b.position),
-})
-
-const normalizeBarLine = (line: BarLine): BarSectionLine => ({
-  id: line.id ?? generateId(),
-  bars: Array.isArray(line.bars) ? line.bars.filter((bar) => typeof bar === 'string') : [],
-})
-
-export const createEmptyLine = (type: SectionType): LyricsLine | BarSectionLine =>
-  type === 'bar'
-    ? { id: generateId(), bars: [] }
-    : { id: generateId(), lyrics: '', chords: [] }
 
 export const parseSectionContent = (
-  lines: SectionLine[] | null | undefined,
-  type: SectionType
+  content: string | undefined
 ): SectionContent => {
-  const safeLines = Array.isArray(lines) ? lines : []
-  if (type === 'bar') {
-    return { lines: safeLines.map((line) => normalizeBarLine(line as BarLine)) }
+  if (!content) return { lines: [] }
+  try {
+    const parsed = JSON.parse(content) as { lines?: unknown[] }
+    const rawLines = Array.isArray(parsed.lines) ? parsed.lines : []
+    return {
+      // eslint-disable-next-line
+      lines: rawLines.map((raw: any) => {
+        const line = raw as Record<string, unknown>
+        return {
+          id: (line.id as string) ?? generateId(),
+          lyrics: typeof line.lyrics === 'string' ? line.lyrics : '',
+          chords: Array.isArray(line.chords)
+            // eslint-disable-next-line
+            ? (line.chords as any[]).map((c) => {
+                const chord = c as Record<string, unknown>
+                return {
+                  id: (chord.id as string) ?? generateId(),
+                  chord: typeof chord.chord === 'string' ? chord.chord : '',
+                  offset: typeof chord.offset === 'number' ? chord.offset : 0,
+                }
+              })
+            : [],
+        }
+      }),
+    }
+  } catch {
+    return { lines: [] }
   }
-  return { lines: safeLines.map((line) => normalizeLyricsLine(line as LyricsChordLine)) }
+}
+
+export const serializeSectionContent = (lines: SectionLine[]): string => {
+  return JSON.stringify({ lines })
 }
 
 export const createSection = (name: string, type: SectionType): Section => ({
   id: generateId(),
   name,
   type,
-  lines: [createEmptyLine(type)],
+  content: serializeSectionContent([createEmptyLine()]),
 })

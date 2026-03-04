@@ -15,20 +15,27 @@ ChordBook REST API の概要と認証方式です。
 
 | 環境 | URL |
 |------|-----|
-| 開発 | http://localhost:5000/api |
+| 開発 | http://localhost:8080/api |
 | 本番 | https://api.chordbook.example.com/api |
 
 ---
 
-## OpenAPI（仕様の一次情報）
-
-API 仕様の一次情報は OpenAPI で管理します。
-
-- OpenAPI: `docs/api/openapi.yaml`
-
 ## 認証
 
-**MVP では認証なしで利用する前提です。**
+Supabase Auth が発行する JWT を使用します。
+
+### 認証ヘッダー
+
+```
+Authorization: Bearer <access_token>
+```
+
+### 認証レベル
+
+| レベル | 説明 | 未認証時の動作 |
+|--------|------|---------------|
+| 必須 (`authMiddleware`) | 認証が必要 | 401 Unauthorized |
+| オプション (`optionalAuthMiddleware`) | 認証なしでもアクセス可能 | 公開データのみ返却 |
 
 ---
 
@@ -39,19 +46,7 @@ API 仕様の一次情報は OpenAPI で管理します。
 | ヘッダー | 必須 | 説明 |
 |----------|------|------|
 | Content-Type | POST/PUT | `application/json` |
-
-### クエリパラメータ
-
-```http
-GET /api/songs?page=1&limit=20&sort=updatedAt&order=desc
-```
-
-| パラメータ | 型 | デフォルト | 説明 |
-|-----------|-----|-----------|------|
-| page | number | 1 | ページ番号 |
-| limit | number | 20 | 取得件数 |
-| sort | string | updatedAt | ソートキー |
-| order | string | desc | asc / desc |
+| Authorization | エンドポイントによる | `Bearer <token>` |
 
 ### リクエストボディ
 
@@ -64,9 +59,11 @@ GET /api/songs?page=1&limit=20&sort=updatedAt&order=desc
 }
 ```
 
+バリデーションには Zod を使用しています。
+
 ### Content（コード譜データ）
 
-`Song.content` は JSON のセクション配列です（JSON 文字列ではありません）。
+`Song.content` は JSON 文字列として保存されるセクション配列です。
 
 例:
 
@@ -112,29 +109,49 @@ GET /api/songs?page=1&limit=20&sort=updatedAt&order=desc
 ### 一覧レスポンス
 
 ```json
-{
-  "items": [
-    { "id": "1", "title": "曲1" },
-    { "id": "2", "title": "曲2" }
-  ],
-  "total": 100,
-  "page": 1,
-  "pageSize": 20,
-  "totalPages": 5
-}
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "title": "サンプル曲",
+    "artist": "アーティスト",
+    "key": "C",
+    "updatedAt": "2024-01-15T10:30:00Z"
+  }
+]
 ```
 
 ### エラーレスポンス
 
+#### バリデーションエラー（400）
+
 ```json
 {
-  "type": "https://tools.ietf.org/html/rfc7231#section-6.5.1",
-  "title": "Bad Request",
-  "status": 400,
-  "errors": {
-    "Title": ["タイトルは必須です"],
-    "Bpm": ["BPMは1以上の数値を指定してください"]
-  }
+  "error": "Validation failed",
+  "details": [
+    {
+      "code": "too_small",
+      "minimum": 1,
+      "type": "string",
+      "path": ["title"],
+      "message": "String must contain at least 1 character(s)"
+    }
+  ]
+}
+```
+
+#### 認証エラー（401）
+
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+#### Not Found（404）
+
+```json
+{
+  "error": "Song not found"
 }
 ```
 
@@ -146,44 +163,38 @@ GET /api/songs?page=1&limit=20&sort=updatedAt&order=desc
 
 | コード | 説明 | 用途 |
 |--------|------|------|
-| 200 | OK | GET成功 |
-| 201 | Created | POST成功（リソース作成） |
-| 204 | No Content | PUT/DELETE成功 |
+| 200 | OK | GET/PUT 成功 |
+| 201 | Created | POST 成功（リソース作成） |
+| 204 | No Content | DELETE 成功 |
 
 ### クライアントエラー
 
 | コード | 説明 | 原因 |
 |--------|------|------|
-| 400 | Bad Request | リクエスト形式エラー、バリデーションエラー |
+| 400 | Bad Request | バリデーションエラー |
+| 401 | Unauthorized | 認証エラー |
 | 404 | Not Found | リソースが存在しない |
-| 409 | Conflict | 競合（重複など） |
-| 422 | Unprocessable Entity | ビジネスルールエラー |
 
 ### サーバーエラー
 
 | コード | 説明 | 原因 |
 |--------|------|------|
 | 500 | Internal Server Error | サーバー内部エラー |
-| 503 | Service Unavailable | サービス一時停止 |
 
 ---
 
 ## CORS
 
-Cross-Origin Resource Sharing の設定:
+環境変数 `ALLOWED_ORIGINS` でオリジンを制御します。
 
-```csharp
-// Program.cs
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend", policy =>
-    {
-        policy.WithOrigins("http://localhost:3000", "https://chordbook.vercel.app")
-            .AllowAnyMethod()
-            .AllowAnyHeader()
-            .AllowCredentials();
-    });
-});
+```typescript
+// app.ts
+app.use("*", cors({
+  origin: (origin) => allowedOrigins.includes(origin) ? origin : null,
+  allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+}));
 ```
 
 ### 許可オリジン
@@ -212,18 +223,15 @@ builder.Services.AddCors(options =>
 
 ---
 
-## Swagger / OpenAPI
+## API テスト
 
-開発環境では Swagger UI でAPIをテスト・確認できます。
+VS Code の REST Client 拡張機能を使用して API をテストできます。
 
 ```
-http://localhost:5000/swagger
+apps/backend-hono/.http/
+├── auth.http     # サインアップ・サインイン
+└── songs.http    # Song CRUD
 ```
-
-機能:
-- エンドポイント一覧
-- リクエスト/レスポンス例
-- 実際にAPIを実行してテスト
 
 ---
 

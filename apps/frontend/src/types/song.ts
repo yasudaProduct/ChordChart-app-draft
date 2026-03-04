@@ -1,4 +1,4 @@
-export type SectionType = 'lyrics-chord' | 'bar'
+export type SectionType = 'lyrics-chord' | 'chord-only'
 
 export type SongVisibility = 'private' | 'url-only' | 'specific-users' | 'public'
 
@@ -25,7 +25,7 @@ export interface Section {
   id: string
   name: string
   type: SectionType
-  lines: SectionLine[]
+  content: string
 }
 
 export interface SongMeta {

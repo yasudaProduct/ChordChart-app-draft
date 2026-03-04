@@ -1,0 +1,99 @@
+@baseUrl = http://localhost:8080/api
+
+@supabaseUrl = http://localhost:54321
+
+@anonKey = sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz
+
+@token = {{signin.response.body.access_token}}
+
+### サインイン
+# @name signin
+POST {{supabaseUrl}}/auth/v1/token?grant_type=password
+apikey: {{anonKey}}
+Content-Type: application/json
+
+{
+  "email": "test01@example.com",
+  "password": "password123"
+}
+
+### ========================================
+### 認証不要（匿名アクセス可能）
+### ========================================
+
+### 公開曲一覧を取得
+GET {{baseUrl}}/songs
+
+###
+
+### 公開曲を検索（クエリパラメータ: q）
+GET {{baseUrl}}/songs/search?q=test
+
+###
+
+### 曲の詳細を取得（公開曲のみ）
+# @name getSong
+GET {{baseUrl}}/songs/{{songId}}
+
+### ========================================
+### 認証あり（匿名アクセス可能だが自分の曲を取得）
+### ========================================
+
+### 自分の曲一覧を取得（認証付き）
+GET {{baseUrl}}/songs
+Authorization: Bearer {{token}}
+
+###
+
+### 公開曲を検索（認証付き）
+GET {{baseUrl}}/songs/search?q=test
+Authorization: Bearer {{token}}
+
+###
+
+### 曲の詳細を取得（認証付き - 自分の非公開曲もアクセス可能）
+GET {{baseUrl}}/songs/{{songId}}
+Authorization: Bearer {{token}}
+
+### ========================================
+### 認証必須（要ログイン）
+### ========================================
+
+### 曲を作成
+# @name createSong
+POST {{baseUrl}}/songs
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "テスト曲",
+  "artist": "テストアーティスト",
+  "key": "C",
+  "bpm": 120,
+  "timeSignature": "4/4"
+}
+
+###
+
+### 作成した曲のIDを変数に保存
+@songId = {{createSong.response.body.id}}
+
+### 曲を更新
+PUT {{baseUrl}}/songs/{{songId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "テスト曲（更新済み）",
+  "artist": "テストアーティスト",
+  "key": "G",
+  "bpm": 140,
+  "timeSignature": "4/4",
+  "content": "[{\"type\":\"section\",\"name\":\"Intro\",\"bars\":[[{\"chord\":\"C\"}]]}]"
+}
+
+###
+
+### 曲を削除
+DELETE {{baseUrl}}/songs/{{songId}}
+Authorization: Bearer {{token}}

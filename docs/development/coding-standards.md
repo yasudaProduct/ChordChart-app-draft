@@ -15,7 +15,6 @@ ChordBook プロジェクトのコーディングスタイルと命名規則で�
 | 言語 | インデント |
 |------|-----------|
 | TypeScript/JavaScript | スペース 2 |
-| C# | スペース 4 |
 | JSON | スペース 2 |
 | YAML | スペース 2 |
 
@@ -42,7 +41,7 @@ const isLoading = true
 
 // 定数: UPPER_SNAKE_CASE
 const MAX_TITLE_LENGTH = 200
-const API_BASE_URL = 'http://localhost:5000'
+const API_BASE_URL = 'http://localhost:8080'
 
 // 関数: camelCase（動詞で始める）
 function getSongById(id: string) { }
@@ -107,98 +106,77 @@ pnpm lint --fix
 
 ---
 
-## バックエンド（C#）
+## バックエンド（TypeScript/Hono）
 
 ### ファイル命名
 
 | 種類 | 規則 | 例 |
 |------|------|-----|
-| クラス | PascalCase | `SongController.cs` |
-| インターフェース | I prefix + PascalCase | `ISongRepository.cs` |
-| 列挙型 | PascalCase | `Visibility.cs` |
+| ルート | camelCase | `songs.ts` |
+| サービス | camelCase（.service suffix） | `song.service.ts` |
+| ミドルウェア | camelCase | `auth.ts` |
+| スキーマ | camelCase | `schema.ts` |
+| 型定義 | camelCase | `index.ts` |
 
 ### 命名規則
 
-```csharp
-// 名前空間: PascalCase
-namespace ChordBook.Application.Songs;
+```typescript
+// 変数: camelCase
+const songTitle = "Sample"
+const isPublic = true
 
-// クラス・インターフェース: PascalCase
-public class SongService { }
-public interface ISongRepository { }
+// 定数: UPPER_SNAKE_CASE or PascalCase オブジェクト
+const Visibility = { Private: 0, UrlOnly: 1, Public: 3 } as const
 
-// メソッド: PascalCase
-public async Task<Song> GetSongByIdAsync(Guid id) { }
+// 関数: camelCase（動詞で始める）
+export async function listSongs(userId?: string) { }
+export async function createSong(userId: string, data: CreateSongInput) { }
+export async function getSongById(id: string, userId?: string) { }
 
-// プロパティ: PascalCase
-public string Title { get; set; }
-
-// フィールド: _camelCase（private）
-private readonly ISongRepository _songRepository;
-
-// 定数: PascalCase
-public const int MaxTitleLength = 200;
-
-// ローカル変数: camelCase
-var songTitle = "Sample";
+// 型: PascalCase
+type SongDto = { ... }
+type SongListItemDto = { ... }
 ```
 
-### 非同期メソッド
+### Hono ルート定義
 
-```csharp
-// Async suffix を付ける
-public async Task<Song> GetSongAsync(Guid id)
-{
-    return await _context.Songs.FindAsync(id);
-}
+```typescript
+// routes/songs.ts
+const songs = new Hono<{ Variables: AuthVariables }>();
 
-// CancellationToken を受け取る
-public async Task<Song> GetSongAsync(Guid id, CancellationToken ct = default)
-{
-    return await _context.Songs.FindAsync(id, ct);
-}
-```
-
-### LINQ
-
-```csharp
-// メソッド構文を推奨
-var activeSongs = await _context.Songs
-    .Where(s => s.Visibility == Visibility.Public)
-    .OrderByDescending(s => s.UpdatedAt)
-    .ToListAsync(ct);
-
-// 複雑なクエリは改行して読みやすく
-var result = await _context.Songs
-    .Include(s => s.User)
-    .Where(s => s.UserId == userId)
-    .Select(s => new SongListItemDto(
-        s.Id,
-        s.Title,
-        s.Artist,
-        s.Key,
-        s.UpdatedAt
-    ))
-    .ToListAsync(ct);
-```
-
-### DTO / Record
-
-```csharp
-// 不変データには record を使用
-public record SongDto(
-    Guid Id,
-    string Title,
-    string? Artist,
-    DateTime UpdatedAt
+// Zod バリデーション付き
+songs.post(
+  "/",
+  authMiddleware(),
+  zValidator("json", createSongSchema, (result, c) => {
+    if (!result.success) {
+      return c.json({ error: "Validation failed", details: result.error.issues }, 400);
+    }
+  }),
+  async (c) => {
+    const userId = c.get("userId")!;
+    const data = c.req.valid("json");
+    const song = await createSong(userId, data);
+    return c.json(song, 201);
+  }
 );
+```
 
-// 可変データには class を使用
-public class UpdateSongCommand
-{
-    public string Title { get; set; }
-    public string? Artist { get; set; }
-}
+### Drizzle ORM クエリ
+
+```typescript
+// メソッドチェーンで読みやすく
+const result = await db
+  .select({
+    id: songsTable.id,
+    title: songsTable.title,
+    artist: songsTable.artist,
+    key: songsTable.key,
+    updatedAt: songsTable.updatedAt,
+  })
+  .from(songsTable)
+  .where(eq(songsTable.userId, userId))
+  .orderBy(desc(songsTable.updatedAt));
 ```
 
 ---

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { SongPreview } from '@/components/song/SongPreview'
 import { useSong } from '@/hooks/useSong'
+import { useAuthStore } from '@/stores/authStore'
 
 type SongDetailContentProps = {
   id: string
@@ -12,6 +13,7 @@ type SongDetailContentProps = {
 export const SongDetailContent = ({ id }: SongDetailContentProps) => {
   const router = useRouter()
   const { song, error, isLoading } = useSong(id)
+  const session = useAuthStore((s) => s.session)
 
   if (error) {
     return (
@@ -42,12 +44,14 @@ export const SongDetailContent = ({ id }: SongDetailContentProps) => {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 print:hidden">
-          <Link
-            href={`/editor/${song.id}`}
-            className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
-          >
-            編集
-          </Link>
+          {session && (
+            <Link
+              href={`/editor/${song.id}`}
+              className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
+            >
+              編集
+            </Link>
+          )}
           <button
             type="button"
             onClick={() => window.print()}

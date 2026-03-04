@@ -6,15 +6,26 @@
   "keepExistingTerminals": false,
   "sessions": {
     "default": [
-      {
-        "name": "console",
-        "autoExecuteCommands": true,
-        "icon": "person",
-        "color": "terminal.ansiGreen",
-        "commands": [
-          ""
-        ]
-      },
+      [
+        {
+          "name": "frontend:console",
+          "autoExecuteCommands": true,
+          "icon": "person",
+          "color": "terminal.ansiGreen",
+          "commands": [
+            "cd apps/frontend"
+          ]
+        },
+        {
+          "name": "backend:console",
+          "autoExecuteCommands": true,
+          "icon": "person",
+          "color": "terminal.ansiGreen",
+          "commands": [
+            "cd apps/backend-hono"
+          ]
+        }
+      ],
       [
         {
           "name": "frontend:dev",
@@ -27,19 +38,35 @@
           "name": "backend:dev",
           "icon": "terminal",
           "commands": [
-            "cd apps/backend/src/ChordBook.Api && ASPNETCORE_ENVIRONMENT=Development dotnet run"
+            "cd apps/backend-hono && pnpm dev"
           ]
-        }
-      ],
-      [
+        },
         {
-          "name": "docker:db",
+          "name": "supabase:db",
           "icon": "terminal",
           "commands": [
-            ""
+            "supabase start"
           ]
         }
       ]
+    ],
+    "supabase:db": [
+      {
+        "name": "claude",
+        "icon": "terminal",
+        "commands": [
+          "claude"
+        ]
+      }
+    ],
+    "backend-dotnet": [
+      {
+        "name": "dotnet",
+        "icon": "terminal",
+        "commands": [
+          "cd apps/backend/src/ChordBook.Api && ASPNETCORE_ENVIRONMENT=Development dotnet run"
+        ]
+      }
     ]
   }
 }
