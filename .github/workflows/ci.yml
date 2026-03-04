@@ -24,7 +24,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: 8
+          version: 10
 
       - name: Install dependencies
         run: pnpm install
@@ -42,21 +42,26 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: apps/backend
+        working-directory: apps/backend-hono
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          dotnet-version: '8.0.x'
+          node-version: '20'
 
-      - name: Restore dependencies
-        run: dotnet restore ChordBook.sln
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
+      - name: Install dependencies
+        run: pnpm install
 
       - name: Build
-        run: dotnet build ChordBook.sln --no-restore
+        run: pnpm build
 
       - name: Test
-        run: dotnet test ChordBook.sln --no-build --verbosity normal
+        run: pnpm test
