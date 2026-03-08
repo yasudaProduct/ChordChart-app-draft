@@ -42,6 +42,9 @@ yarn-error.log*
 coverage/
 .nyc_output/
 TestResults/
+test-results/
+playwright-report/
+blob-report/
 
 # Misc
 *.tmp

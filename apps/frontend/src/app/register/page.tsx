@@ -47,7 +47,7 @@ export default function RegisterPage() {
             アカウントを作成して楽曲を保存しましょう。
           </p>
           {error && (
-            <p className="mt-3 rounded-xl bg-red-50 px-4 py-2 text-sm text-red-600">
+            <p data-testid="auth-error" className="mt-3 rounded-xl bg-red-50 px-4 py-2 text-sm text-red-600">
               {error}
             </p>
           )}
