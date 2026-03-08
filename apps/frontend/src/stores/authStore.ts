@@ -29,6 +29,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   session: null,
   isLoading: true,
 
+  /**
+   * 認証状態を初期化する
+   */
   hydrate: async () => {
     try {
       const {
@@ -40,6 +43,8 @@ export const useAuthStore = create<AuthState>((set) => ({
         isLoading: false,
       })
 
+      // 認証状態が変化したときに呼び出される
+      // ログイン/ログアウト/更新を検知し、ストアを更新する
       supabase.auth.onAuthStateChange((_event, session) => {
         set({
           session,
@@ -51,6 +56,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
+  /**
+   * ログインする
+   * @param email メールアドレス
+   * @param password パスワード
+   * @returns エラーがあればエラーメッセージを返す
+   */
   signIn: async (email, password) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -60,6 +71,13 @@ export const useAuthStore = create<AuthState>((set) => ({
     return {}
   },
 
+  /**
+   * 新規登録する
+   * @param email メールアドレス
+   * @param password パスワード
+   * @param name 名前
+   * @returns エラーがあればエラーメッセージを返す
+   */
   signUp: async (email, password, name) => {
     const { error } = await supabase.auth.signUp({
       email,
@@ -70,6 +88,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     return {}
   },
 
+  /**
+   * ログアウトする
+   */
   logout: async () => {
     await supabase.auth.signOut()
     set({ user: null, session: null })

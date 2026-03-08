@@ -8,14 +8,28 @@ interface RequestOptions {
   headers?: Record<string, string>
 }
 
+/**
+ * 認証トークンを取得する
+ * @returns 認証トークン
+ */
 async function getAuthToken(): Promise<string | null> {
+
+  // supabase から認証トークンを取得する
   const {
     data: { session },
   } = await supabase.auth.getSession()
   return session?.access_token ?? null
 }
 
-export async function apiClient<T>(
+/**
+ * API クライアント
+ * @param endpoint エンドポイント
+ * @param options リクエストオプション
+ * @returns API レスポンス
+ * @example
+ * const response = await apiClient<Song[]>('/songs')
+ */
+async function apiClient<T>(
   endpoint: string,
   options: RequestOptions = {}
 ): Promise<T> {
@@ -32,6 +46,7 @@ export async function apiClient<T>(
     requestHeaders['Authorization'] = `Bearer ${token}`
   }
 
+  // リクエストを送信する
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method,
     headers: requestHeaders,
@@ -40,7 +55,7 @@ export async function apiClient<T>(
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({
-      message: 'An error occurred',
+      message: 'エラーが発生しました',
       code: 'UNKNOWN_ERROR',
     }))
     throw error
@@ -58,6 +73,14 @@ export async function apiClient<T>(
   return JSON.parse(text) as T
 }
 
+/**
+ * API クライアント
+ * @param endpoint エンドポイント
+ * @param options リクエストオプション
+ * @returns API レスポンス
+ * @example
+ * const response = await api.get<Song[]>('/songs')
+ */
 export const api = {
   get: <T>(endpoint: string) => apiClient<T>(endpoint),
   post: <T>(endpoint: string, body: unknown) =>
