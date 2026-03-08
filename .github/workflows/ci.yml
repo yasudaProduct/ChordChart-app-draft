@@ -41,9 +41,6 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
-    defaults:
-      run:
-        working-directory: apps/frontend
 
     steps:
       - uses: actions/checkout@v4
@@ -59,18 +56,33 @@ jobs:
           version: 10
 
       - name: Install dependencies
+        working-directory: apps/frontend
         run: pnpm install
 
       - name: Install Playwright Browsers
+        working-directory: apps/frontend
         run: npx playwright install --with-deps chromium
 
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start Supabase local
+        run: supabase start
+
+      - name: Get Supabase local credentials
+        id: supabase
+        run: |
+          echo "api_url=$(supabase status --output json | jq -r '.API_URL')" >> "$GITHUB_OUTPUT"
+          echo "anon_key=$(supabase status --output json | jq -r '.ANON_KEY')" >> "$GITHUB_OUTPUT"
+
       - name: Run E2E tests
+        working-directory: apps/frontend
         run: pnpm e2e
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
-          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ steps.supabase.outputs.api_url }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ steps.supabase.outputs.anon_key }}
 
       - name: Upload Playwright Report
         uses: actions/upload-artifact@v4
@@ -79,6 +91,10 @@ jobs:
           name: playwright-report
           path: apps/frontend/playwright-report/
           retention-days: 30
+
+      - name: Stop Supabase
+        if: always()
+        run: supabase stop
 
   backend:
     runs-on: ubuntu-latest

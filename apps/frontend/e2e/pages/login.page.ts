@@ -19,8 +19,11 @@ export class LoginPage {
     this.registerLink = page.locator('section').getByRole('link', { name: '新規登録' })
   }
 
-  async goto() {
-    await this.page.goto('/login')
+  async goto(params?: Record<string, string>) {
+    const query = params
+      ? '?' + new URLSearchParams(params).toString()
+      : ''
+    await this.page.goto(`/login${query}`)
   }
 
   async login(email: string, password: string) {
