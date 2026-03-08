@@ -1,22 +1,37 @@
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+FROM node:20-slim AS builder
+
+# pnpmインストール
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
 WORKDIR /app
+
+# 依存関係のインストール
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+
+# ソースのコピーとビルド
+COPY tsconfig.json ./
+COPY src ./src
+RUN pnpm build
+
+# ============================================================
+# 本番ステージ
+# ============================================================
+FROM node:20-slim
+
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+WORKDIR /app
+
+# 本番依存のみインストール
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prod
+
+# ビルド成果物のコピー
+COPY --from=builder /app/dist ./dist
+
+# ポート公開
 EXPOSE 8080
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /src
-COPY ["src/ChordBook.Api/ChordBook.Api.csproj", "ChordBook.Api/"]
-COPY ["src/ChordBook.Application/ChordBook.Application.csproj", "ChordBook.Application/"]
-COPY ["src/ChordBook.Domain/ChordBook.Domain.csproj", "ChordBook.Domain/"]
-COPY ["src/ChordBook.Infrastructure/ChordBook.Infrastructure.csproj", "ChordBook.Infrastructure/"]
-RUN dotnet restore "ChordBook.Api/ChordBook.Api.csproj"
-COPY src/ .
-WORKDIR "/src/ChordBook.Api"
-RUN dotnet build "ChordBook.Api.csproj" -c Release -o /app/build
-
-FROM build AS publish
-RUN dotnet publish "ChordBook.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
-
-FROM base AS final
-WORKDIR /app
-COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "ChordBook.Api.dll"]
+# 起動
+CMD ["node", "dist/index.js"]
