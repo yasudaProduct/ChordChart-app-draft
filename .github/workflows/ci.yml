@@ -2,9 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
   pull_request:
-    branches: [main, develop]
 
 jobs:
   frontend:
@@ -38,11 +36,168 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
+  e2e:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
+      - name: Install dependencies
+        working-directory: apps/frontend
+        run: pnpm install
+
+      - name: Install Playwright Browsers
+        working-directory: apps/frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start Supabase local
+        run: supabase start
+
+      - name: Get Supabase local credentials
+        id: supabase
+        run: |
+          echo "api_url=$(supabase status --output json | jq -r '.API_URL')" >> "$GITHUB_OUTPUT"
+          echo "anon_key=$(supabase status --output json | jq -r '.ANON_KEY')" >> "$GITHUB_OUTPUT"
+
+      - name: Run E2E tests
+        id: e2e
+        working-directory: apps/frontend
+        continue-on-error: true
+        run: npx playwright test --reporter=list,json
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ steps.supabase.outputs.api_url }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ steps.supabase.outputs.anon_key }}
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-results.json
+
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: apps/frontend/playwright-report/
+          retention-days: 30
+
+      - name: Post E2E result to PR
+        if: ${{ !cancelled() }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = 'apps/frontend/playwright-results.json';
+
+            let body = '';
+            const passed = '${{ steps.e2e.outcome }}' === 'success';
+            const icon = passed ? '✅' : '❌';
+
+            if (fs.existsSync(path)) {
+              const report = JSON.parse(fs.readFileSync(path, 'utf8'));
+              const suites = report.suites || [];
+              let total = 0, ok = 0, fail = 0, skip = 0;
+
+              function countSpecs(suites) {
+                for (const suite of suites) {
+                  for (const spec of (suite.specs || [])) {
+                    for (const test of (spec.tests || [])) {
+                      total++;
+                      if (test.status === 'expected') ok++;
+                      else if (test.status === 'skipped') skip++;
+                      else fail++;
+                    }
+                  }
+                  if (suite.suites) countSpecs(suite.suites);
+                }
+              }
+              countSpecs(suites);
+
+              body = `## ${icon} E2E テスト結果\n\n`;
+              body += `| 合計 | 成功 | 失敗 | スキップ |\n`;
+              body += `|------|------|------|----------|\n`;
+              body += `| ${total} | ${ok} ✅ | ${fail} ❌ | ${skip} ⏭️ |\n\n`;
+
+              if (fail > 0) {
+                body += `### 失敗したテスト\n\n`;
+                function collectFailures(suites, prefix) {
+                  const failures = [];
+                  for (const suite of suites) {
+                    const name = prefix ? `${prefix} > ${suite.title}` : suite.title;
+                    for (const spec of (suite.specs || [])) {
+                      for (const test of (spec.tests || [])) {
+                        if (test.status !== 'expected' && test.status !== 'skipped') {
+                          const error = test.results?.[0]?.error?.message || '';
+                          failures.push(`- **${name} > ${spec.title}**\n  \`${error.split('\n')[0]}\``);
+                        }
+                      }
+                    }
+                    if (suite.suites) failures.push(...collectFailures(suite.suites, name));
+                  }
+                  return failures;
+                }
+                body += collectFailures(suites, '') .join('\n') + '\n\n';
+              }
+            } else {
+              body = `## ${icon} E2E テスト結果\n\nレポートの生成に失敗しました。\n\n`;
+            }
+
+            body += `> 📎 詳細レポートは Actions の Artifacts からダウンロードできます`;
+
+            // 既存コメントがあれば更新、なければ新規作成
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const marker = '## ✅ E2E テスト結果';
+            const marker2 = '## ❌ E2E テスト結果';
+            const existing = comments.find(c => c.body?.startsWith(marker) || c.body?.startsWith(marker2));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: Fail if E2E tests failed
+        if: ${{ steps.e2e.outcome == 'failure' }}
+        run: exit 1
+
+      - name: Stop Supabase
+        if: always()
+        run: supabase stop
+
   backend:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: apps/backend-hono
+        working-directory: apps/backend
 
     steps:
       - uses: actions/checkout@v4
