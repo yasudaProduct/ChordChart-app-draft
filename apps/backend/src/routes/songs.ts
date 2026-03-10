@@ -59,9 +59,8 @@ songRoutes.get('/search', optionalAuthMiddleware(), async (c) => {
 })
 
 // GET / — 曲一覧
-songRoutes.get('/', optionalAuthMiddleware(), async (c) => {
-  const userId = c.get('userId')
-  const results = await songService.listSongs(userId)
+songRoutes.get('/', async (c) => {
+  const results = await songService.listSongs()
   return c.json(results)
 })
 

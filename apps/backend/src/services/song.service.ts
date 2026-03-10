@@ -67,19 +67,13 @@ const toSongDto = (song: typeof songs.$inferSelect): SongDto => {
 // ============================================================
 
 /**
- * 曲一覧を取得する。
- * - 認証済み: 自分の曲のみ
- * - 匿名: 公開曲のみ
+ * 公開曲の一覧を取得する。
  */
-const listSongs = async (userId?: string): Promise<SongListItemDto[]> => {
-  const condition = userId
-    ? eq(songs.userId, userId)
-    : eq(songs.visibility, Visibility.Public)
-
+const listSongs = async (): Promise<SongListItemDto[]> => {
   const results = await db
     .select()
     .from(songs)
-    .where(condition)
+    .where(eq(songs.visibility, Visibility.Public))
     .orderBy(desc(songs.updatedAt))
 
   return results.map(toSongListItemDto)
