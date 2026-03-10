@@ -19,7 +19,7 @@ ChordBook のバックエンド API サーバー。Hono + Drizzle ORM + TypeScri
 ### 1. 依存パッケージのインストール
 
 ```bash
-cd apps/backend-hono
+cd apps/backend
 pnpm install
 ```
 
@@ -110,6 +110,19 @@ pnpm test -- --run # 1回実行
 pnpm db:generate   # マイグレーションファイルを生成
 pnpm db:push       # DBに直接反映（開発環境向け）
 ```
+
+### シードデータの投入
+
+開発用のサンプルデータをDBに投入する。
+
+```bash
+pnpm db:seed
+```
+
+ユーザー5件、楽曲15件、ブックマーク5件、共有リンク3件のサンプルデータが生成される。
+シードデータの内容は `src/db/seed.ts` で変更可能。
+
+> **注意:** 既存データがある場合、重複エラーになる可能性がある。開発環境での使用を推奨。
 
 ### 既存DBからスキーマを再生成する場合
 
