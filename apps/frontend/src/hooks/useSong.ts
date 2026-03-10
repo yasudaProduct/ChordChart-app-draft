@@ -22,8 +22,9 @@ export const useSong = (id: string | undefined) => {
 
 export const useSongSearch = (query?: string) => {
   const isAuthReady = !useAuthStore((s) => s.isLoading)
+  const hasQuery = !!query?.trim()
   const { data, error, isLoading } = useSWR(
-    isAuthReady ? `songs/search?q=${query ?? ''}` : null,
+    isAuthReady && hasQuery ? `songs/search?q=${query}` : null,
     () => songApi.search(query)
   )
   return { results: data ?? [], error, isLoading: !isAuthReady || isLoading }

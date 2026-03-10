@@ -44,7 +44,11 @@ export default function SearchPage() {
         </div>
 
         <div className="mt-8 grid gap-4">
-          {isLoading ? (
+          {!debouncedQuery.trim() ? (
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-white/60 p-8 text-center text-sm text-slate-500">
+              曲名・アーティスト・キーを入力して検索してください。
+            </div>
+          ) : isLoading ? (
             <div className="rounded-2xl border border-dashed border-slate-200 bg-white/60 p-8 text-center text-sm text-slate-500">
               読み込み中...
             </div>
