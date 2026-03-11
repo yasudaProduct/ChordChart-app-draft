@@ -75,7 +75,7 @@ async function main() {
         bpm: f.int({ minValue: 60, maxValue: 200 }),
         timeSignature: f.valuesFromArray({ values: timeSignatures }),
         content: f.valuesFromArray({ values: sampleSections }),
-        visibility: f.int({ minValue: 0, maxValue: 3 }),
+        visibility: f.valuesFromArray({ values: ['private', 'url_only', 'specific_users', 'public'] }),
       },
     },
     bookmarks: {

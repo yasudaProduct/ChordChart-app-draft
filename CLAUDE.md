@@ -86,6 +86,14 @@ Frontend (Zustand) → API Request → Backend (Hono Route → Service) → Driz
 ```
 Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 
+## Supabase 開発ルール
+- **DBスキーマ変更は必ずローカルのSupabase CLIを使用する**
+  - `supabase migration new <name>` でマイグレーションファイルを作成
+  - `supabase db reset` でローカルDBに適用・検証
+  - Supabase MCP（クラウド）への直接マイグレーション適用は禁止
+- クラウド（本番）Supabaseへの反映は将来的にCI経由で行う
+- ローカルSupabase: `supabase start` で起動、`supabase status` で接続情報確認
+
 ## 環境変数（バックエンド）
 ```
 DATABASE_URL      # PostgreSQL接続文字列

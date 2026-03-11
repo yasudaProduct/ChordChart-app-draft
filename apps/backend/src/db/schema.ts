@@ -1,5 +1,6 @@
 import {
   pgTable,
+  pgEnum,
   uuid,
   text,
   varchar,
@@ -23,6 +24,16 @@ export const users = pgTable('Users', {
 })
 
 // ============================================================
+// ENUM 定義
+// ============================================================
+export const visibilityEnum = pgEnum('visibility', [
+  'private',
+  'url_only',
+  'specific_users',
+  'public',
+])
+
+// ============================================================
 // Songs テーブル
 // ============================================================
 export const songs = pgTable(
@@ -38,7 +49,7 @@ export const songs = pgTable(
     bpm: integer('Bpm'),
     timeSignature: varchar('TimeSignature', { length: 10 }).notNull().default('4/4'),
     content: text('Content').notNull().default('[]'),
-    visibility: integer('Visibility').notNull().default(0),
+    visibility: visibilityEnum('Visibility').notNull().default('private'),
     createdAt: timestamp('CreatedAt', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('UpdatedAt', { withTimezone: true }).notNull().defaultNow(),
   },

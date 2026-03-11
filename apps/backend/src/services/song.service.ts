@@ -23,7 +23,7 @@ type SongDto = {
   bpm: number | null
   timeSignature: string
   content: unknown
-  visibility: number
+  visibility: string
   createdAt: Date
   updatedAt: Date
 }

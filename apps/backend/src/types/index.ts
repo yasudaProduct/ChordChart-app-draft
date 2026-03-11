@@ -1,8 +1,8 @@
 export const Visibility = {
-  Private: 0,
-  UrlOnly: 1,
-  SpecificUsers: 2,
-  Public: 3,
+  Private: 'private',
+  UrlOnly: 'url_only',
+  SpecificUsers: 'specific_users',
+  Public: 'public',
 } as const
 
 export type Visibility = (typeof Visibility)[keyof typeof Visibility]

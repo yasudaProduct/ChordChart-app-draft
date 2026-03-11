@@ -10,7 +10,7 @@ type ApiSongDto = {
   bpm: number | null
   timeSignature: string
   content: string
-  visibility: number | string | null
+  visibility: string | null
   createdAt: string
   updatedAt: string
 }
@@ -38,18 +38,12 @@ const safeJsonParse = (value: string | null): { sections: Section[] } => {
 }
 
 const mapVisibility = (value: ApiSongDto['visibility']): SongVisibility => {
-  if (typeof value === 'string') {
-    if (value.toLowerCase().includes('url')) return 'url-only'
-    if (value.toLowerCase().includes('specific')) return 'specific-users'
-    if (value.toLowerCase().includes('public')) return 'public'
-    return 'private'
-  }
   switch (value) {
-    case 1:
+    case 'url_only':
       return 'url-only'
-    case 2:
+    case 'specific_users':
       return 'specific-users'
-    case 3:
+    case 'public':
       return 'public'
     default:
       return 'private'

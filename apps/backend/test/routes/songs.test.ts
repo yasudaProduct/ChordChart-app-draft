@@ -61,7 +61,7 @@ const mockSongDto = {
   bpm: 120,
   timeSignature: '4/4',
   content: { sections: [] },
-  visibility: 0,
+  visibility: 'private',
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-01'),
 }
@@ -85,27 +85,16 @@ beforeEach(() => {
 // ============================================================
 
 describe('GET /api/songs', () => {
-  it('匿名アクセス: songService.listSongs(undefined) が呼ばれる → 200', async () => {
+  it('曲一覧: songService.listSongs() が呼ばれる → 200', async () => {
     mockedSongService.listSongs.mockResolvedValueOnce([mockSongListItemDto])
 
     const res = await app.request('/api/songs')
 
     expect(res.status).toBe(200)
-    expect(mockedSongService.listSongs).toHaveBeenCalledWith(undefined)
+    expect(mockedSongService.listSongs).toHaveBeenCalledWith()
     const body = await res.json()
     expect(body).toHaveLength(1)
     expect(body[0].title).toBe('Test Song')
-  })
-
-  it('認証済みアクセス: songService.listSongs(userId) が呼ばれる → 200', async () => {
-    mockedSongService.listSongs.mockResolvedValueOnce([mockSongListItemDto])
-
-    const res = await app.request('/api/songs', {
-      headers: { Authorization: 'Bearer test-user-id' },
-    })
-
-    expect(res.status).toBe(200)
-    expect(mockedSongService.listSongs).toHaveBeenCalledWith('test-user-id')
   })
 })
 

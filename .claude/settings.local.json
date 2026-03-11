@@ -18,7 +18,8 @@
       "Bash(export PATH=\"/Users/yuta/.nodebrew/current/bin:$PATH\" && cd /Users/yuta/Develop/chord-chart/apps/frontend && pnpm build 2>&1)",
       "Bash(find /Users/yuta/Develop/chord-chart/chord-chart/apps/backend -name \"*.csproj\" | xargs cat)",
       "Bash(find /Users/yuta/Develop/chord-chart/chord-chart/apps/backend -type f \\\\\\( -name \"appsettings*.json\" -o -name \".env*\" \\\\\\) 2>/dev/null | head -10)",
-      "Bash(find /Users/yuta/Develop/chord-chart/chord-chart/apps/backend/src -name \"*.cs\" -not -path \"*/obj/*\" -not -path \"*/bin/*\" -exec wc -l {} + | tail -1)"
+      "Bash(find /Users/yuta/Develop/chord-chart/chord-chart/apps/backend/src -name \"*.cs\" -not -path \"*/obj/*\" -not -path \"*/bin/*\" -exec wc -l {} + | tail -1)",
+      "Bash(npx supabase:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
