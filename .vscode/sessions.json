@@ -22,7 +22,7 @@
           "icon": "person",
           "color": "terminal.ansiGreen",
           "commands": [
-            "cd apps/backend-hono"
+            "cd apps/backend"
           ]
         }
       ],
@@ -38,7 +38,7 @@
           "name": "backend:dev",
           "icon": "terminal",
           "commands": [
-            "cd apps/backend-hono && pnpm dev"
+            "cd apps/backend && pnpm dev"
           ]
         },
         {
