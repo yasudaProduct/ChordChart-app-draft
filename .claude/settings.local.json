@@ -19,7 +19,12 @@
       "Bash(find /Users/yuta/Develop/chord-chart/chord-chart/apps/backend -name \"*.csproj\" | xargs cat)",
       "Bash(find /Users/yuta/Develop/chord-chart/chord-chart/apps/backend -type f \\\\\\( -name \"appsettings*.json\" -o -name \".env*\" \\\\\\) 2>/dev/null | head -10)",
       "Bash(find /Users/yuta/Develop/chord-chart/chord-chart/apps/backend/src -name \"*.cs\" -not -path \"*/obj/*\" -not -path \"*/bin/*\" -exec wc -l {} + | tail -1)",
-      "Bash(npx supabase:*)"
+      "Bash(npx supabase:*)",
+      "Bash(find /Users/yuta/Develop/chord-chart/chord-chart -name \"backend*\" -o -name \"server*\" -type d 2>/dev/null | head -20)",
+      "Bash(find /Users/yuta/Develop/chord-chart/chord-chart/apps/backend/src -type f -name \"*.ts\" -o -name \"*.tsx\" 2>/dev/null | sort)",
+      "Bash(grep -r \"demo\\\\|Demo\" /Users/yuta/Develop/chord-chart/chord-chart/apps/frontend/src/app/ --include=\"*.tsx\" --include=\"*.ts\" 2>/dev/null | head -20)",
+      "Bash(grep -rn \"isAuthenticated\" /Users/yuta/Develop/chord-chart/chord-chart/apps/frontend/src/ --include=\"*.ts\" --include=\"*.tsx\" 2>/dev/null | head -20)",
+      "Bash(grep -rn \"songApi\\\\|api\\\\.\" /Users/yuta/Develop/chord-chart/chord-chart/apps/frontend/src/components/ --include=\"*.tsx\" --include=\"*.ts\" 2>/dev/null | head -30)"
     ]
   },
   "enableAllProjectMcpServers": true,

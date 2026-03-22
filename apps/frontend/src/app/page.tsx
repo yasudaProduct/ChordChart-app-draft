@@ -29,7 +29,7 @@ export default function Home() {
               無料で始める
             </Link>
             <Link
-              href="/songs"
+              href="/demo"
               className="rounded-full border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
             >
               デモを見る

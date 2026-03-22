@@ -9,7 +9,7 @@ type ApiSongDto = {
   key: string | null
   bpm: number | null
   timeSignature: string
-  content: string
+  content: string | { sections?: Section[] }
   visibility: string | null
   createdAt: string
   updatedAt: string
@@ -27,10 +27,10 @@ const isAuthenticated = (): boolean => {
   return useAuthStore.getState().session !== null
 }
 
-const safeJsonParse = (value: string | null): { sections: Section[] } => {
+const safeJsonParse = (value: string | { sections?: Section[] } | null): { sections: Section[] } => {
   if (!value) return { sections: [] }
   try {
-    const parsed = JSON.parse(value) as { sections?: Section[] }
+    const parsed = (typeof value === 'string' ? JSON.parse(value) : value) as { sections?: Section[] }
     return { sections: Array.isArray(parsed.sections) ? parsed.sections : [] }
   } catch {
     return { sections: [] }

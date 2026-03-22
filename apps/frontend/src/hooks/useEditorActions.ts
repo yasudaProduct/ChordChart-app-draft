@@ -12,6 +12,8 @@ import {
 import { generateId } from '@/lib/utils'
 import type { Section, SectionType, Song } from '@/types/song'
 
+type SaveFn = (id: string, song: Song) => Promise<Song>
+
 const clamp = (value: number, min = 0, max = 1) =>
   Math.min(max, Math.max(min, value))
 
@@ -29,7 +31,7 @@ const cloneSectionContent = (content: string) => {
   return serializeSectionContent(clonedLines)
 }
 
-export const useEditorActions = () => {
+export const useEditorActions = (saveFn?: SaveFn) => {
   const {
     song,
     updateSong,
@@ -54,13 +56,14 @@ export const useEditorActions = () => {
     if (!song) return
     setSaving(true)
     try {
-      const updated = await songApi.update(song.id, song)
+      const save = saveFn ?? ((id: string, s: Song) => songApi.update(id, s))
+      const updated = await save(song.id, song)
       setSong(updated)
       setDirty(false)
     } finally {
       setSaving(false)
     }
-  }, [song, setSaving, setSong, setDirty])
+  }, [song, setSaving, setSong, setDirty, saveFn])
 
   const handleShare = useCallback(async () => {
     if (!song || typeof window === 'undefined') return

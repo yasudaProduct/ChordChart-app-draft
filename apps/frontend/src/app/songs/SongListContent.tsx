@@ -6,7 +6,11 @@ import { SongSearchInput } from '@/components/song/SongSearchInput'
 import { songApi } from '@/lib/songApi'
 import { useSongList } from '@/hooks/useSong'
 
-export const SongListContent = () => {
+type SongListContentProps = {
+  mode?: 'default' | 'demo'
+}
+
+export const SongListContent = ({ mode = 'default' }: SongListContentProps) => {
   const { songs, error, isLoading, mutate } = useSongList()
   const [query, setQuery] = useState('')
 
@@ -46,11 +50,16 @@ export const SongListContent = () => {
           </div>
         ) : filtered.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-200 bg-white/60 p-8 text-center text-sm text-slate-500">
-            まだ楽曲がありません。新規作成から始めましょう。
+            まだ楽曲がありません。
           </div>
         ) : (
           filtered.map((song) => (
-            <SongCard key={song.id} song={song} onDelete={handleDelete} />
+            <SongCard
+              key={song.id}
+              song={song}
+              mode={mode}
+              onDelete={mode === 'default' ? handleDelete : undefined}
+            />
           ))
         )}
       </div>
