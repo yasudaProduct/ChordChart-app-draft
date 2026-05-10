@@ -1,6 +1,10 @@
-import { supabase } from '@/lib/supabase'
-
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'
+
+let getToken: (() => Promise<string | null>) | null = null
+
+export function setTokenGetter(fn: () => Promise<string | null>) {
+  getToken = fn
+}
 
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
@@ -8,34 +12,13 @@ interface RequestOptions {
   headers?: Record<string, string>
 }
 
-/**
- * 認証トークンを取得する
- * @returns 認証トークン
- */
-async function getAuthToken(): Promise<string | null> {
-
-  // supabase から認証トークンを取得する
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-  return session?.access_token ?? null
-}
-
-/**
- * API クライアント
- * @param endpoint エンドポイント
- * @param options リクエストオプション
- * @returns API レスポンス
- * @example
- * const response = await apiClient<Song[]>('/songs')
- */
 async function apiClient<T>(
   endpoint: string,
   options: RequestOptions = {}
 ): Promise<T> {
   const { method = 'GET', body, headers = {} } = options
 
-  const token = await getAuthToken()
+  const token = getToken ? await getToken() : null
 
   const requestHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -46,7 +29,6 @@ async function apiClient<T>(
     requestHeaders['Authorization'] = `Bearer ${token}`
   }
 
-  // リクエストを送信する
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method,
     headers: requestHeaders,
@@ -73,14 +55,6 @@ async function apiClient<T>(
   return JSON.parse(text) as T
 }
 
-/**
- * API クライアント
- * @param endpoint エンドポイント
- * @param options リクエストオプション
- * @returns API レスポンス
- * @example
- * const response = await api.get<Song[]>('/songs')
- */
 export const api = {
   get: <T>(endpoint: string) => apiClient<T>(endpoint),
   post: <T>(endpoint: string, body: unknown) =>

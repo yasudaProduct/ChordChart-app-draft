@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useClerk } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/authStore";
-import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 type HeaderVariant = "public" | "app";
 
@@ -21,8 +21,8 @@ const navItems = [
 export const SiteHeader = ({ variant = "public" }: SiteHeaderProps) => {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout } = useAuthStore();
-  const { requireAuth } = useRequireAuth();
+  const { user } = useAuthStore();
+  const { signOut } = useClerk();
 
   return (
     <header className="print-hidden sticky top-0 z-40 border-b border-white/60 bg-white/80 backdrop-blur">
@@ -60,7 +60,7 @@ export const SiteHeader = ({ variant = "public" }: SiteHeaderProps) => {
             <>
               <button
                 type="button"
-                onClick={() => requireAuth(() => router.push("/songs/new"))}
+                onClick={() => router.push("/songs/new")}
                 className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
               >
                 + 新規作成
@@ -72,7 +72,7 @@ export const SiteHeader = ({ variant = "public" }: SiteHeaderProps) => {
                   </span>
                   <button
                     type="button"
-                    onClick={() => void logout()}
+                    onClick={() => void signOut()}
                     className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 transition hover:border-slate-400"
                   >
                     ログアウト

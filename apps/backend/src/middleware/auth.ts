@@ -10,22 +10,21 @@ let jwks: ReturnType<typeof createRemoteJWKSet> | null = null
 
 const getJWKS = () => {
   if (!jwks) {
-    const supabaseUrl = process.env.SUPABASE_URL
-    if (!supabaseUrl) {
-      throw new Error('SUPABASE_URL environment variable is not set')
+    const clerkIssuer = process.env.CLERK_ISSUER
+    if (!clerkIssuer) {
+      throw new Error('CLERK_ISSUER environment variable is not set')
     }
     jwks = createRemoteJWKSet(
-      new URL(`${supabaseUrl}/auth/v1/.well-known/jwks.json`)
+      new URL(`${clerkIssuer}/.well-known/jwks.json`)
     )
   }
   return jwks
 }
 
 const verifyToken = async (token: string) => {
-  const supabaseUrl = process.env.SUPABASE_URL
+  const clerkIssuer = process.env.CLERK_ISSUER
   const { payload } = await jwtVerify(token, getJWKS(), {
-    issuer: `${supabaseUrl}/auth/v1`,
-    audience: 'authenticated',
+    issuer: clerkIssuer,
   })
   return payload
 }

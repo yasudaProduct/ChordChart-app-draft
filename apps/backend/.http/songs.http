@@ -1,21 +1,7 @@
 @baseUrl = http://localhost:8080/api
 
-@supabaseUrl = http://localhost:54321
-
-@anonKey = sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz
-
-@token = {{signin.response.body.access_token}}
-
-### サインイン
-# @name signin
-POST {{supabaseUrl}}/auth/v1/token?grant_type=password
-apikey: {{anonKey}}
-Content-Type: application/json
-
-{
-  "email": "test01@example.com",
-  "password": "password123"
-}
+# Clerk から取得したJWTトークンを設定してください
+@token = YOUR_CLERK_JWT_TOKEN
 
 ### ========================================
 ### 認証不要（匿名アクセス可能）

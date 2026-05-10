@@ -11,11 +11,16 @@ ChordBook - コード譜を作成・管理・共有できるWebアプリケー�
 ## 技術スタック
 - **フロントエンド:** Next.js 14 (App Router) + React 18 + TypeScript + Tailwind CSS + Zustand
 - **バックエンド:** Hono + Drizzle ORM + Zod + jose (JWT検証)
-- **データベース:** PostgreSQL (Supabase)
-- **認証:** Supabase Auth (JWT)
+- **データベース:** PostgreSQL (Neon)
+- **認証:** Clerk
 - **ホスティング:** Vercel (FE), Railway (BE)
 
 ## コマンド
+
+### ローカル開発環境
+```bash
+docker compose up -d   # ローカルPostgreSQLを起動
+```
 
 ### フロントエンド (apps/frontend)
 ```bash
@@ -25,13 +30,15 @@ pnpm lint         # ESLint実行
 pnpm lint --fix   # ESLint自動修正
 ```
 
-### バックエンド (apps/backend-hono)
+### バックエンド (apps/backend)
 ```bash
-cd apps/backend-hono
+cd apps/backend
 pnpm dev          # 開発サーバー起動 (tsx watch, localhost:8080)
 pnpm build        # 本番ビルド (tsup)
 pnpm start        # 本番起動 (node dist/index.js)
 pnpm test         # テスト実行 (vitest)
+pnpm db:generate  # Drizzleマイグレーション生成
+pnpm db:push      # DBスキーマをプッシュ
 ```
 
 ## アーキテクチャ
@@ -45,16 +52,17 @@ apps/frontend/src/
 └── types/        # TypeScript型定義
 ```
 
-### バックエンド構造 (Hono)
+### バックエンド構造
 ```
-apps/backend-hono/src/
+apps/backend/src/
 ├── index.ts              # エントリポイント
 ├── app.ts                # Honoアプリ定義（CORS, logger, エラーハンドラ）
 ├── routes/
 │   ├── health.ts         # GET /api/health
-│   └── songs.ts          # Song CRUD + 検索（Zodバリデーション）
+│   ├── songs.ts          # Song CRUD + 検索（Zodバリデーション）
+│   └── webhooks.ts       # Clerk Webhook（ユーザー同期）
 ├── middleware/
-│   └── auth.ts           # Supabase JWT認証（jose）
+│   └── auth.ts           # Clerk JWT認証（jose）
 ├── db/
 │   ├── schema.ts         # Drizzle ORMスキーマ（4テーブル）
 │   └── index.ts          # DBクライアント初期化
@@ -71,7 +79,7 @@ apps/backend-hono/src/
 - `SongShare` - 楽曲共有
 
 ### データフロー
-Frontend (Zustand) → API Request → Backend (Hono Route → Service) → Drizzle ORM → PostgreSQL
+Frontend (Clerk + Zustand) → API Request → Backend (Hono Route → Service) → Drizzle ORM → PostgreSQL
 
 ## コーディング規約
 
@@ -86,20 +94,26 @@ Frontend (Zustand) → API Request → Backend (Hono Route → Service) → Driz
 ```
 Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 
-## Supabase 開発ルール
-- **DBスキーマ変更は必ずローカルのSupabase CLIを使用する**
-  - `supabase migration new <name>` でマイグレーションファイルを作成
-  - `supabase db reset` でローカルDBに適用・検証
-  - Supabase MCP（クラウド）への直接マイグレーション適用は禁止
-- クラウド（本番）Supabaseへの反映は将来的にCI経由で行う
-- ローカルSupabase: `supabase start` で起動、`supabase status` で接続情報確認
+## DB開発ルール
+- **DBスキーマ変更は Drizzle ORM のスキーマファイル (`apps/backend/src/db/schema.ts`) を編集する**
+  - `pnpm db:generate` でマイグレーションファイルを生成
+  - `pnpm db:push` でローカルDBに適用・検証
+- ローカルDB: `docker compose up -d` で起動
 
 ## 環境変数（バックエンド）
 ```
-DATABASE_URL      # PostgreSQL接続文字列
-SUPABASE_URL      # Supabase URL
-ALLOWED_ORIGINS   # CORS許可オリジン（カンマ区切り）
-PORT              # サーバーポート（デフォルト: 8080）
+DATABASE_URL         # PostgreSQL接続文字列
+CLERK_ISSUER         # Clerk Issuer URL (例: https://xxx.clerk.accounts.dev)
+CLERK_WEBHOOK_SECRET # Clerk Webhook署名検証シークレット
+ALLOWED_ORIGINS      # CORS許可オリジン（カンマ区切り）
+PORT                 # サーバーポート（デフォルト: 8080）
+```
+
+## 環境変数（フロントエンド）
+```
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY  # Clerk公開キー
+CLERK_SECRET_KEY                   # Clerkシークレットキー
+NEXT_PUBLIC_API_URL                # バックエンドAPI URL
 ```
 
 ## 詳細ドキュメント
@@ -108,4 +122,3 @@ PORT              # サーバーポート（デフォルト: 8080）
 - `development/` - 環境構築、コーディング規約、Git運用
 - `api/` - REST API仕様
 - `database/` - ER図、テーブル定義
-- `plans/` - 移行計画（backend-migration-to-hono.md）

@@ -4,6 +4,7 @@ import { logger } from 'hono/logger'
 import type { AuthVariables } from './middleware/auth'
 import { healthRoutes } from './routes/health'
 import { songRoutes } from './routes/songs'
+import { webhookRoutes } from './routes/webhooks'
 
 type AppEnv = {
   Variables: AuthVariables
@@ -28,6 +29,7 @@ app.use('*', cors({
 // ルート
 app.route('/api/health', healthRoutes)
 app.route('/api/songs', songRoutes)
+app.route('/api/webhooks', webhookRoutes)
 
 // グローバルエラーハンドラ
 app.onError((err, c) => {

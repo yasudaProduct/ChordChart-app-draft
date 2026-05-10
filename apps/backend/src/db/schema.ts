@@ -15,7 +15,7 @@ import { relations } from 'drizzle-orm'
 // Users テーブル
 // ============================================================
 export const users = pgTable('Users', {
-  id: uuid('Id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  id: text('Id').primaryKey(),
   email: text('Email').notNull(),
   displayName: text('DisplayName'),
   avatarUrl: text('AvatarUrl'),
@@ -40,7 +40,7 @@ export const songs = pgTable(
   'Songs',
   {
     id: uuid('Id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-    userId: uuid('UserId')
+    userId: text('UserId')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     title: varchar('Title', { length: 200 }).notNull(),
@@ -66,7 +66,7 @@ export const bookmarks = pgTable(
   'Bookmarks',
   {
     id: uuid('Id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-    userId: uuid('UserId')
+    userId: text('UserId')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     songId: uuid('SongId')
