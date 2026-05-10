@@ -39,14 +39,15 @@ Hono (TypeScript) を使用したバックエンドの設計を説明します�
 ## ディレクトリ構成
 
 ```
-apps/backend-hono/src/
+apps/backend/src/
 ├── index.ts              # エントリポイント（サーバー起動）
 ├── app.ts                # Hono アプリ定義（CORS, logger, エラーハンドラ）
 ├── routes/
 │   ├── health.ts         # GET /api/health
-│   └── songs.ts          # Song CRUD + 検索（Zodバリデーション）
+│   ├── songs.ts          # Song CRUD + 検索（Zodバリデーション）
+│   └── webhooks.ts       # Clerk Webhook（ユーザー同期）
 ├── middleware/
-│   └── auth.ts           # Supabase JWT 認証（jose）
+│   └── auth.ts           # Clerk JWT 認証（jose）
 ├── services/
 │   └── song.service.ts   # ビジネスロジック
 ├── db/
@@ -82,7 +83,7 @@ songs.post("/", authMiddleware(), zValidator("json", createSongSchema, ...), asy
 
 ### Middleware 層
 
-認証処理を担当。Supabase の JWKS を使用して JWT を検証。
+認証処理を担当。Clerk の JWKS を使用して JWT を検証。
 
 ```typescript
 // middleware/auth.ts
@@ -93,8 +94,7 @@ export const authMiddleware = () => async (c, next) => {
   if (!token) return c.json({ error: "Unauthorized" }, 401);
 
   const { payload } = await jwtVerify(token, getJWKS(), {
-    issuer: `${SUPABASE_URL}/auth/v1`,
-    audience: "authenticated",
+    issuer: process.env.CLERK_ISSUER,
   });
   c.set("userId", payload.sub);
   await next();
@@ -139,7 +139,7 @@ Drizzle ORM によるスキーマ定義とデータベース接続。
 // db/schema.ts
 export const songs = pgTable("Songs", {
   id: uuid("Id").primaryKey().defaultRandom(),
-  userId: uuid("UserId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: text("UserId").notNull().references(() => users.id, { onDelete: "cascade" }),
   title: varchar("Title", { length: 200 }).notNull(),
   artist: varchar("Artist", { length: 200 }),
   key: varchar("Key", { length: 10 }),
@@ -193,15 +193,14 @@ HTTP Response
 
 ## 認証フロー
 
-Supabase Auth が発行した JWT を JWKS（JSON Web Key Set）で検証します。
+Clerk が発行した JWT を JWKS（JSON Web Key Set）で検証します。
 
 ```
-1. クライアント → Supabase Auth でログイン → access_token 取得
+1. クライアント → Clerk でログイン → access_token 取得
 2. クライアント → Authorization: Bearer {access_token} でAPIリクエスト
 3. バックエンド → JWKS エンドポイントから公開鍵を取得（キャッシュ）
 4. バックエンド → jose.jwtVerify() で検証
-   - issuer: {SUPABASE_URL}/auth/v1
-   - audience: "authenticated"
+   - issuer: {CLERK_ISSUER}
 5. 検証成功 → payload.sub を userId として利用
 ```
 

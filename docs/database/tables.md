@@ -6,13 +6,13 @@ ChordBook データベースの各テーブル詳細定義です。
 
 ## Users テーブル
 
-ユーザー情報を管理します。Supabase Auth と連携。
+ユーザー情報を管理します。Clerk と連携。
 
 ### カラム定義
 
 | カラム名 | データ型 | NULL | デフォルト | 制約 | 説明 |
 |----------|----------|------|-----------|------|------|
-| Id | UUID | NO | gen_random_uuid() | PK | 主キー |
+| Id | TEXT | NO | - | PK | 主キー（Clerk ユーザー ID） |
 | Email | VARCHAR(255) | NO | - | UNIQUE | メールアドレス |
 | DisplayName | VARCHAR(100) | YES | NULL | - | 表示名 |
 | AvatarUrl | VARCHAR(500) | YES | NULL | - | アバター画像URL |
@@ -30,7 +30,7 @@ ChordBook データベースの各テーブル詳細定義です。
 
 ```sql
 CREATE TABLE Users (
-    Id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    Id TEXT PRIMARY KEY,
     Email VARCHAR(255) NOT NULL UNIQUE,
     DisplayName VARCHAR(100),
     AvatarUrl VARCHAR(500),
@@ -52,7 +52,7 @@ CREATE UNIQUE INDEX IX_Users_Email ON Users(Email);
 | カラム名 | データ型 | NULL | デフォルト | 制約 | 説明 |
 |----------|----------|------|-----------|------|------|
 | Id | UUID | NO | gen_random_uuid() | PK | 主キー |
-| UserId | UUID | NO | - | FK → Users | 所有者 |
+| UserId | TEXT | NO | - | FK → Users | 所有者 |
 | Title | VARCHAR(200) | NO | - | - | 曲名 |
 | Artist | VARCHAR(200) | YES | NULL | - | アーティスト名 |
 | Key | VARCHAR(10) | YES | NULL | - | キー（C, Am等） |
@@ -86,7 +86,7 @@ CREATE UNIQUE INDEX IX_Users_Email ON Users(Email);
 ```sql
 CREATE TABLE Songs (
     Id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    UserId UUID NOT NULL REFERENCES Users(Id) ON DELETE CASCADE,
+    UserId TEXT NOT NULL REFERENCES Users(Id) ON DELETE CASCADE,
     Title VARCHAR(200) NOT NULL,
     Artist VARCHAR(200),
     Key VARCHAR(10),
@@ -113,7 +113,7 @@ CREATE INDEX IX_Songs_Visibility ON Songs(Visibility);
 | カラム名 | データ型 | NULL | デフォルト | 制約 | 説明 |
 |----------|----------|------|-----------|------|------|
 | Id | UUID | NO | gen_random_uuid() | PK | 主キー |
-| UserId | UUID | NO | - | FK → Users | ユーザー |
+| UserId | TEXT | NO | - | FK → Users | ユーザー |
 | SongId | UUID | NO | - | FK → Songs | 楽曲 |
 | CreatedAt | TIMESTAMP | NO | now() | - | 作成日時 |
 | UpdatedAt | TIMESTAMP | NO | now() | - | 更新日時 |
@@ -131,7 +131,7 @@ CREATE INDEX IX_Songs_Visibility ON Songs(Visibility);
 ```sql
 CREATE TABLE Bookmarks (
     Id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    UserId UUID NOT NULL REFERENCES Users(Id) ON DELETE CASCADE,
+    UserId TEXT NOT NULL REFERENCES Users(Id) ON DELETE CASCADE,
     SongId UUID NOT NULL REFERENCES Songs(Id) ON DELETE CASCADE,
     CreatedAt TIMESTAMP NOT NULL DEFAULT now(),
     UpdatedAt TIMESTAMP NOT NULL DEFAULT now(),

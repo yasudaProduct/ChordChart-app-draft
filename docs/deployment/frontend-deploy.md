@@ -38,8 +38,8 @@ Next.js フロントエンドを Vercel にデプロイする手順です。
 
 | 変数名 | 値 |
 |--------|-----|
-| NEXT_PUBLIC_SUPABASE_URL | https://xxx.supabase.co |
-| NEXT_PUBLIC_SUPABASE_ANON_KEY | eyJhbGciOi... |
+| NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY | pk_live_XXXXXXXX |
+| CLERK_SECRET_KEY | sk_live_XXXXXXXX |
 | NEXT_PUBLIC_API_URL | https://api.chordbook.railway.app/api |
 
 ### 5. デプロイ
@@ -150,7 +150,7 @@ module.exports = {
 
   // 画像最適化
   images: {
-    domains: ['xxx.supabase.co'],
+    domains: ['img.clerk.com'],
   },
 }
 ```

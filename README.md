@@ -12,8 +12,8 @@
 |----------|------|
 | フロントエンド | Next.js 14 (App Router), Tailwind CSS, shadcn/ui, Zustand |
 | バックエンド | Hono, Drizzle ORM, Zod, jose (JWT検証) |
-| データベース | PostgreSQL (Supabase) |
-| 認証 | Supabase Auth |
+| データベース | PostgreSQL (Neon) |
+| 認証 | Clerk |
 | ホスティング | Vercel (FE), Railway (BE) |
 
 ## プロジェクト構成
@@ -22,9 +22,7 @@
 chord-chart/
 ├── apps/
 │   ├── frontend/        # Next.js フロントエンド
-│   └── backend-hono/    # Hono バックエンド (TypeScript)
-├── supabase/
-│   └── migrations/      # DBマイグレーション（テーブル・RLS・トリガー）
+│   └── backend/         # Hono バックエンド (TypeScript)
 ├── docs/                # ドキュメント
 └── .github/             # GitHub Actions
 ```
@@ -35,7 +33,7 @@ chord-chart/
 
 - Node.js 20+
 - pnpm
-- Docker Desktop（ローカル Supabase 用）
+- Docker Desktop（ローカル PostgreSQL 用）
 
 ### 1. リポジトリのクローン
 
@@ -44,8 +42,13 @@ git clone https://github.com/yasudaProduct/chord-chart.git
 cd chord-chart
 ```
 
+### 2. ローカル PostgreSQL の起動
 
-### 2. フロントエンドのセットアップ
+```bash
+docker compose up -d
+```
+
+### 3. フロントエンドのセットアップ
 
 ```bash
 cd apps/frontend
@@ -53,38 +56,46 @@ pnpm install
 cp .env.local.example .env.local
 ```
 
-ローカル Supabase を使う場合、`.env.local` はデフォルト値のままで動作します。
+`.env.local` に Clerk のキーを設定します。
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<supabase status で表示される anon key>
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_XXXXXXXX
+CLERK_SECRET_KEY=sk_test_XXXXXXXX
 NEXT_PUBLIC_API_URL=http://localhost:8080/api
 ```
 
-### 3. バックエンドのセットアップ
+### 4. バックエンドのセットアップ
 
 ```bash
-cd apps/backend-hono
+cd apps/backend
 pnpm install
 cp .env.example .env
 ```
 
-ローカル Supabase を使う場合、`.env` はデフォルト値のままで動作します。
+`.env` に Clerk の Issuer URL を設定します。
 
 ```env
-DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres
-SUPABASE_URL=http://127.0.0.1:54321
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/chordbook
+CLERK_ISSUER=https://your-clerk-instance.clerk.accounts.dev
+CLERK_WEBHOOK_SECRET=
 ALLOWED_ORIGINS=http://localhost:3000
 PORT=8080
 ```
 
-### 4. 開発サーバーの起動
+### 5. DBスキーマの適用
+
+```bash
+cd apps/backend
+pnpm db:push
+```
+
+### 6. 開発サーバーの起動
 
 バックエンドとフロントエンドをそれぞれ別のターミナルで起動します。
 
 ```bash
 # ターミナル1: バックエンド
-cd apps/backend-hono
+cd apps/backend
 pnpm dev
 # http://localhost:8080
 ```
@@ -96,67 +107,60 @@ pnpm dev
 # http://localhost:3000
 ```
 
-### 5. Supabase ローカル開発フロー
+### 7. Clerk Webhook のローカル開発（ngrok）
 
-#### 初回セットアップ
+Clerk の Webhook をローカル環境で受け取るために ngrok を使用します。
 
-```bash
-# 1. Supabase にログイン
-supabase login
-
-# 2. リモートプロジェクトとリンク
-supabase link --project-ref <your-project-ref>
-
-# 3. ローカル環境を起動（supabase/migrations/ 内の migration が自動適用される）
-supabase start
-
-# 4. ローカル環境の接続情報を確認
-supabase status
-```
-
-#### リモートスキーマの再取得（リモート DB を直接変更した場合）
-
-> **注意:** `supabase db pull`（リンク経由）は、Docker Desktop（macOS）の IPv6 制限により
-> diff ステップで `ECONNREFUSED` エラーが発生します。
-> Supabase の IPv4 Add-on（有料）を使わずに回避するため、`--db-url` で Supavisor pooler 経由の接続文字列を指定しています。
+#### ngrok のインストール
 
 ```bash
-# 1. リモートスキーマを migration ファイルとして取得（pooler 経由）
-supabase db pull --db-url postgresql://postgres.<your-project-ref>:<password>@<pooler-host>:6543/postgres
+# macOS (Homebrew)
+brew install ngrok
 
-# 2. ローカル DB をリセットして migration を再適用
-supabase db reset
+# または公式サイトからダウンロード
+# https://ngrok.com/download
 ```
 
-#### 日常の開発フロー
+#### ngrok のセットアップ
 
 ```bash
-# 1. ローカル環境を起動
-supabase start
-
-# 2. ローカルでスキーマを変更（Studio http://localhost:54323 or SQL）
-
-# 3. 変更を migration ファイルに書き出し
-supabase db diff -f <migration_name>
-
-# 4. Git にコミット
-git add supabase/migrations/
-git commit -m "feat: add xxx table"
-
-# 5. デプロイ時にリモートへ migration を適用
-supabase db push
+# ngrok にサインアップ後、認証トークンを設定
+ngrok config add-authtoken <your-authtoken>
 ```
 
-#### ローカル環境の操作
+#### ローカル開発での使い方
 
 ```bash
-supabase start              # 起動
-supabase stop               # 停止（データ保持）
-supabase stop --no-backup   # 停止（データ削除）
-supabase db reset           # ローカル DB をリセット（migration 再適用）
-supabase status             # ローカル環境の接続情報を表示
+# 1. バックエンドサーバーを起動（ターミナル1）
+cd apps/backend
+pnpm dev
+
+# 2. ngrok でバックエンドをトンネリング（ターミナル2）
+ngrok http 8080
 ```
 
+ngrok が起動すると、以下のような公開URLが表示されます。
+
+```
+Forwarding  https://xxxx-xxx-xxx.ngrok-free.app -> http://localhost:8080
+```
+
+#### Clerk Webhook の設定
+
+1. [Clerk Dashboard](https://dashboard.clerk.com) を開く
+2. **Configure** → **Webhooks** → **Add Endpoint**
+3. **Endpoint URL** に ngrok の URL + パスを入力:
+   ```
+   https://xxxx-xxx-xxx.ngrok-free.app/api/webhooks/clerk
+   ```
+4. **Subscribe to events** で以下を選択:
+   - `user.created`
+   - `user.updated`
+   - `user.deleted`
+5. **Create** をクリック
+6. 作成後に表示される **Signing Secret** を `apps/backend/.env` の `CLERK_WEBHOOK_SECRET` に設定
+
+> **注意:** ngrok の無料プランでは起動するたびに URL が変わるため、再起動時は Clerk Dashboard の Webhook URL も更新してください。固定ドメインを使いたい場合は `ngrok http --domain=your-domain.ngrok-free.app 8080` を使用します（無料プランでも1つ利用可能）。
 
 ### デモモード
 

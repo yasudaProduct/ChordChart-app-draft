@@ -22,6 +22,7 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
+  globalSetup: './e2e/global-setup.ts',
   webServer: {
     command: 'pnpm build && pnpm start',
     port: 3000,

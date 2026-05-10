@@ -1,27 +1,33 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useUser, useAuth } from "@clerk/nextjs";
 import { useAuthStore } from "@/stores/authStore";
-import { isProtectedPath } from "@/lib/auth";
+import { setTokenGetter } from "@/lib/api";
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const hydrate = useAuthStore((s) => s.hydrate);
-  const session = useAuthStore((s) => s.session);
-  const isLoading = useAuthStore((s) => s.isLoading);
-  const pathname = usePathname();
-  const router = useRouter();
+  const { user, isLoaded } = useUser();
+  const { getToken } = useAuth();
+  const setUser = useAuthStore((s) => s.setUser);
+  const setLoading = useAuthStore((s) => s.setLoading);
 
   useEffect(() => {
-    void hydrate();
-  }, [hydrate]);
+    setTokenGetter(() => getToken());
+  }, [getToken]);
 
   useEffect(() => {
-    if (isLoading) return;
-    if (!session && isProtectedPath(pathname)) {
-      router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
+    if (!isLoaded) return;
+
+    if (user) {
+      setUser({
+        id: user.id,
+        email: user.primaryEmailAddress?.emailAddress ?? "",
+        name: user.fullName ?? user.firstName ?? undefined,
+      });
+    } else {
+      setUser(null);
     }
-  }, [isLoading, session, pathname, router]);
+  }, [isLoaded, user, setUser, setLoading]);
 
   return <>{children}</>;
 };

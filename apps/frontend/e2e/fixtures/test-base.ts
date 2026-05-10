@@ -1,19 +1,6 @@
 import { test as base } from '@playwright/test'
-import { LoginPage } from '../pages/login.page'
-import { RegisterPage } from '../pages/register.page'
-
-type Fixtures = {
-  loginPage: LoginPage
-  registerPage: RegisterPage
-}
-
-export const test = base.extend<Fixtures>({
-  loginPage: async ({ page }, use) => {
-    await use(new LoginPage(page))
-  },
-  registerPage: async ({ page }, use) => {
-    await use(new RegisterPage(page))
-  },
-})
+import { setupClerkTestingToken } from '@clerk/testing/playwright'
 
 export { expect } from '@playwright/test'
+export { setupClerkTestingToken }
+export const test = base
