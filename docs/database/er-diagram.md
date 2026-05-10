@@ -8,7 +8,7 @@ ChordBook のデータベース設計を説明します。
 ┌─────────────────────────────────────────────────────────────────────┐
 │                              Users                                  │
 ├─────────────────────────────────────────────────────────────────────┤
-│ PK │ Id          : UUID                                             │
+│ PK │ Id          : TEXT                                             │
 │    │ Email       : VARCHAR       NOT NULL                           │
 │    │ DisplayName : VARCHAR       NULL                               │
 │    │ AvatarUrl   : VARCHAR       NULL                               │
@@ -23,7 +23,7 @@ ChordBook のデータベース設計を説明します。
 │                              Songs                                  │
 ├─────────────────────────────────────────────────────────────────────┤
 │ PK │ Id            : UUID                                           │
-│ FK │ UserId        : UUID         NOT NULL  → Users.Id              │
+│ FK │ UserId        : TEXT         NOT NULL  → Users.Id              │
 │    │ Title         : VARCHAR      NOT NULL                          │
 │    │ Artist        : VARCHAR      NULL                              │
 │    │ Key           : VARCHAR      NULL                              │
@@ -42,7 +42,7 @@ ChordBook のデータベース設計を説明します。
 │           Bookmarks            │   │          SongShares            │
 ├────────────────────────────────┤   ├────────────────────────────────┤
 │ PK │ Id        : UUID          │   │ PK │ Id         : UUID         │
-│ FK │ UserId    : UUID → Users  │   │ FK │ SongId     : UUID → Songs │
+│ FK │ UserId    : TEXT → Users  │   │ FK │ SongId     : UUID → Songs │
 │ FK │ SongId    : UUID → Songs  │   │    │ ShareToken : VARCHAR      │
 │    │ CreatedAt : TIMESTAMP     │   │    │ ExpiresAt  : TIMESTAMP    │
 │    │ UpdatedAt : TIMESTAMP     │   │    │ CreatedAt  : TIMESTAMP    │
@@ -63,11 +63,11 @@ ChordBook のデータベース設計を説明します。
 
 ### Users
 
-ユーザー情報を管理するテーブル。Supabase Auth と連携。
+ユーザー情報を管理するテーブル。Clerk と連携。
 
 | カラム | 型 | NULL | デフォルト | 説明 |
 |--------|-----|------|-----------|------|
-| Id | UUID | NO | newguid() | 主キー |
+| Id | TEXT | NO | - | 主キー（Clerk ユーザー ID） |
 | Email | VARCHAR(255) | NO | - | メールアドレス（ユニーク） |
 | DisplayName | VARCHAR(100) | YES | NULL | 表示名 |
 | AvatarUrl | VARCHAR(500) | YES | NULL | アバター画像URL |
@@ -81,7 +81,7 @@ ChordBook のデータベース設計を説明します。
 | カラム | 型 | NULL | デフォルト | 説明 |
 |--------|-----|------|-----------|------|
 | Id | UUID | NO | newguid() | 主キー |
-| UserId | UUID | NO | - | 所有者（FK → Users） |
+| UserId | TEXT | NO | - | 所有者（FK → Users） |
 | Title | VARCHAR(200) | NO | - | 曲名 |
 | Artist | VARCHAR(200) | YES | NULL | アーティスト名 |
 | Key | VARCHAR(10) | YES | NULL | キー（C, Am, etc.） |
@@ -99,7 +99,7 @@ ChordBook のデータベース設計を説明します。
 | カラム | 型 | NULL | デフォルト | 説明 |
 |--------|-----|------|-----------|------|
 | Id | UUID | NO | newguid() | 主キー |
-| UserId | UUID | NO | - | ユーザー（FK → Users） |
+| UserId | TEXT | NO | - | ユーザー（FK → Users） |
 | SongId | UUID | NO | - | 曲（FK → Songs） |
 | CreatedAt | TIMESTAMP | NO | now() | 作成日時 |
 | UpdatedAt | TIMESTAMP | NO | now() | 更新日時 |

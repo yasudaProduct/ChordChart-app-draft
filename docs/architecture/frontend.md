@@ -259,8 +259,8 @@ import { Input } from '@/components/ui/input'
 
 | 変数 | 説明 |
 |------|------|
-| NEXT_PUBLIC_SUPABASE_URL | Supabase プロジェクト URL |
-| NEXT_PUBLIC_SUPABASE_ANON_KEY | Supabase 匿名キー |
+| NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY | Clerk 公開キー |
+| CLERK_SECRET_KEY | Clerk シークレットキー |
 | NEXT_PUBLIC_API_URL | バックエンド API URL |
 
 **注意**: `NEXT_PUBLIC_` プレフィックスの変数はブラウザに公開されます。

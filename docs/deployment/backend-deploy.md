@@ -26,7 +26,7 @@ Hono (TypeScript) バックエンドを Railway にデプロイする手順で�
 
 | 項目 | 値 |
 |------|-----|
-| Root Directory | apps/backend-hono |
+| Root Directory | apps/backend |
 | Build Command | pnpm build |
 | Start Command | pnpm start |
 
@@ -36,60 +36,17 @@ Hono (TypeScript) バックエンドを Railway にデプロイする手順で�
 
 | 変数名 | 値 |
 |--------|-----|
-| DATABASE_URL | postgresql://postgres:xxx@db.xxx.supabase.co:5432/postgres |
-| SUPABASE_URL | https://xxx.supabase.co |
+| DATABASE_URL | postgresql://postgres:xxx@db.xxx.neon.tech:5432/chordbook |
+| CLERK_ISSUER | https://xxx.clerk.accounts.dev |
+| CLERK_WEBHOOK_SECRET | whsec_XXXXXXXX |
 | ALLOWED_ORIGINS | https://chordbook.vercel.app |
 | PORT | 8080 |
+
+詳細は [docs/deployment/environments.md](./environments.md) を参照。
 
 ### 5. デプロイ
 
 設定保存後、自動的にビルド・デプロイが開始されます。
-
----
-
-## 環境変数の詳細
-
-### DATABASE_URL
-
-Supabase PostgreSQL への接続文字列:
-
-```
-postgresql://postgres:YOUR_PASSWORD@db.xxx.supabase.co:5432/postgres
-```
-
-| パラメータ | 説明 |
-|-----------|------|
-| ユーザー名 | `postgres` |
-| パスワード | Supabase のデータベースパスワード |
-| ホスト | `db.xxx.supabase.co` |
-| ポート | `5432` |
-| データベース | `postgres` |
-
-SSL 接続が必要な場合:
-```
-postgresql://postgres:xxx@db.xxx.supabase.co:5432/postgres?sslmode=require
-```
-
-### SUPABASE_URL
-
-JWT 検証に使用する Supabase のプロジェクト URL:
-
-```
-https://xxx.supabase.co
-```
-
-### ALLOWED_ORIGINS
-
-CORS 許可オリジン（カンマ区切り）:
-
-```
-https://chordbook.vercel.app
-```
-
-複数オリジンの場合:
-```
-https://chordbook.vercel.app,https://preview.chordbook.vercel.app
-```
 
 ---
 
@@ -105,7 +62,7 @@ GitHub 連携により自動デプロイ:
 ### トリガー設定
 
 1. プロジェクト設定 → **Deployments**
-2. **Watch Paths** で `apps/backend-hono/**` を設定
+2. **Watch Paths** で `apps/backend/**` を設定
 
 ---
 
@@ -208,7 +165,7 @@ railway up
 
 ```bash
 # ローカルでビルド確認
-cd apps/backend-hono
+cd apps/backend
 pnpm build
 pnpm start
 ```
@@ -216,8 +173,7 @@ pnpm start
 ### 接続エラー
 
 - 環境変数の確認
-- Supabase の接続許可 IP を確認
-- SSL 設定を確認
+- SSL 設定を確認（`?sslmode=require`）
 
 ### ポートエラー
 

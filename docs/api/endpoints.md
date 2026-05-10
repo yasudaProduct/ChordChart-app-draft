@@ -10,7 +10,7 @@ ChordBook バックエンド API のエンドポイント一覧です。
 | ベースURL（本番） | https://api.chordbook.example.com/api |
 | 形式 | REST API |
 | データ形式 | JSON |
-| 認証 | Supabase Auth JWT |
+| 認証 | Clerk JWT |
 
 ## エンドポイント一覧
 
@@ -23,6 +23,7 @@ ChordBook バックエンド API のエンドポイント一覧です。
 | POST | /api/songs | 必須 | 曲作成 |
 | PUT | /api/songs/:id | 必須 | 曲更新 |
 | DELETE | /api/songs/:id | 必須 | 曲削除 |
+| POST | /api/webhooks/clerk | 不要（署名検証） | Clerk Webhook（ユーザー同期） |
 
 ---
 
@@ -300,8 +301,8 @@ ChordBook バックエンド API のエンドポイント一覧です。
 VS Code の REST Client 拡張機能でテストできます。
 
 ```
-apps/backend-hono/.http/
-├── auth.http     # サインアップ・サインイン
+apps/backend/.http/
+├── auth.http     # 認証テスト
 └── songs.http    # Song CRUD
 ```
 

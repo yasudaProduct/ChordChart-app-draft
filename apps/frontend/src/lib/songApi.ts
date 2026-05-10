@@ -24,7 +24,7 @@ type ApiSongListItemDto = {
 }
 
 const isAuthenticated = (): boolean => {
-  return useAuthStore.getState().session !== null
+  return useAuthStore.getState().user !== null
 }
 
 const safeJsonParse = (value: string | { sections?: Section[] } | null): { sections: Section[] } => {

@@ -9,64 +9,41 @@
       [
         {
           "name": "frontend:console",
-          "autoExecuteCommands": true,
+          "cwd": "apps/frontend",
           "icon": "person",
-          "color": "terminal.ansiGreen",
-          "commands": [
-            "cd apps/frontend"
-          ]
+          "color": "terminal.ansiGreen"
         },
         {
           "name": "backend:console",
-          "autoExecuteCommands": true,
+          "cwd": "apps/backend",
           "icon": "person",
-          "color": "terminal.ansiGreen",
-          "commands": [
-            "cd apps/backend"
-          ]
+          "color": "terminal.ansiGreen"
         }
       ],
       [
         {
           "name": "frontend:dev",
+          "cwd": "apps/frontend",
           "icon": "terminal",
-          "commands": [
-            "cd apps/frontend && npm run dev"
-          ]
+          "commands": ["pnpm dev"]
         },
         {
           "name": "backend:dev",
+          "cwd": "apps/backend",
           "icon": "terminal",
-          "commands": [
-            "cd apps/backend && pnpm dev"
-          ]
+          "commands": ["pnpm dev"]
         },
         {
-          "name": "supabase:db",
+          "name": "docker:db",
           "icon": "terminal",
-          "commands": [
-            "supabase start"
-          ]
+          "commands": ["docker compose up -d"]
+        },
+        {
+          "name": "ngrok",
+          "icon": "terminal",
+          "commands": ["ngrok http 8080"]
         }
       ]
-    ],
-    "supabase:db": [
-      {
-        "name": "claude",
-        "icon": "terminal",
-        "commands": [
-          "claude"
-        ]
-      }
-    ],
-    "backend-dotnet": [
-      {
-        "name": "dotnet",
-        "icon": "terminal",
-        "commands": [
-          "cd apps/backend/src/ChordBook.Api && ASPNETCORE_ENVIRONMENT=Development dotnet run"
-        ]
-      }
     ]
   }
 }

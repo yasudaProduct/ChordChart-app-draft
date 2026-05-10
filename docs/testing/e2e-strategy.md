@@ -7,7 +7,7 @@ PlaywrightによるE2Eテストを導入し、ユーザーの実操作に近い�
 ## ツール
 
 - **Playwright** (TypeScript)
-- **Supabase CLI** - ローカルDBとAuth環境
+- **Docker** - ローカルPostgreSQL環境
 - ブラウザ: Chromium（CI/ローカル共通）
 
 ## 実行タイミング
@@ -17,39 +17,55 @@ PlaywrightによるE2Eテストを導入し、ユーザーの実操作に近い�
 | ローカル | `pnpm e2e` で任意実行 | 任意 |
 | CI | プルリクエスト作成・更新時 | main, develop |
 
-## Supabase環境
+## ローカルDB環境
 
 ### 方針
-E2Eテストは **Supabase CLIのローカル環境** を使用する。本番Supabaseへの影響を完全に排除する。
+E2Eテストは **Dockerのローカル PostgreSQL** を使用する。本番DBへの影響を完全に排除する。
 
 ### ローカル環境
 ```bash
-# 初回 or スキーマ変更時
-supabase start          # ローカルSupabase起動（マイグレーション + シード自動適用）
-supabase db reset       # DBリセット + シード再適用
-supabase stop           # 停止
-```
+# DB起動
+docker compose up -d
 
-ローカルSupabase起動時に `supabase/seed.sql` が自動実行され、テスト用ユーザー（`test01@example.com` / `password123`）が作成される。
+# DBリセット（スキーマ再適用）
+cd apps/backend && pnpm db:push
+
+# シードデータ投入
+cd apps/backend && pnpm db:seed
+```
 
 ### CI環境
 GitHub Actions上で以下のフローを実行:
-1. Supabase CLI セットアップ
-2. `supabase start`（マイグレーション + シード自動適用）
-3. ローカルSupabaseの URL と anon key を取得
-4. E2Eテスト実行（ローカルSupabaseに接続）
-5. `supabase stop`（クリーンアップ）
-
-CI上ではSupabase関連のSecretsは不要。すべてローカル環境で完結する。
+1. Docker PostgreSQL 起動
+2. `pnpm db:push`（スキーマ適用）
+3. `pnpm db:seed`（テストデータ投入）
+4. E2Eテスト実行
+5. Docker コンテナ停止
 
 ### シードデータ
-`supabase/seed.sql` にテスト用データを定義:
+
+`apps/backend/src/db/seed.ts` にテスト用データを定義:
 
 | テーブル | データ | 用途 |
 |---------|--------|------|
-| auth.users + auth.identities | test01@example.com / password123 | 認証テスト全般 |
+| Users | test01@example.com | 楽曲操作テスト |
+| Songs | サンプル楽曲15件 | 一覧・詳細テスト |
 
-auth.usersへのINSERTトリガーにより、`public.Users` テーブルにもレコードが自動作成される。
+## 認証（Clerk）
+
+E2EテストでのClerk認証は以下のいずれかの方式を採用:
+
+- **テスト用トークン**: Clerk のテストモードで発行したトークンを `.env.e2e` に設定して使用
+- **UI操作**: Playwright でClerkのログインフローを実際に操作
+
+```bash
+# .env.e2e
+E2E_USER_EMAIL=test01@example.com
+E2E_USER_PASSWORD=password123
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_XXXXXXXX
+CLERK_SECRET_KEY=sk_test_XXXXXXXX
+NEXT_PUBLIC_API_URL=http://localhost:8080/api
+```
 
 ## テスト方針
 
@@ -74,9 +90,6 @@ UIは頻繁に変更される前提で、以下の方針でテストを壊れに
 - ログイン成功 → リダイレクト
 - ログイン失敗 → エラー表示
 - redirect パラメータ付きログイン
-- 送信中のボタン無効化
-- バリデーション（空入力の防止）
-- 新規登録ページの表示
 - 未認証ユーザーの保護ページアクセス → ログインリダイレクト
 - ログアウト
 
@@ -104,26 +117,6 @@ apps/frontend/
 │       └── register.page.ts  # 新規登録ページPOM
 ├── playwright.config.ts
 └── .env.e2e                  # E2Eテスト用環境変数（gitignore対象、ローカル用）
-
-supabase/
-├── config.toml               # Supabase設定
-├── migrations/               # DBマイグレーション
-└── seed.sql                  # テスト用シードデータ
-```
-
-## 環境変数
-
-E2Eテストで使用する環境変数（`.env.e2e`）:
-
-```
-E2E_USER_EMAIL=test01@example.com      # デフォルト値あり（省略可）
-E2E_USER_PASSWORD=password123           # デフォルト値あり（省略可）
-```
-
-ローカルSupabase使用時は以下も `.env.e2e` に設定:
-```
-NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<supabase status で取得した anon key>
 ```
 
 ## npm scripts

@@ -22,7 +22,7 @@ ChordBook REST API の概要と認証方式です。
 
 ## 認証
 
-Supabase Auth が発行する JWT を使用します。
+Clerk が発行する JWT を使用します。
 
 ### 認証ヘッダー
 
@@ -228,8 +228,8 @@ app.use("*", cors({
 VS Code の REST Client 拡張機能を使用して API をテストできます。
 
 ```
-apps/backend-hono/.http/
-├── auth.http     # サインアップ・サインイン
+apps/backend/.http/
+├── auth.http     # 認証テスト
 └── songs.http    # Song CRUD
 ```
 

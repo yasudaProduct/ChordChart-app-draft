@@ -8,7 +8,7 @@ ChordBook の開発環境を構築する手順を説明します。
 |--------|-----------|------|
 | Node.js | 20以上 | フロントエンド・バックエンド実行環境 |
 | pnpm | 8以上 | パッケージマネージャー |
-| Docker Desktop | 最新 | ローカル Supabase |
+| Docker Desktop | 最新 | ローカル PostgreSQL |
 | Git | 最新 | バージョン管理 |
 
 ## インストール手順
@@ -34,12 +34,10 @@ cp .env.local.example .env.local
 
 `.env.local` を編集して必要な環境変数を設定します（詳細は[環境変数](../deployment/environments.md)を参照）。
 
-ローカル Supabase を使う場合、デフォルト値のままで動作します。
-
 ### 3. バックエンドのセットアップ
 
 ```bash
-cd apps/backend-hono
+cd apps/backend
 
 # 依存関係のインストール
 pnpm install
@@ -48,27 +46,22 @@ pnpm install
 cp .env.example .env
 ```
 
-ローカル Supabase を使う場合、`.env` はデフォルト値のままで動作します。
+`.env` を編集して必要な環境変数を設定します。
 
 ```bash
 # .env
-DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres
-SUPABASE_URL=http://127.0.0.1:54321
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/chordbook
+CLERK_ISSUER=https://your-clerk-instance.clerk.accounts.dev
+CLERK_WEBHOOK_SECRET=whsec_XXXXXXXX
 ALLOWED_ORIGINS=http://localhost:3000
 PORT=8080
 ```
 
-### 4. ローカル Supabase の起動
+### 4. ローカル PostgreSQL の起動
 
 ```bash
-# 初回のみ: Supabase にログイン
-supabase login
-
-# ローカル環境を起動（マイグレーションが自動適用される）
-supabase start
-
-# 接続情報を確認
-supabase status
+# ローカルDBを起動
+docker compose up -d
 ```
 
 ## 開発サーバーの起動
@@ -85,7 +78,7 @@ http://localhost:3000 でアクセスできます。
 ### バックエンド
 
 ```bash
-cd apps/backend-hono
+cd apps/backend
 pnpm dev
 ```
 
@@ -103,8 +96,8 @@ http://localhost:8080 でアクセスできます。
 VS Code の REST Client 拡張機能を使用:
 
 ```
-apps/backend-hono/.http/
-├── auth.http     # サインアップ・サインイン
+apps/backend/.http/
+├── auth.http     # 認証テスト
 └── songs.http    # Song CRUD
 ```
 
@@ -127,7 +120,7 @@ pnpm build
 
 ```bash
 # 開発モードで実行（ホットリロード有効）
-cd apps/backend-hono
+cd apps/backend
 pnpm dev
 
 # テスト実行

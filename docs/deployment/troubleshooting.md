@@ -37,7 +37,7 @@ pnpm install
 node --version  # 20以上が必要
 
 # 依存関係の再インストール
-cd apps/backend-hono
+cd apps/backend
 rm -rf node_modules
 pnpm install
 ```
@@ -45,8 +45,8 @@ pnpm install
 **よくある原因**:
 - `.env` ファイルが存在しない（`.env.example` からコピー）
 - `DATABASE_URL` が未設定または不正
-- `SUPABASE_URL` が未設定
-- ローカル Supabase が起動していない
+- `CLERK_ISSUER` が未設定
+- Docker PostgreSQL が起動していない（`docker compose up -d`）
 
 ---
 
@@ -55,18 +55,17 @@ pnpm install
 **症状**: サーバー起動時にDB接続エラー
 
 **確認事項**:
-1. ローカル Supabase が起動しているか: `supabase status`
+1. Docker PostgreSQL が起動しているか: `docker compose ps`
 2. `DATABASE_URL` の値が正しいか
-3. ローカルの場合ポートが `54322` になっているか
 
 **接続文字列の例（ローカル）**:
 ```
-postgresql://postgres:postgres@127.0.0.1:54322/postgres
+postgresql://postgres:postgres@127.0.0.1:5432/chordbook
 ```
 
 **接続文字列の例（本番）**:
 ```
-postgresql://postgres:xxx@db.xxx.supabase.co:5432/postgres?sslmode=require
+postgresql://postgres:xxx@db.xxx.neon.tech:5432/chordbook?sslmode=require
 ```
 
 ---
@@ -93,17 +92,10 @@ ALLOWED_ORIGINS=http://localhost:3000
 **症状**: 401 Unauthorized
 
 **確認事項**:
-1. Supabase の設定が正しいか
+1. `CLERK_ISSUER` が正しく設定されているか（JWKS取得に使用）
 2. トークンが期限切れでないか
 3. Authorization ヘッダーの形式（`Bearer <token>`）
-4. `SUPABASE_URL` が正しく設定されているか（JWKS取得に使用）
-
-**デバッグ**:
-```typescript
-// トークンの確認
-const { data: { session } } = await supabase.auth.getSession()
-console.log('Token:', session?.access_token)
-```
+4. Clerk ダッシュボードで正しい Issuer URL を確認
 
 ---
 
@@ -139,13 +131,13 @@ pnpm build
 **確認事項**:
 ```bash
 # ローカルでビルド確認
-cd apps/backend-hono
+cd apps/backend
 pnpm build
 pnpm start
 ```
 
 **よくある原因**:
-- Root Directory の設定が `apps/backend-hono` になっていない
+- Root Directory の設定が `apps/backend` になっていない
 - 環境変数が未設定
 - TypeScript のコンパイルエラー
 
@@ -213,29 +205,19 @@ pnpm build
 
 ### `NEXT_PUBLIC_xxx is not defined`
 
-環境変数が設定されていない。
-
-```bash
-# .env.local に追加
-NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-```
+環境変数が設定されていない。`.env.local` に追加して再起動する。
 
 ### `Unable to connect to PostgreSQL`
 
 接続文字列が間違っているか、ネットワーク問題。
 
 1. `DATABASE_URL` を確認
-2. ローカル Supabase が起動しているか: `supabase status`
-3. 本番環境では SSL 接続を有効にする
+2. ローカルは Docker が起動しているか: `docker compose ps`
+3. 本番環境では SSL 接続を有効にする（`?sslmode=require`）
 
 ### `JWT token is expired`
 
-トークンが期限切れ。
-
-```typescript
-// セッションを更新
-await supabase.auth.refreshSession()
-```
+トークンが期限切れ。Clerk の `useAuth` フックで再取得する。
 
 ### `Module not found`
 
@@ -267,7 +249,7 @@ Hono の logger ミドルウェアが全リクエストをログ出力します�
 
 ```bash
 # 開発サーバー起動（ログ付き）
-cd apps/backend-hono
+cd apps/backend
 pnpm dev
 ```
 
