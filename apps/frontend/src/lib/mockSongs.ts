@@ -154,8 +154,7 @@ const toListItem = (song: Song): SongListItem => ({
   updatedAt: song.updatedAt,
 })
 
-const normalizeVisibility = (value?: SongVisibility): SongVisibility =>
-  value ?? 'private'
+const normalizeVisibility = (value?: SongVisibility): SongVisibility => value ?? 'private'
 
 export const mockSongsApi = {
   async list(): Promise<SongListItem[]> {

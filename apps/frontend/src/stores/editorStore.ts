@@ -28,10 +28,7 @@ interface EditorState {
   setSong: (song: Song) => void
   updateSong: (updater: (song: Song) => Song) => void
   updateSection: (sectionId: string, updater: (section: Section) => Section) => void
-  updateSectionLines: (
-    sectionId: string,
-    updater: (lines: SectionLine[]) => SectionLine[]
-  ) => void
+  updateSectionLines: (sectionId: string, updater: (lines: SectionLine[]) => SectionLine[]) => void
   setDirty: (dirty: boolean) => void
   setSaving: (saving: boolean) => void
   setDialog: (dialog: ChordDialogState | null) => void
@@ -86,7 +83,6 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   setSaving: (saving) => set({ isSaving: saving }),
   setDialog: (dialog) => set({ dialog }),
   setShareMessage: (message) => set({ shareMessage: message }),
-  togglePreview: () =>
-    set((state) => ({ isPreviewVisible: !state.isPreviewVisible })),
+  togglePreview: () => set((state) => ({ isPreviewVisible: !state.isPreviewVisible })),
   reset: () => set(initialState),
 }))

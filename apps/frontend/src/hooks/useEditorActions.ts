@@ -14,8 +14,7 @@ import type { Section, SectionType, Song } from '@/types/song'
 
 type SaveFn = (id: string, song: Song) => Promise<Song>
 
-const clamp = (value: number, min = 0, max = 1) =>
-  Math.min(max, Math.max(min, value))
+const clamp = (value: number, min = 0, max = 1) => Math.min(max, Math.max(min, value))
 
 const cloneSectionContent = (content: string) => {
   const parsed = parseSectionContent(content)
@@ -35,7 +34,6 @@ export const useEditorActions = (saveFn?: SaveFn) => {
   const {
     song,
     updateSong,
-    updateSection,
     updateSectionLines,
     setSong,
     setDirty,
@@ -90,9 +88,7 @@ export const useEditorActions = (saveFn?: SaveFn) => {
   const duplicateSection = useCallback(
     (sectionId: string) => {
       updateSong((current) => {
-        const index = current.sections.findIndex(
-          (section) => section.id === sectionId
-        )
+        const index = current.sections.findIndex((section) => section.id === sectionId)
         if (index === -1) return current
         const source = current.sections[index]
         const duplicated: Section = {
@@ -112,12 +108,9 @@ export const useEditorActions = (saveFn?: SaveFn) => {
   const moveSection = useCallback(
     (sectionId: string, direction: -1 | 1) => {
       updateSong((current) => {
-        const index = current.sections.findIndex(
-          (section) => section.id === sectionId
-        )
+        const index = current.sections.findIndex((section) => section.id === sectionId)
         const target = index + direction
-        if (index === -1 || target < 0 || target >= current.sections.length)
-          return current
+        if (index === -1 || target < 0 || target >= current.sections.length) return current
         const next = [...current.sections]
         const [removed] = next.splice(index, 1)
         next.splice(target, 0, removed)
@@ -131,9 +124,7 @@ export const useEditorActions = (saveFn?: SaveFn) => {
     (sectionId: string) => {
       updateSong((current) => ({
         ...current,
-        sections: current.sections.filter(
-          (section) => section.id !== sectionId
-        ),
+        sections: current.sections.filter((section) => section.id !== sectionId),
       }))
     },
     [updateSong]
@@ -162,10 +153,9 @@ export const useEditorActions = (saveFn?: SaveFn) => {
           line.id === lineId
             ? {
                 ...line,
-                chords: [
-                  ...line.chords,
-                  { id: generateId(), chord, offset },
-                ].sort((a, b) => a.offset - b.offset),
+                chords: [...line.chords, { id: generateId(), chord, offset }].sort(
+                  (a, b) => a.offset - b.offset
+                ),
               }
             : line
         )
@@ -245,10 +235,7 @@ export const useEditorActions = (saveFn?: SaveFn) => {
           window.innerWidth - width - 16,
           Math.max(16, next.position.x - width / 2)
         )
-        const y = Math.min(
-          window.innerHeight - height - 16,
-          Math.max(96, next.position.y + 16)
-        )
+        const y = Math.min(window.innerHeight - height - 16, Math.max(96, next.position.y + 16))
         setDialog({ ...next, position: { x, y } })
         return
       }
@@ -258,11 +245,7 @@ export const useEditorActions = (saveFn?: SaveFn) => {
   )
 
   const handleChordRowClick = useCallback(
-    (
-      event: React.MouseEvent<HTMLDivElement>,
-      sectionId: string,
-      lineId: string
-    ) => {
+    (event: React.MouseEvent<HTMLDivElement>, sectionId: string, lineId: string) => {
       const rect = event.currentTarget.getBoundingClientRect()
       const offset = clamp((event.clientX - rect.left) / rect.width)
       openDialog({
@@ -283,19 +266,9 @@ export const useEditorActions = (saveFn?: SaveFn) => {
       return
     }
     if (dialog.chordId) {
-      updateChord(
-        dialog.sectionId,
-        dialog.lineId,
-        dialog.chordId,
-        dialog.value.trim()
-      )
+      updateChord(dialog.sectionId, dialog.lineId, dialog.chordId, dialog.value.trim())
     } else {
-      addChord(
-        dialog.sectionId,
-        dialog.lineId,
-        dialog.value.trim(),
-        dialog.offset
-      )
+      addChord(dialog.sectionId, dialog.lineId, dialog.value.trim(), dialog.offset)
     }
     setDialog(null)
   }, [dialog, setDialog, updateChord, addChord])

@@ -8,10 +8,7 @@ type LineEditorProps = {
   line: SectionLine
   sectionType: SectionType
   onChordRowClick: (event: React.MouseEvent<HTMLDivElement>) => void
-  onChordPointerDown: (
-    event: React.PointerEvent<HTMLButtonElement>,
-    chord: ChordBlock
-  ) => void
+  onChordPointerDown: (event: React.PointerEvent<HTMLButtonElement>, chord: ChordBlock) => void
   onLyricsChange: (lyrics: string) => void
 }
 

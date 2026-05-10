@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import { useCallback } from 'react'
 import { useParams } from 'next/navigation'
@@ -8,7 +8,7 @@ import { EditorContent } from '@/components/editor/EditorContent'
 import type { Song } from '@/types/song'
 
 export default function DemoEditorPage() {
-  const params = useParams<{ id: string }>();
+  const params = useParams<{ id: string }>()
 
   const fetchSong = useCallback(async (id: string) => {
     const local = demoSongStorage.get(id)
@@ -21,11 +21,6 @@ export default function DemoEditorPage() {
   }, [])
 
   return (
-    <EditorContent
-      songId={params.id}
-      fetchSong={fetchSong}
-      saveFn={saveSong}
-      backHref="/demo"
-    />
-  );
+    <EditorContent songId={params.id} fetchSong={fetchSong} saveFn={saveSong} backHref="/demo" />
+  )
 }

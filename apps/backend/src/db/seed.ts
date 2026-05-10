@@ -58,24 +58,33 @@ async function main() {
       columns: {
         title: f.valuesFromArray({
           values: [
-            'First Song', 'Summer Breeze', 'Midnight Rain',
-            'Blue Sky', 'Ocean Drive', 'City Lights',
-            'Morning Star', 'Golden Hour', 'Fading Echoes',
-            'Silent Night', 'Rising Sun', 'Autumn Leaves',
-            'Winter Song', 'Spring Wind', 'Night Walk',
+            'First Song',
+            'Summer Breeze',
+            'Midnight Rain',
+            'Blue Sky',
+            'Ocean Drive',
+            'City Lights',
+            'Morning Star',
+            'Golden Hour',
+            'Fading Echoes',
+            'Silent Night',
+            'Rising Sun',
+            'Autumn Leaves',
+            'Winter Song',
+            'Spring Wind',
+            'Night Walk',
           ],
         }),
         artist: f.valuesFromArray({
-          values: [
-            'The Band', 'Solo Artist', 'Jazz Trio',
-            'Rock Stars', 'Acoustic Duo',
-          ],
+          values: ['The Band', 'Solo Artist', 'Jazz Trio', 'Rock Stars', 'Acoustic Duo'],
         }),
         key: f.valuesFromArray({ values: keys }),
         bpm: f.int({ minValue: 60, maxValue: 200 }),
         timeSignature: f.valuesFromArray({ values: timeSignatures }),
         content: f.valuesFromArray({ values: sampleSections }),
-        visibility: f.valuesFromArray({ values: ['private', 'url_only', 'specific_users', 'public'] }),
+        visibility: f.valuesFromArray({
+          values: ['private', 'url_only', 'specific_users', 'public'],
+        }),
       },
     },
     bookmarks: {

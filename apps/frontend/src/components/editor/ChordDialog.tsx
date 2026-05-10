@@ -31,9 +31,7 @@ const variantStyles = {
 
 const ChordGroup = ({ title, chords, variant, onSelect }: ChordGroupProps) => (
   <div>
-    <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400">
-      {title}
-    </p>
+    <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400">{title}</p>
     <div className="mt-2 flex flex-wrap gap-2">
       {chords.map((chord) => (
         <button

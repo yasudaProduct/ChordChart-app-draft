@@ -16,12 +16,8 @@ export default function SongsPage() {
       <section className="mx-auto w-full max-w-6xl px-6 py-10">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="font-display text-2xl font-semibold text-slate-900">
-              楽曲一覧
-            </h1>
-            <p className="text-sm text-slate-500">
-              直近の編集内容から一覧表示しています。
-            </p>
+            <h1 className="font-display text-2xl font-semibold text-slate-900">楽曲一覧</h1>
+            <p className="text-sm text-slate-500">直近の編集内容から一覧表示しています。</p>
           </div>
           <Link
             href="/songs/new"

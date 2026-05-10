@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { Toggle } from '@/components/ui/Toggle'
 
@@ -29,10 +28,7 @@ export const EditorHeader = ({
   return (
     <header className="print-hidden fixed top-0 z-50 flex w-full items-center justify-between border-b border-slate-200 bg-white px-6 py-3">
       <div className="flex items-center gap-4">
-        <Link
-          href="/"
-          className="font-display text-lg font-semibold text-primary"
-        >
+        <Link href="/" className="font-display text-lg font-semibold text-primary">
           ChordBook
         </Link>
         <button

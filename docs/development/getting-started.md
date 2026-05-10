@@ -7,7 +7,7 @@ ChordBook の開発環境を構築する手順を説明します。
 | ツール | バージョン | 用途 |
 |--------|-----------|------|
 | Node.js | 20以上 | フロントエンド・バックエンド実行環境 |
-| pnpm | 8以上 | パッケージマネージャー |
+| pnpm | 10以上 | パッケージマネージャー（ワークスペース管理） |
 | Docker Desktop | 最新 | ローカル PostgreSQL |
 | Git | 最新 | バージョン管理 |
 
@@ -20,33 +20,29 @@ git clone https://github.com/yasudaProduct/chord-chart.git
 cd chord-chart
 ```
 
-### 2. フロントエンドのセットアップ
+### 2. 依存関係のインストール
+
+ルートディレクトリで一度実行するだけで、全ワークスペース（apps/frontend, apps/backend, packages/*）の依存関係がインストールされます。
 
 ```bash
-cd apps/frontend
-
-# 依存関係のインストール
 pnpm install
-
-# 環境変数ファイルの作成
-cp .env.local.example .env.local
 ```
 
-`.env.local` を編集して必要な環境変数を設定します（詳細は[環境変数](../deployment/environments.md)を参照）。
-
-### 3. バックエンドのセットアップ
+### 3. フロントエンドの環境変数設定
 
 ```bash
-cd apps/backend
-
-# 依存関係のインストール
-pnpm install
-
-# 環境変数ファイルの作成
-cp .env.example .env
+cp apps/frontend/.env.local.example apps/frontend/.env.local
 ```
 
-`.env` を編集して必要な環境変数を設定します。
+`apps/frontend/.env.local` を編集して必要な環境変数を設定します（詳細は[環境変数](../deployment/environments.md)を参照）。
+
+### 4. バックエンドの環境変数設定
+
+```bash
+cp apps/backend/.env.example apps/backend/.env
+```
+
+`apps/backend/.env` を編集して必要な環境変数を設定します。
 
 ```bash
 # .env
@@ -57,7 +53,7 @@ ALLOWED_ORIGINS=http://localhost:3000
 PORT=8080
 ```
 
-### 4. ローカル PostgreSQL の起動
+### 5. ローカル PostgreSQL の起動
 
 ```bash
 # ローカルDBを起動
@@ -69,18 +65,20 @@ docker compose up -d
 ### フロントエンド
 
 ```bash
-cd apps/frontend
-pnpm dev
+pnpm dev:frontend
 ```
+
+または `apps/frontend` ディレクトリで `pnpm dev` を実行しても同等です。
 
 http://localhost:3000 でアクセスできます。
 
 ### バックエンド
 
 ```bash
-cd apps/backend
-pnpm dev
+pnpm dev:backend
 ```
+
+または `apps/backend` ディレクトリで `pnpm dev` を実行しても同等です。
 
 http://localhost:8080 でアクセスできます。
 
@@ -107,24 +105,31 @@ apps/backend/.http/
 
 ```bash
 # 開発サーバー（ホットリロード有効）
-pnpm dev
+pnpm dev:frontend
 
-# Lintチェック
+# Lintチェック（ルートから全ワークスペース一括）
 pnpm lint
+pnpm lint:fix
+
+# フォーマット確認・適用
+pnpm format:check
+pnpm format
 
 # ビルド確認
-pnpm build
+pnpm --filter chordbook-frontend build
 ```
 
 #### バックエンド
 
 ```bash
 # 開発モードで実行（ホットリロード有効）
-cd apps/backend
-pnpm dev
+pnpm dev:backend
 
 # テスト実行
-pnpm test
+pnpm --filter chordbook-backend test
+
+# Lint
+pnpm --filter chordbook-backend lint
 ```
 
 ## トラブルシューティング
@@ -135,8 +140,8 @@ pnpm test
 # pnpm のキャッシュをクリア
 pnpm store prune
 
-# node_modules を削除して再インストール
-rm -rf node_modules
+# 全ワークスペースの node_modules を削除して再インストール
+find . -name "node_modules" -type d -not -path "*/.git/*" | xargs rm -rf
 pnpm install
 ```
 

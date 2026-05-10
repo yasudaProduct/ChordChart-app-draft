@@ -4,18 +4,16 @@ import { useAuthStore } from '@/stores/authStore'
 
 export const useSongList = () => {
   const isAuthReady = !useAuthStore((s) => s.isLoading)
-  const { data, error, isLoading, mutate } = useSWR(
-    isAuthReady ? 'songs' : null,
-    () => songApi.list()
+  const { data, error, isLoading, mutate } = useSWR(isAuthReady ? 'songs' : null, () =>
+    songApi.list()
   )
   return { songs: data ?? [], error, isLoading: !isAuthReady || isLoading, mutate }
 }
 
 export const useSong = (id: string | undefined) => {
   const isAuthReady = !useAuthStore((s) => s.isLoading)
-  const { data, error, isLoading, mutate } = useSWR(
-    isAuthReady && id ? `songs/${id}` : null,
-    () => songApi.get(id!)
+  const { data, error, isLoading, mutate } = useSWR(isAuthReady && id ? `songs/${id}` : null, () =>
+    songApi.get(id!)
   )
   return { song: data, error, isLoading: !isAuthReady || isLoading, mutate }
 }

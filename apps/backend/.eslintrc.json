@@ -1,0 +1,7 @@
+{
+  "extends": ["@chordbook/eslint-config"],
+  "rules": {
+    "no-console": "off"
+  },
+  "ignorePatterns": ["dist/", "drizzle/"]
+}

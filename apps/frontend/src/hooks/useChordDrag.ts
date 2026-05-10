@@ -10,8 +10,7 @@ type DragChordState = {
   moved: boolean
 }
 
-const clamp = (value: number, min = 0, max = 1) =>
-  Math.min(max, Math.max(min, value))
+const clamp = (value: number, min = 0, max = 1) => Math.min(max, Math.max(min, value))
 
 export const useChordDrag = () => {
   const dragRef = useRef<DragChordState | null>(null)
@@ -22,12 +21,8 @@ export const useChordDrag = () => {
     const handleMove = (event: PointerEvent) => {
       const drag = dragRef.current
       if (!drag) return
-      const offset = clamp(
-        (event.clientX - drag.rect.left) / drag.rect.width
-      )
-      actionsRef.current.updateChordOffset(
-        drag.sectionId, drag.lineId, drag.chordId, offset
-      )
+      const offset = clamp((event.clientX - drag.rect.left) / drag.rect.width)
+      actionsRef.current.updateChordOffset(drag.sectionId, drag.lineId, drag.chordId, offset)
       drag.moved = drag.moved || Math.abs(event.clientX - drag.startX) > 3
     }
 
@@ -36,9 +31,7 @@ export const useChordDrag = () => {
       if (!drag) return
       if (!drag.moved) {
         const targetLine = actionsRef.current.findLine(drag.sectionId, drag.lineId)
-        const chord = targetLine?.chords.find(
-          (item) => item.id === drag.chordId
-        )
+        const chord = targetLine?.chords.find((item) => item.id === drag.chordId)
         if (chord) {
           actionsRef.current.openDialog({
             sectionId: drag.sectionId,

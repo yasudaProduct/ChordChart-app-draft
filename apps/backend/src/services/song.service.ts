@@ -91,11 +91,7 @@ const searchSongs = async (query: string): Promise<SongListItemDto[]> => {
     .where(
       and(
         eq(songs.visibility, Visibility.Public),
-        or(
-          ilike(songs.title, pattern),
-          ilike(songs.artist, pattern),
-          ilike(songs.key, pattern)
-        )
+        or(ilike(songs.title, pattern), ilike(songs.artist, pattern), ilike(songs.key, pattern))
       )
     )
     .orderBy(desc(songs.updatedAt))
@@ -108,10 +104,7 @@ const searchSongs = async (query: string): Promise<SongListItemDto[]> => {
  * - 認証済み: 自分の曲 OR 公開 OR URL限定公開
  * - 匿名: 公開曲のみ
  */
-const getSongById = async (
-  id: string,
-  userId?: string
-): Promise<SongDto | null> => {
+const getSongById = async (id: string, userId?: string): Promise<SongDto | null> => {
   const visibilityCondition = userId
     ? or(
         eq(songs.userId, userId),

@@ -12,10 +12,7 @@ interface RequestOptions {
   headers?: Record<string, string>
 }
 
-async function apiClient<T>(
-  endpoint: string,
-  options: RequestOptions = {}
-): Promise<T> {
+async function apiClient<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, headers = {} } = options
 
   const token = getToken ? await getToken() : null
@@ -57,11 +54,8 @@ async function apiClient<T>(
 
 export const api = {
   get: <T>(endpoint: string) => apiClient<T>(endpoint),
-  post: <T>(endpoint: string, body: unknown) =>
-    apiClient<T>(endpoint, { method: 'POST', body }),
-  put: <T>(endpoint: string, body: unknown) =>
-    apiClient<T>(endpoint, { method: 'PUT', body }),
-  patch: <T>(endpoint: string, body: unknown) =>
-    apiClient<T>(endpoint, { method: 'PATCH', body }),
+  post: <T>(endpoint: string, body: unknown) => apiClient<T>(endpoint, { method: 'POST', body }),
+  put: <T>(endpoint: string, body: unknown) => apiClient<T>(endpoint, { method: 'PUT', body }),
+  patch: <T>(endpoint: string, body: unknown) => apiClient<T>(endpoint, { method: 'PATCH', body }),
   delete: <T>(endpoint: string) => apiClient<T>(endpoint, { method: 'DELETE' }),
 }

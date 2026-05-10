@@ -23,18 +23,14 @@ export const MetadataPanel = ({ song, onChange }: MetadataPanelProps) => {
           label="アーティスト"
           type="text"
           value={song.artist ?? ''}
-          onChange={(event) =>
-            onChange('artist', (event.target as HTMLInputElement).value)
-          }
+          onChange={(event) => onChange('artist', (event.target as HTMLInputElement).value)}
         />
         <div>
           <Input
             label="キー"
             type="text"
             value={song.key ?? ''}
-            onChange={(event) =>
-              onChange('key', (event.target as HTMLInputElement).value)
-            }
+            onChange={(event) => onChange('key', (event.target as HTMLInputElement).value)}
           />
           <span className="ml-2 inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
             ✓ 自動検出
@@ -55,9 +51,7 @@ export const MetadataPanel = ({ song, onChange }: MetadataPanelProps) => {
           label="拍子"
           type="text"
           value={song.timeSignature}
-          onChange={(event) =>
-            onChange('timeSignature', (event.target as HTMLInputElement).value)
-          }
+          onChange={(event) => onChange('timeSignature', (event.target as HTMLInputElement).value)}
         />
       </div>
     </div>

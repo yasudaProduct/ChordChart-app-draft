@@ -57,9 +57,7 @@ export const SectionHeader = ({
               onClick={() => onTypeChange(type)}
               className={cn(
                 'rounded-md px-3 py-1 text-xs transition',
-                section.type === type
-                  ? 'bg-white text-slate-800 shadow'
-                  : 'text-slate-600'
+                section.type === type ? 'bg-white text-slate-800 shadow' : 'text-slate-600'
               )}
             >
               {type === 'lyrics-chord' ? '歌詞+コード' : 'コード'}

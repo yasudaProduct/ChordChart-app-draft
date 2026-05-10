@@ -94,14 +94,31 @@ import { formatDate } from './utils'
 
 ### ESLint / Prettier
 
-プロジェクトの設定に従う（`frontend/.eslintrc.json`）。
+共有設定パッケージ（`packages/` 配下）を各アプリが参照しています。
+
+| パッケージ | 用途 |
+|-----------|------|
+| `@chordbook/eslint-config` | 共有 ESLint ルール（TypeScript + Node.js） |
+| `@chordbook/eslint-config/next` | フロントエンド向け（Next.js + React 追加） |
+| `@chordbook/prettier-config` | 共有 Prettier 設定 |
+
+**主な Prettier 設定:** `semi: false`, `singleQuote: true`, `printWidth: 100`, `trailingComma: "es5"`
+
+**主な ESLint ルール:**
+- `@typescript-eslint/no-explicit-any`: warn
+- `@typescript-eslint/no-unused-vars`: error（`_` プレフィックスで無視可）
+- `@typescript-eslint/consistent-type-imports`: error（`import type` を強制）
 
 ```bash
-# Lint チェック
+# ルートから全ワークスペース一括実行
 pnpm lint
+pnpm lint:fix
+pnpm format
+pnpm format:check
 
-# 自動修正
-pnpm lint --fix
+# アプリ個別実行
+pnpm --filter chordbook-frontend lint
+pnpm --filter chordbook-backend lint
 ```
 
 ---

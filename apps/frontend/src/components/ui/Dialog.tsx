@@ -7,12 +7,7 @@ type DialogProps = {
   children: React.ReactNode
 }
 
-export const Dialog = ({
-  position,
-  width = 320,
-  onClose,
-  children,
-}: DialogProps) => {
+export const Dialog = ({ position, width = 320, onClose, children }: DialogProps) => {
   return (
     <div className="fixed inset-0 z-[100]" onClick={onClose}>
       <div

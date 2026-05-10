@@ -28,16 +28,15 @@ export const SongListContent = ({ mode = 'default' }: SongListContentProps) => {
   const handleDelete = async (id: string) => {
     if (!confirm('この楽曲を削除しますか？')) return
     await songApi.remove(id)
-    mutate(songs.filter((song) => song.id !== id), false)
+    mutate(
+      songs.filter((song) => song.id !== id),
+      false
+    )
   }
 
   return (
     <>
-      <SongSearchInput
-        query={query}
-        onChange={setQuery}
-        resultCount={filtered.length}
-      />
+      <SongSearchInput query={query} onChange={setQuery} resultCount={filtered.length} />
 
       <div className="mt-8 grid gap-4">
         {isLoading ? (

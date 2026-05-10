@@ -30,10 +30,7 @@ const updateSongSchema = z.object({
 // バリデーションエラーハンドリング用フック
 // ============================================================
 
-const validationHook = (
-  result: { success: boolean; error?: z.ZodError },
-  c: any
-) => {
+const validationHook = (result: { success: boolean; error?: z.ZodError }, c: any) => {
   if (!result.success) {
     return c.json(
       {

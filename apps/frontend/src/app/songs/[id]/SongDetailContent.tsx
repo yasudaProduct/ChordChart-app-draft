@@ -1,73 +1,66 @@
-"use client";
+'use client'
 
-import { useRouter } from "next/navigation";
-import { SongPreview } from "@/components/song/SongPreview";
-import { useSong } from "@/hooks/useSong";
-import { useRequireAuth } from "@/hooks/useRequireAuth";
-import type { Song } from "@/types/song";
+import { useRouter } from 'next/navigation'
+import { SongPreview } from '@/components/song/SongPreview'
+import { useSong } from '@/hooks/useSong'
+import { useRequireAuth } from '@/hooks/useRequireAuth'
+import type { Song } from '@/types/song'
 
 type SongDetailContentProps = {
-  id: string;
-  mode?: "default" | "demo";
-  song?: Song | null;
-  isLoading?: boolean;
-  error?: unknown;
-};
+  id: string
+  mode?: 'default' | 'demo'
+  song?: Song | null
+  isLoading?: boolean
+  error?: unknown
+}
 
 export const SongDetailContent = ({
   id,
-  mode = "default",
+  mode = 'default',
   song: externalSong,
   isLoading: externalLoading,
   error: externalError,
 }: SongDetailContentProps) => {
-  const router = useRouter();
-  const { requireAuth } = useRequireAuth();
+  const router = useRouter()
+  const { requireAuth } = useRequireAuth()
 
-  const fetched = useSong(mode === "default" ? id : undefined);
-  const song = externalSong !== undefined ? externalSong : fetched.song;
-  const isLoading =
-    externalLoading !== undefined ? externalLoading : fetched.isLoading;
-  const error = externalError !== undefined ? externalError : fetched.error;
+  const fetched = useSong(mode === 'default' ? id : undefined)
+  const song = externalSong !== undefined ? externalSong : fetched.song
+  const isLoading = externalLoading !== undefined ? externalLoading : fetched.isLoading
+  const error = externalError !== undefined ? externalError : fetched.error
 
-  const isDemo = mode === "demo";
-  const editHref = isDemo ? `/demo/editor/${id}` : `/editor/${id}`;
-  const backHref = isDemo ? "/demo" : "/songs";
+  const isDemo = mode === 'demo'
+  const editHref = isDemo ? `/demo/editor/${id}` : `/editor/${id}`
+  const backHref = isDemo ? '/demo' : '/songs'
 
   if (error) {
     return (
       <div className="mx-auto max-w-4xl px-6 py-16 text-sm text-red-600">
-        {error instanceof Error ? error.message : "読み込みに失敗しました"}
+        {error instanceof Error ? error.message : '読み込みに失敗しました'}
       </div>
-    );
+    )
   }
 
   if (isLoading || !song) {
-    return (
-      <div className="mx-auto max-w-4xl px-6 py-16 text-sm text-slate-500">
-        読み込み中...
-      </div>
-    );
+    return <div className="mx-auto max-w-4xl px-6 py-16 text-sm text-slate-500">読み込み中...</div>
   }
 
   const handleEdit = () => {
     if (isDemo) {
-      router.push(editHref);
+      router.push(editHref)
     } else {
-      requireAuth(() => router.push(editHref));
+      requireAuth(() => router.push(editHref))
     }
-  };
+  }
 
   return (
     <section className="mx-auto max-w-4xl px-6 py-10">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-semibold text-slate-900">
-            {song.title}
-          </h1>
+          <h1 className="font-display text-2xl font-semibold text-slate-900">{song.title}</h1>
           <p className="text-sm text-slate-500">
-            {song.artist || "アーティスト未設定"} · Key {song.key || "-"} · BPM{" "}
-            {song.bpm ?? "-"} · {song.timeSignature}
+            {song.artist || 'アーティスト未設定'} · Key {song.key || '-'} · BPM {song.bpm ?? '-'} ·{' '}
+            {song.timeSignature}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 print:hidden">
@@ -99,5 +92,5 @@ export const SongDetailContent = ({
         <SongPreview song={song} />
       </div>
     </section>
-  );
-};
+  )
+}

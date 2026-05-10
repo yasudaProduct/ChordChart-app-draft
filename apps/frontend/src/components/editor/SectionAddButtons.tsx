@@ -8,10 +8,7 @@ type SectionAddButtonsProps = {
   hasSections: boolean
 }
 
-export const SectionAddButtons = ({
-  onAddSection,
-  hasSections,
-}: SectionAddButtonsProps) => {
+export const SectionAddButtons = ({ onAddSection, hasSections }: SectionAddButtonsProps) => {
   return (
     <>
       <button

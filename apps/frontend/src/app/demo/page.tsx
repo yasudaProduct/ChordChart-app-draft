@@ -15,9 +15,7 @@ export default function DemoPage() {
       <section className="mx-auto w-full max-w-6xl px-6 py-10">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="font-display text-2xl font-semibold text-slate-900">
-              デモ
-            </h1>
+            <h1 className="font-display text-2xl font-semibold text-slate-900">デモ</h1>
             <p className="text-sm text-slate-500">
               登録不要で閲覧・編集を体験できます。編集内容はブラウザに保存されます。
             </p>

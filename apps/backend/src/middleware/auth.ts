@@ -14,9 +14,7 @@ const getJWKS = () => {
     if (!clerkIssuer) {
       throw new Error('CLERK_ISSUER environment variable is not set')
     }
-    jwks = createRemoteJWKSet(
-      new URL(`${clerkIssuer}/.well-known/jwks.json`)
-    )
+    jwks = createRemoteJWKSet(new URL(`${clerkIssuer}/.well-known/jwks.json`))
   }
   return jwks
 }

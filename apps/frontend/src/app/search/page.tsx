@@ -1,33 +1,31 @@
-"use client";
+'use client'
 
-import { useRef, useState } from "react";
-import Link from "next/link";
-import { SiteHeader } from "@/components/layout/SiteHeader";
-import { useSongSearch } from "@/hooks/useSong";
+import { useRef, useState } from 'react'
+import Link from 'next/link'
+import { SiteHeader } from '@/components/layout/SiteHeader'
+import { useSongSearch } from '@/hooks/useSong'
 
 export default function SearchPage() {
-  const [query, setQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [query, setQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const { results, isLoading } = useSongSearch(debouncedQuery);
+  const { results, isLoading } = useSongSearch(debouncedQuery)
 
   const handleQueryChange = (value: string) => {
-    setQuery(value);
-    if (timerRef.current) clearTimeout(timerRef.current);
+    setQuery(value)
+    if (timerRef.current) clearTimeout(timerRef.current)
     timerRef.current = setTimeout(() => {
-      setDebouncedQuery(value);
-    }, 300);
-  };
+      setDebouncedQuery(value)
+    }, 300)
+  }
 
   return (
     <main className="min-h-screen">
       <SiteHeader variant="app" />
       <section className="mx-auto w-full max-w-5xl px-6 py-10">
         <div>
-          <h1 className="font-display text-2xl font-semibold text-slate-900">
-            検索
-          </h1>
+          <h1 className="font-display text-2xl font-semibold text-slate-900">検索</h1>
           <p className="text-sm text-slate-500">
             公開楽曲の検索画面（MVPでは全件から検索できます）。
           </p>
@@ -64,12 +62,9 @@ export default function SearchPage() {
               >
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <h2 className="text-lg font-semibold text-slate-900">
-                      {song.title}
-                    </h2>
+                    <h2 className="text-lg font-semibold text-slate-900">{song.title}</h2>
                     <p className="text-sm text-slate-500">
-                      {song.artist || "アーティスト未設定"} · Key{" "}
-                      {song.key || "-"}
+                      {song.artist || 'アーティスト未設定'} · Key {song.key || '-'}
                     </p>
                   </div>
                   <Link
@@ -85,5 +80,5 @@ export default function SearchPage() {
         </div>
       </section>
     </main>
-  );
+  )
 }

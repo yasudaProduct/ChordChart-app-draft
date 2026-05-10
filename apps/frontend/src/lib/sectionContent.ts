@@ -23,9 +23,7 @@ export const createEmptyLine = (): SectionLine => ({
   chords: [],
 })
 
-export const parseSectionContent = (
-  content: string | undefined
-): SectionContent => {
+export const parseSectionContent = (content: string | undefined): SectionContent => {
   if (!content) return { lines: [] }
   try {
     const parsed = JSON.parse(content) as { lines?: unknown[] }
@@ -38,8 +36,8 @@ export const parseSectionContent = (
           id: (line.id as string) ?? generateId(),
           lyrics: typeof line.lyrics === 'string' ? line.lyrics : '',
           chords: Array.isArray(line.chords)
-            // eslint-disable-next-line
-            ? (line.chords as any[]).map((c) => {
+            ? // eslint-disable-next-line
+              (line.chords as any[]).map((c) => {
                 const chord = c as Record<string, unknown>
                 return {
                   id: (chord.id as string) ?? generateId(),

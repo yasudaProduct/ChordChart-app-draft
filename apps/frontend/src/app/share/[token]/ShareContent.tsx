@@ -11,9 +11,11 @@ export const ShareContent = ({ token }: ShareContentProps) => {
   const { song, error, isLoading } = useSong(token)
 
   if (error) {
-    return <div className="mt-6 text-sm text-red-600">
-      {error instanceof Error ? error.message : '読み込みに失敗しました'}
-    </div>
+    return (
+      <div className="mt-6 text-sm text-red-600">
+        {error instanceof Error ? error.message : '読み込みに失敗しました'}
+      </div>
+    )
   }
 
   if (isLoading || !song) {

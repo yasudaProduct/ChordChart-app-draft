@@ -22,12 +22,24 @@ ChordBook - コード譜を作成・管理・共有できるWebアプリケー�
 docker compose up -d   # ローカルPostgreSQLを起動
 ```
 
+### ルート（全ワークスペース一括）
+```bash
+pnpm install      # 全ワークスペースの依存関係をインストール
+pnpm lint         # 全アプリのESLint実行
+pnpm lint:fix     # 全アプリのESLint自動修正
+pnpm format       # 全アプリのPrettierフォーマット適用
+pnpm format:check # 全アプリのPrettierフォーマット確認
+pnpm build        # 全アプリのビルド
+pnpm test         # 全アプリのテスト実行
+```
+
 ### フロントエンド (apps/frontend)
 ```bash
 pnpm dev          # 開発サーバー起動 (localhost:3000)
 pnpm build        # 本番ビルド
 pnpm lint         # ESLint実行
-pnpm lint --fix   # ESLint自動修正
+pnpm lint:fix     # ESLint自動修正
+pnpm format       # Prettierフォーマット適用
 ```
 
 ### バックエンド (apps/backend)
@@ -37,11 +49,25 @@ pnpm dev          # 開発サーバー起動 (tsx watch, localhost:8080)
 pnpm build        # 本番ビルド (tsup)
 pnpm start        # 本番起動 (node dist/index.js)
 pnpm test         # テスト実行 (vitest)
+pnpm lint         # ESLint実行
+pnpm lint:fix     # ESLint自動修正
+pnpm format       # Prettierフォーマット適用
 pnpm db:generate  # Drizzleマイグレーション生成
 pnpm db:push      # DBスキーマをプッシュ
 ```
 
 ## アーキテクチャ
+
+### モノレポ構造
+```
+chord-chart/
+├── apps/
+│   ├── frontend/     # Next.js フロントエンド
+│   └── backend/      # Hono バックエンド
+└── packages/
+    ├── eslint-config/    # @chordbook/eslint-config（共有ESLintルール）
+    └── prettier-config/  # @chordbook/prettier-config（共有Prettierルール）
+```
 
 ### フロントエンド構造
 ```

@@ -1,51 +1,47 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useClerk } from "@clerk/nextjs";
-import { cn } from "@/lib/utils";
-import { useAuthStore } from "@/stores/authStore";
+import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
+import { useClerk } from '@clerk/nextjs'
+import { cn } from '@/lib/utils'
+import { useAuthStore } from '@/stores/authStore'
 
-type HeaderVariant = "public" | "app";
+type HeaderVariant = 'public' | 'app'
 
 type SiteHeaderProps = {
-  variant?: HeaderVariant;
-};
+  variant?: HeaderVariant
+}
 
 const navItems = [
-  { href: "/songs", label: "楽曲一覧" },
-  { href: "/search", label: "検索" },
-  { href: "/profile", label: "プロフィール" },
-];
+  { href: '/songs', label: '楽曲一覧' },
+  { href: '/search', label: '検索' },
+  { href: '/profile', label: 'プロフィール' },
+]
 
-export const SiteHeader = ({ variant = "public" }: SiteHeaderProps) => {
-  const pathname = usePathname();
-  const router = useRouter();
-  const { user } = useAuthStore();
-  const { signOut } = useClerk();
+export const SiteHeader = ({ variant = 'public' }: SiteHeaderProps) => {
+  const pathname = usePathname()
+  const router = useRouter()
+  const { user } = useAuthStore()
+  const { signOut } = useClerk()
 
   return (
     <header className="print-hidden sticky top-0 z-40 border-b border-white/60 bg-white/80 backdrop-blur">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-4">
         <div className="flex items-center gap-4">
-          <Link
-            href="/"
-            className="text-lg font-semibold font-display tracking-tight"
-          >
+          <Link href="/" className="text-lg font-semibold font-display tracking-tight">
             ChordBook
           </Link>
-          {variant === "app" && (
+          {variant === 'app' && (
             <nav className="hidden items-center gap-3 text-sm text-slate-600 md:flex">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "rounded-full px-3 py-1 transition",
-                    pathname === item.href ||
-                      (item.href !== "/" && pathname?.startsWith(item.href))
-                      ? "bg-slate-900 text-white"
-                      : "hover:bg-slate-100",
+                    'rounded-full px-3 py-1 transition',
+                    pathname === item.href || (item.href !== '/' && pathname?.startsWith(item.href))
+                      ? 'bg-slate-900 text-white'
+                      : 'hover:bg-slate-100'
                   )}
                 >
                   {item.label}
@@ -56,20 +52,18 @@ export const SiteHeader = ({ variant = "public" }: SiteHeaderProps) => {
         </div>
 
         <div className="flex items-center gap-3">
-          {variant === "app" ? (
+          {variant === 'app' ? (
             <>
               <button
                 type="button"
-                onClick={() => router.push("/songs/new")}
+                onClick={() => router.push('/songs/new')}
                 className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
               >
                 + 新規作成
               </button>
               {user ? (
                 <div className="flex items-center gap-2 text-sm text-slate-600">
-                  <span className="hidden sm:inline">
-                    {user.name ?? user.email}
-                  </span>
+                  <span className="hidden sm:inline">{user.name ?? user.email}</span>
                   <button
                     type="button"
                     onClick={() => void signOut()}
@@ -98,10 +92,7 @@ export const SiteHeader = ({ variant = "public" }: SiteHeaderProps) => {
                 </Link>
               ) : (
                 <>
-                  <Link
-                    href="/login"
-                    className="text-sm text-slate-600 hover:text-slate-900"
-                  >
+                  <Link href="/login" className="text-sm text-slate-600 hover:text-slate-900">
                     ログイン
                   </Link>
                   <Link
@@ -117,5 +108,5 @@ export const SiteHeader = ({ variant = "public" }: SiteHeaderProps) => {
         </div>
       </div>
     </header>
-  );
-};
+  )
+}
