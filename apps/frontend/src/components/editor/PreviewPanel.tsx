@@ -52,9 +52,7 @@ export const PreviewPanel = ({ song }: PreviewPanelProps) => {
                       ))}
                     </div>
                     {section.type === 'lyrics-chord' && (
-                      <div className="text-sm text-slate-800">
-                        {line.lyrics}
-                      </div>
+                      <div className="text-sm text-slate-800">{line.lyrics}</div>
                     )}
                   </div>
                 ))}

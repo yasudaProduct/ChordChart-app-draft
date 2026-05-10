@@ -8,10 +8,7 @@ export default function RegisterPage() {
     <main className="min-h-screen">
       <SiteHeader variant="public" />
       <section className="mx-auto flex max-w-4xl flex-col items-center gap-6 px-6 py-16">
-        <SignUp
-          routing="hash"
-          fallbackRedirectUrl="/songs"
-        />
+        <SignUp routing="hash" fallbackRedirectUrl="/songs" />
       </section>
     </main>
   )

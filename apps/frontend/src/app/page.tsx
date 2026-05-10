@@ -47,7 +47,7 @@ export default function Home() {
           <div className="mt-6 space-y-4 font-mono text-sm text-slate-700">
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
               <p className="text-xs text-slate-400">Verse</p>
-              <p>C        G        Am       F</p>
+              <p>C G Am F</p>
               <p>きょうも いちにち がんばった</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -63,8 +63,7 @@ export default function Home() {
           {[
             {
               title: '直感的なエディタ',
-              description:
-                'セクションごとに整理しながら、歌詞+コード/小節形式をスムーズに編集。',
+              description: 'セクションごとに整理しながら、歌詞+コード/小節形式をスムーズに編集。',
             },
             {
               title: '演奏に最適化',
@@ -79,9 +78,7 @@ export default function Home() {
               key={feature.title}
               className="rounded-2xl border border-white/60 bg-white/70 p-6 shadow-[0_20px_50px_-40px_rgba(15,23,42,0.6)] backdrop-blur"
             >
-              <h3 className="font-display text-lg font-semibold text-slate-900">
-                {feature.title}
-              </h3>
+              <h3 className="font-display text-lg font-semibold text-slate-900">{feature.title}</h3>
               <p className="mt-3 text-sm text-slate-600">{feature.description}</p>
             </div>
           ))}

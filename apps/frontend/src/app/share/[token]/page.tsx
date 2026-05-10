@@ -22,9 +22,7 @@ export default async function SharePage({ params }: SharePageProps) {
         <div className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-[0_30px_80px_-50px_rgba(15,23,42,0.5)]">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h1 className="font-display text-2xl font-semibold text-slate-900">
-                共有コード譜
-              </h1>
+              <h1 className="font-display text-2xl font-semibold text-slate-900">共有コード譜</h1>
               <p className="text-sm text-slate-500">
                 このページはURL共有で閲覧できる想定です（MVP）。
               </p>

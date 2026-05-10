@@ -17,10 +17,7 @@ type SectionEditorProps = {
   onMove: (direction: -1 | 1) => void
   onDelete: () => void
   onAddLine: () => void
-  onChordRowClick: (
-    event: React.MouseEvent<HTMLDivElement>,
-    lineId: string
-  ) => void
+  onChordRowClick: (event: React.MouseEvent<HTMLDivElement>, lineId: string) => void
   onChordPointerDown: (
     event: React.PointerEvent<HTMLButtonElement>,
     lineId: string,
@@ -54,10 +51,7 @@ export const SectionEditor = ({
 
   return (
     <div
-      className={cn(
-        'overflow-hidden rounded-2xl bg-white shadow-sm',
-        isDragging && 'opacity-70'
-      )}
+      className={cn('overflow-hidden rounded-2xl bg-white shadow-sm', isDragging && 'opacity-70')}
       onDragOver={onDragOver}
       onDragEnd={onDragEnd}
     >
@@ -82,9 +76,7 @@ export const SectionEditor = ({
             line={line}
             sectionType={section.type}
             onChordRowClick={(event) => onChordRowClick(event, line.id)}
-            onChordPointerDown={(event, chord) =>
-              onChordPointerDown(event, line.id, chord)
-            }
+            onChordPointerDown={(event, chord) => onChordPointerDown(event, line.id, chord)}
             onLyricsChange={(lyrics) => onLineLyricsChange(line.id, lyrics)}
           />
         ))}

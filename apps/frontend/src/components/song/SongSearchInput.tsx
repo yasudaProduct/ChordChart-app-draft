@@ -4,11 +4,7 @@ type SongSearchInputProps = {
   resultCount: number
 }
 
-export const SongSearchInput = ({
-  query,
-  onChange,
-  resultCount,
-}: SongSearchInputProps) => {
+export const SongSearchInput = ({ query, onChange, resultCount }: SongSearchInputProps) => {
   return (
     <div className="mt-6 flex flex-wrap items-center gap-3">
       <input

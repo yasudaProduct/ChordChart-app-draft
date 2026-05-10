@@ -1,7 +1,7 @@
-"use client";
+'use client'
 
-import { UserProfile } from "@clerk/nextjs";
-import { SiteHeader } from "@/components/layout/SiteHeader";
+import { UserProfile } from '@clerk/nextjs'
+import { SiteHeader } from '@/components/layout/SiteHeader'
 
 export default function ProfilePage() {
   return (
@@ -11,5 +11,5 @@ export default function ProfilePage() {
         <UserProfile routing="hash" />
       </section>
     </main>
-  );
+  )
 }

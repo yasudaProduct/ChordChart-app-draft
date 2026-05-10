@@ -1,40 +1,38 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { SiteHeader } from "@/components/layout/SiteHeader";
-import { songApi } from "@/lib/songApi";
-import { KEYS, TIME_SIGNATURES } from "@/lib/utils";
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { SiteHeader } from '@/components/layout/SiteHeader'
+import { songApi } from '@/lib/songApi'
+import { KEYS, TIME_SIGNATURES } from '@/lib/utils'
 
 export default function NewSongPage() {
-  const router = useRouter();
-  const [title, setTitle] = useState("");
-  const [artist, setArtist] = useState("");
-  const [key, setKey] = useState("C");
-  const [bpm, setBpm] = useState<number | "">(120);
-  const [timeSignature, setTimeSignature] = useState("4/4");
+  const router = useRouter()
+  const [title, setTitle] = useState('')
+  const [artist, setArtist] = useState('')
+  const [key, setKey] = useState('C')
+  const [bpm, setBpm] = useState<number | ''>(120)
+  const [timeSignature, setTimeSignature] = useState('4/4')
 
   const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!title.trim()) return;
+    event.preventDefault()
+    if (!title.trim()) return
     const song = await songApi.create({
       title,
       artist,
       key,
-      bpm: bpm === "" ? undefined : Number(bpm),
+      bpm: bpm === '' ? undefined : Number(bpm),
       timeSignature,
-    });
-    router.push(`/editor/${song.id}`);
-  };
+    })
+    router.push(`/editor/${song.id}`)
+  }
 
   return (
     <main className="min-h-screen">
       <SiteHeader variant="app" />
       <section className="mx-auto w-full max-w-4xl px-6 py-12">
         <div className="rounded-3xl border border-white/60 bg-white/80 p-8 shadow-[0_30px_80px_-50px_rgba(15,23,42,0.5)] backdrop-blur">
-          <h1 className="font-display text-2xl font-semibold text-slate-900">
-            新しい楽曲
-          </h1>
+          <h1 className="font-display text-2xl font-semibold text-slate-900">新しい楽曲</h1>
           <p className="mt-2 text-sm text-slate-500">
             タイトルと基本情報を入力して編集を開始します。
           </p>
@@ -84,11 +82,7 @@ export default function NewSongPage() {
                   type="number"
                   value={bpm}
                   onChange={(event) =>
-                    setBpm(
-                      event.target.value === ""
-                        ? ""
-                        : Number(event.target.value),
-                    )
+                    setBpm(event.target.value === '' ? '' : Number(event.target.value))
                   }
                   className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400"
                   min={40}
@@ -121,5 +115,5 @@ export default function NewSongPage() {
         </div>
       </section>
     </main>
-  );
+  )
 }

@@ -23,6 +23,9 @@ chord-chart/
 ├── apps/
 │   ├── frontend/        # Next.js フロントエンド
 │   └── backend/         # Hono バックエンド (TypeScript)
+├── packages/
+│   ├── eslint-config/   # 共有 ESLint 設定 (@chordbook/eslint-config)
+│   └── prettier-config/ # 共有 Prettier 設定 (@chordbook/prettier-config)
 ├── docs/                # ドキュメント
 └── .github/             # GitHub Actions
 ```
@@ -48,15 +51,21 @@ cd chord-chart
 docker compose up -d
 ```
 
-### 3. フロントエンドのセットアップ
+### 3. 依存関係のインストール
+
+ルートディレクトリで一度実行するだけで全ワークスペースにインストールされます。
 
 ```bash
-cd apps/frontend
 pnpm install
-cp .env.local.example .env.local
 ```
 
-`.env.local` に Clerk のキーを設定します。
+### 4. フロントエンドの環境変数設定
+
+```bash
+cp apps/frontend/.env.local.example apps/frontend/.env.local
+```
+
+`apps/frontend/.env.local` に Clerk のキーを設定します。
 
 ```env
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_XXXXXXXX
@@ -64,15 +73,13 @@ CLERK_SECRET_KEY=sk_test_XXXXXXXX
 NEXT_PUBLIC_API_URL=http://localhost:8080/api
 ```
 
-### 4. バックエンドのセットアップ
+### 5. バックエンドの環境変数設定
 
 ```bash
-cd apps/backend
-pnpm install
-cp .env.example .env
+cp apps/backend/.env.example apps/backend/.env
 ```
 
-`.env` に Clerk の Issuer URL を設定します。
+`apps/backend/.env` に Clerk の Issuer URL を設定します。
 
 ```env
 DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/chordbook
@@ -82,32 +89,29 @@ ALLOWED_ORIGINS=http://localhost:3000
 PORT=8080
 ```
 
-### 5. DBスキーマの適用
+### 6. DBスキーマの適用
 
 ```bash
-cd apps/backend
-pnpm db:push
+pnpm --filter chordbook-backend db:push
 ```
 
-### 6. 開発サーバーの起動
+### 7. 開発サーバーの起動
 
 バックエンドとフロントエンドをそれぞれ別のターミナルで起動します。
 
 ```bash
 # ターミナル1: バックエンド
-cd apps/backend
-pnpm dev
+pnpm dev:backend
 # http://localhost:8080
 ```
 
 ```bash
 # ターミナル2: フロントエンド
-cd apps/frontend
-pnpm dev
+pnpm dev:frontend
 # http://localhost:3000
 ```
 
-### 7. Clerk Webhook のローカル開発（ngrok）
+### 8. Clerk Webhook のローカル開発（ngrok）
 
 Clerk の Webhook をローカル環境で受け取るために ngrok を使用します。
 
@@ -161,6 +165,18 @@ Forwarding  https://xxxx-xxx-xxx.ngrok-free.app -> http://localhost:8080
 6. 作成後に表示される **Signing Secret** を `apps/backend/.env` の `CLERK_WEBHOOK_SECRET` に設定
 
 > **注意:** ngrok の無料プランでは起動するたびに URL が変わるため、再起動時は Clerk Dashboard の Webhook URL も更新してください。固定ドメインを使いたい場合は `ngrok http --domain=your-domain.ngrok-free.app 8080` を使用します（無料プランでも1つ利用可能）。
+
+### コード品質チェック
+
+```bash
+# Lint（全ワークスペース一括）
+pnpm lint
+pnpm lint:fix
+
+# フォーマット（全ワークスペース一括）
+pnpm format:check
+pnpm format
+```
 
 ### デモモード
 

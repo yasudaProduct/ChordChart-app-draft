@@ -1,46 +1,46 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
-import { useRequireAuth } from "@/hooks/useRequireAuth";
-import type { SongListItem } from "@/types/song";
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/Button'
+import { useRequireAuth } from '@/hooks/useRequireAuth'
+import type { SongListItem } from '@/types/song'
 
 type SongCardProps = {
-  song: SongListItem;
-  mode?: "default" | "demo";
-  onDelete?: (id: string) => void;
-};
+  song: SongListItem
+  mode?: 'default' | 'demo'
+  onDelete?: (id: string) => void
+}
 
 const formatDate = (value: string) => {
-  const date = new Date(value);
-  return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, "0")}/${String(
-    date.getDate(),
-  ).padStart(2, "0")}`;
-};
+  const date = new Date(value)
+  return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(
+    date.getDate()
+  ).padStart(2, '0')}`
+}
 
-export const SongCard = ({ song, mode = "default", onDelete }: SongCardProps) => {
-  const router = useRouter();
-  const { requireAuth } = useRequireAuth();
+export const SongCard = ({ song, mode = 'default', onDelete }: SongCardProps) => {
+  const router = useRouter()
+  const { requireAuth } = useRequireAuth()
 
-  const isDemo = mode === "demo";
-  const detailHref = isDemo ? `/demo/${song.id}` : `/songs/${song.id}`;
-  const editHref = isDemo ? `/demo/editor/${song.id}` : `/editor/${song.id}`;
+  const isDemo = mode === 'demo'
+  const detailHref = isDemo ? `/demo/${song.id}` : `/songs/${song.id}`
+  const editHref = isDemo ? `/demo/editor/${song.id}` : `/editor/${song.id}`
 
   const handleEdit = () => {
     if (isDemo) {
-      router.push(editHref);
+      router.push(editHref)
     } else {
-      requireAuth(() => router.push(editHref));
+      requireAuth(() => router.push(editHref))
     }
-  };
+  }
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/60 bg-white/80 p-5 shadow-[0_20px_50px_-40px_rgba(15,23,42,0.6)]">
       <div>
         <h2 className="text-lg font-semibold text-slate-900">{song.title}</h2>
         <p className="text-sm text-slate-500">
-          {song.artist || "アーティスト未設定"} · Key {song.key || "-"} · 更新{" "}
+          {song.artist || 'アーティスト未設定'} · Key {song.key || '-'} · 更新{' '}
           {formatDate(song.updatedAt)}
         </p>
       </div>
@@ -70,5 +70,5 @@ export const SongCard = ({ song, mode = "default", onDelete }: SongCardProps) =>
         )}
       </div>
     </div>
-  );
-};
+  )
+}

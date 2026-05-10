@@ -7,12 +7,7 @@ type ToggleProps = {
   'aria-label'?: string
 }
 
-export const Toggle = ({
-  checked,
-  onChange,
-  label,
-  'aria-label': ariaLabel,
-}: ToggleProps) => {
+export const Toggle = ({ checked, onChange, label, 'aria-label': ariaLabel }: ToggleProps) => {
   return (
     <div className="flex items-center gap-2 rounded-md bg-slate-100 px-3 py-1 text-xs text-slate-600">
       {label && <span>{label}</span>}

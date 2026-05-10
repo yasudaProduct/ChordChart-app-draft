@@ -14,11 +14,9 @@ type ButtonProps = {
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
     'bg-primary font-semibold text-white transition hover:bg-primary-hover disabled:opacity-60',
-  secondary:
-    'border border-slate-200 text-slate-700 transition hover:border-slate-400',
+  secondary: 'border border-slate-200 text-slate-700 transition hover:border-slate-400',
   ghost: 'text-slate-600 transition hover:bg-slate-100',
-  danger:
-    'border border-red-200 text-red-600 transition hover:border-red-400',
+  danger: 'border border-red-200 text-red-600 transition hover:border-red-400',
 }
 
 const sizeStyles: Record<ButtonSize, string> = {

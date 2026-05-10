@@ -31,10 +31,7 @@ export const SongPreview = ({ song, className }: SongPreviewProps) => {
         {parsedSections.map((section) => {
           const content = section.parsed
           return (
-            <div
-              key={section.id}
-              className="rounded-2xl border border-slate-200 bg-white/80 p-4"
-            >
+            <div key={section.id} className="rounded-2xl border border-slate-200 bg-white/80 p-4">
               <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-slate-400">
                 <span>{section.name}</span>
                 <span>{section.type === 'lyrics-chord' ? 'Lyrics' : 'Chord'}</span>
@@ -57,9 +54,7 @@ export const SongPreview = ({ song, className }: SongPreviewProps) => {
                       ))}
                     </div>
                     {section.type === 'lyrics-chord' && (
-                      <div className="text-sm text-slate-700">
-                        {line.lyrics || '　'}
-                      </div>
+                      <div className="text-sm text-slate-700">{line.lyrics || '　'}</div>
                     )}
                   </div>
                 ))}

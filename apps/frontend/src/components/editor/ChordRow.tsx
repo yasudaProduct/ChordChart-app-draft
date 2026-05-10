@@ -5,17 +5,10 @@ import type { ChordBlock } from '@/lib/sectionContent'
 type ChordRowProps = {
   chords: ChordBlock[]
   onClick: (event: React.MouseEvent<HTMLDivElement>) => void
-  onChordPointerDown: (
-    event: React.PointerEvent<HTMLButtonElement>,
-    chord: ChordBlock
-  ) => void
+  onChordPointerDown: (event: React.PointerEvent<HTMLButtonElement>, chord: ChordBlock) => void
 }
 
-export const ChordRow = ({
-  chords,
-  onClick,
-  onChordPointerDown,
-}: ChordRowProps) => {
+export const ChordRow = ({ chords, onClick, onChordPointerDown }: ChordRowProps) => {
   return (
     <div
       className="relative min-h-[36px] rounded-md border border-slate-200 bg-white"

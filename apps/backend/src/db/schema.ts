@@ -39,7 +39,9 @@ export const visibilityEnum = pgEnum('visibility', [
 export const songs = pgTable(
   'Songs',
   {
-    id: uuid('Id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+    id: uuid('Id')
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     userId: text('UserId')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
@@ -65,7 +67,9 @@ export const songs = pgTable(
 export const bookmarks = pgTable(
   'Bookmarks',
   {
-    id: uuid('Id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+    id: uuid('Id')
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     userId: text('UserId')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
@@ -75,9 +79,7 @@ export const bookmarks = pgTable(
     createdAt: timestamp('CreatedAt', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('UpdatedAt', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [
-    uniqueIndex('IX_Bookmarks_UserId_SongId').on(table.userId, table.songId),
-  ]
+  (table) => [uniqueIndex('IX_Bookmarks_UserId_SongId').on(table.userId, table.songId)]
 )
 
 // ============================================================
@@ -86,7 +88,9 @@ export const bookmarks = pgTable(
 export const songShares = pgTable(
   'SongShares',
   {
-    id: uuid('Id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+    id: uuid('Id')
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     songId: uuid('SongId')
       .notNull()
       .references(() => songs.id, { onDelete: 'cascade' }),
@@ -95,9 +99,7 @@ export const songShares = pgTable(
     createdAt: timestamp('CreatedAt', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('UpdatedAt', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [
-    uniqueIndex('IX_SongShares_ShareToken').on(table.shareToken),
-  ]
+  (table) => [uniqueIndex('IX_SongShares_ShareToken').on(table.shareToken)]
 )
 
 // ============================================================

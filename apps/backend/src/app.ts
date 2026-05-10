@@ -16,15 +16,18 @@ const app = new Hono<AppEnv>()
 app.use('*', logger())
 
 // CORS設定
-app.use('*', cors({
-  origin: (origin) => {
-    const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(',')
-    return allowedOrigins.includes(origin) ? origin : allowedOrigins[0]
-  },
-  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-}))
+app.use(
+  '*',
+  cors({
+    origin: (origin) => {
+      const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(',')
+      return allowedOrigins.includes(origin) ? origin : allowedOrigins[0]
+    },
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  })
+)
 
 // ルート
 app.route('/api/health', healthRoutes)

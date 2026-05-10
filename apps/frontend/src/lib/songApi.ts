@@ -27,10 +27,14 @@ const isAuthenticated = (): boolean => {
   return useAuthStore.getState().user !== null
 }
 
-const safeJsonParse = (value: string | { sections?: Section[] } | null): { sections: Section[] } => {
+const safeJsonParse = (
+  value: string | { sections?: Section[] } | null
+): { sections: Section[] } => {
   if (!value) return { sections: [] }
   try {
-    const parsed = (typeof value === 'string' ? JSON.parse(value) : value) as { sections?: Section[] }
+    const parsed = (typeof value === 'string' ? JSON.parse(value) : value) as {
+      sections?: Section[]
+    }
     return { sections: Array.isArray(parsed.sections) ? parsed.sections : [] }
   } catch {
     return { sections: [] }
@@ -87,7 +91,7 @@ export const songApi = {
     return toSong(dto)
   },
 
-  async create(meta: SongMeta, visibility?: SongVisibility): Promise<Song> {
+  async create(meta: SongMeta, _visibility?: SongVisibility): Promise<Song> {
     if (!isAuthenticated()) {
       throw new Error('ログインが必要です')
     }

@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import { useEffect } from 'react'
 import dynamic from 'next/dynamic'
@@ -18,12 +18,12 @@ import type { ChordBlock } from '@/lib/sectionContent'
 import type { Song } from '@/types/song'
 
 const PreviewPanel = dynamic(
-  () => import('@/components/editor/PreviewPanel').then(mod => ({ default: mod.PreviewPanel })),
+  () => import('@/components/editor/PreviewPanel').then((mod) => ({ default: mod.PreviewPanel })),
   { ssr: false }
 )
 
 const ChordDialog = dynamic(
-  () => import('@/components/editor/ChordDialog').then(mod => ({ default: mod.ChordDialog })),
+  () => import('@/components/editor/ChordDialog').then((mod) => ({ default: mod.ChordDialog })),
   { ssr: false }
 )
 
@@ -34,13 +34,8 @@ type EditorContentProps = {
   backHref: string
 }
 
-export const EditorContent = ({
-  songId,
-  fetchSong,
-  saveFn,
-  backHref,
-}: EditorContentProps) => {
-  const router = useRouter();
+export const EditorContent = ({ songId, fetchSong, saveFn, backHref }: EditorContentProps) => {
+  const router = useRouter()
 
   const song = useEditorStore((s) => s.song)
   const isPreviewVisible = useEditorStore((s) => s.isPreviewVisible)
@@ -65,22 +60,16 @@ export const EditorContent = ({
     handleChordRowClick,
     handleChordConfirm,
     handleChordDelete,
-  } = useEditorActions(saveFn);
+  } = useEditorActions(saveFn)
 
-  const { startChordDrag } = useChordDrag();
+  const { startChordDrag } = useChordDrag()
 
-  const {
-    draggingSectionId,
-    handleSectionDragStart,
-    handleSectionDragOver,
-    handleSectionDragEnd,
-  } = useSectionDrag();
+  const { draggingSectionId, handleSectionDragStart, handleSectionDragOver, handleSectionDragEnd } =
+    useSectionDrag()
 
-  const { isLoading: isFetching } = useSWR(
-    `editor/${songId}`,
-    () => fetchSong(songId),
-    { onSuccess: setSong }
-  )
+  const { isLoading: isFetching } = useSWR(`editor/${songId}`, () => fetchSong(songId), {
+    onSuccess: setSong,
+  })
 
   const isLoading = song === null && isFetching
 
@@ -96,11 +85,11 @@ export const EditorContent = ({
     event: React.PointerEvent<HTMLButtonElement>,
     sectionId: string,
     lineId: string,
-    chord: ChordBlock,
+    chord: ChordBlock
   ) => {
-    event.stopPropagation();
-    const rect = event.currentTarget.parentElement?.getBoundingClientRect();
-    if (!rect) return;
+    event.stopPropagation()
+    const rect = event.currentTarget.parentElement?.getBoundingClientRect()
+    if (!rect) return
     startChordDrag({
       sectionId,
       lineId,
@@ -108,17 +97,17 @@ export const EditorContent = ({
       rect,
       startX: event.clientX,
       moved: false,
-    });
-  };
+    })
+  }
 
   if (!song) {
     return (
       <main className="min-h-screen">
         <div className="mx-auto max-w-4xl px-6 py-16 text-sm text-slate-500">
-          {isLoading ? "読み込み中..." : "楽曲が見つかりませんでした。"}
+          {isLoading ? '読み込み中...' : '楽曲が見つかりませんでした。'}
         </div>
       </main>
-    );
+    )
   }
 
   return (
@@ -134,18 +123,11 @@ export const EditorContent = ({
         onBack={() => router.push(backHref)}
       />
 
-      <div
-        className={cn(
-          "flex min-h-screen pt-16",
-          isPreviewVisible && "bg-white",
-        )}
-      >
+      <div className={cn('flex min-h-screen pt-16', isPreviewVisible && 'bg-white')}>
         <div
           className={cn(
-            "flex-1 px-6 py-8 transition",
-            isPreviewVisible
-              ? "w-1/2 max-w-none pr-4"
-              : "mx-auto max-w-[820px]",
+            'flex-1 px-6 py-8 transition',
+            isPreviewVisible ? 'w-1/2 max-w-none pr-4' : 'mx-auto max-w-[820px]'
           )}
         >
           <MetadataPanel song={song} onChange={handleMetaChange} />
@@ -159,40 +141,29 @@ export const EditorContent = ({
                 totalSections={song.sections.length}
                 isDragging={draggingSectionId === section.id}
                 onNameChange={(name) =>
-                  useEditorStore
-                    .getState()
-                    .updateSection(section.id, (s) => ({ ...s, name }))
+                  useEditorStore.getState().updateSection(section.id, (s) => ({ ...s, name }))
                 }
                 onTypeChange={(type) =>
-                  useEditorStore
-                    .getState()
-                    .updateSection(section.id, (s) => ({ ...s, type }))
+                  useEditorStore.getState().updateSection(section.id, (s) => ({ ...s, type }))
                 }
                 onDuplicate={() => duplicateSection(section.id)}
                 onMove={(direction) => moveSection(section.id, direction)}
                 onDelete={() => deleteSection(section.id)}
                 onAddLine={() => addLine(section.id)}
-                onChordRowClick={(event, lineId) =>
-                  handleChordRowClick(event, section.id, lineId)
-                }
+                onChordRowClick={(event, lineId) => handleChordRowClick(event, section.id, lineId)}
                 onChordPointerDown={(event, lineId, chord) =>
                   handleChordPointerDown(event, section.id, lineId, chord)
                 }
                 onLineLyricsChange={(lineId, lyrics) =>
                   updateLineLyrics(section.id, lineId, lyrics)
                 }
-                onDragStart={(event) =>
-                  handleSectionDragStart(event, section.id)
-                }
+                onDragStart={(event) => handleSectionDragStart(event, section.id)}
                 onDragOver={(event) => handleSectionDragOver(event, section.id)}
                 onDragEnd={handleSectionDragEnd}
               />
             ))}
 
-            <SectionAddButtons
-              onAddSection={addSection}
-              hasSections={hasSections}
-            />
+            <SectionAddButtons onAddSection={addSection} hasSections={hasSections} />
           </div>
         </div>
 
@@ -211,5 +182,5 @@ export const EditorContent = ({
 
       <Toast message={shareMessage} visible={!!shareMessage} />
     </main>
-  );
+  )
 }

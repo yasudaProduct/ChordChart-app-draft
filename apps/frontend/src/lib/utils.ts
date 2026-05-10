@@ -11,8 +11,23 @@ export function generateId(): string {
 
 // Musical keys
 export const KEYS = [
-  'C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F',
-  'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B'
+  'C',
+  'C#',
+  'Db',
+  'D',
+  'D#',
+  'Eb',
+  'E',
+  'F',
+  'F#',
+  'Gb',
+  'G',
+  'G#',
+  'Ab',
+  'A',
+  'A#',
+  'Bb',
+  'B',
 ] as const
 
 // Time signatures
