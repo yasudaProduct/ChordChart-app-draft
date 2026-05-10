@@ -56,3 +56,4 @@ Thumbs.db
 
 # Docker
 docker-compose.override.yml
+apps/frontend/.env.e2e
