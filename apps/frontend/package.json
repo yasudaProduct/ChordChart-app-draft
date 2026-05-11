@@ -13,7 +13,7 @@
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
     "e2e:headed": "playwright test --headed",
-    "build:cf": "next build && next-on-pages",
+    "build:cf": "next-on-pages",
     "deploy:staging": "wrangler pages deploy .vercel/output/static --project-name=chordbook-frontend-staging"
   },
   "dependencies": {

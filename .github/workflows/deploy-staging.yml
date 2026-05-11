@@ -48,16 +48,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build Next.js
-        run: pnpm --filter chordbook-frontend build
+      - name: Build for Cloudflare Pages
+        run: pnpm exec next-on-pages
+        working-directory: apps/frontend
         env:
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.STAGING_CLERK_PUBLISHABLE_KEY }}
           CLERK_SECRET_KEY: ${{ secrets.STAGING_CLERK_SECRET_KEY }}
           NEXT_PUBLIC_API_URL: ${{ secrets.STAGING_API_URL }}
-
-      - name: Convert for Cloudflare Pages
-        run: pnpm exec next-on-pages
-        working-directory: apps/frontend
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
