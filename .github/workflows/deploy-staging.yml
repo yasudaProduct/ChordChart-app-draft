@@ -56,7 +56,7 @@ jobs:
           NEXT_PUBLIC_API_URL: ${{ secrets.STAGING_API_URL }}
 
       - name: Convert for Cloudflare Pages
-        run: pnpm exec @cloudflare/next-on-pages
+        run: pnpm exec next-on-pages
         working-directory: apps/frontend
 
       - name: Deploy to Cloudflare Pages
