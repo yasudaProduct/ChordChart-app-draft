@@ -32,11 +32,16 @@
 - [ER図](./database/er-diagram.md) - エンティティ関連図
 - [テーブル定義](./database/tables.md) - 各テーブルのカラム詳細
 
+### インフラ
+
+- [インフラ構成概要](./infrastructure/overview.md) - Cloudflare / Neon / Clerk の構成まとめ
+- [ステージング環境セットアップ](./infrastructure/staging-setup.md) - 動作確認環境の初回構築手順
+
 ### デプロイ・運用
 
 - [環境変数](./deployment/environments.md) - 環境変数一覧と設定方法
-- [フロントエンドデプロイ](./deployment/frontend-deploy.md) - Vercel へのデプロイ手順
-- [バックエンドデプロイ](./deployment/backend-deploy.md) - Railway へのデプロイ手順
+- [フロントエンドデプロイ](./deployment/frontend-deploy.md) - Cloudflare Pages へのデプロイ手順
+- [バックエンドデプロイ](./deployment/backend-deploy.md) - Cloudflare Workers へのデプロイ手順
 - [トラブルシューティング](./deployment/troubleshooting.md) - よくある問題と解決方法
 
 ### UI/UX

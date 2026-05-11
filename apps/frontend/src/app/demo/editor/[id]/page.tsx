@@ -1,5 +1,7 @@
 'use client'
 
+export const runtime = 'edge'
+
 import { useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { songApi } from '@/lib/songApi'

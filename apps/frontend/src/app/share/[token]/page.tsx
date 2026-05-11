@@ -3,6 +3,8 @@ import type { Metadata } from 'next'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { ShareContent } from './ShareContent'
 
+export const runtime = 'edge'
+
 export const metadata: Metadata = {
   title: '共有コード譜 | ChordBook',
   description: '共有されたコード譜を閲覧できます。',

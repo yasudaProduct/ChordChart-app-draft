@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { SongDetailContent } from './SongDetailContent'
 
+export const runtime = 'edge'
+
 export const metadata: Metadata = {
   title: '楽曲詳細 | ChordBook',
   description: 'コード譜の詳細を表示します。',

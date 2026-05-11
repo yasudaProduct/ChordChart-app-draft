@@ -1,0 +1,13 @@
+name = "chordbook-api-staging"
+main = "src/worker.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+# Cloudflare Pages の URL に合わせて更新する
+ALLOWED_ORIGINS = "chordbook-api-staging.yuta-develop-ct.workers.dev"
+
+# 以下はシークレット（wrangler secret put または GitHub Actions secrets で設定する）
+# DATABASE_URL
+# CLERK_ISSUER
+# CLERK_WEBHOOK_SECRET

@@ -1,5 +1,7 @@
 'use client'
 
+export const runtime = 'edge'
+
 import { useParams } from 'next/navigation'
 import { songApi } from '@/lib/songApi'
 import { EditorContent } from '@/components/editor/EditorContent'
