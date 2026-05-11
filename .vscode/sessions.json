@@ -25,23 +25,31 @@
           "name": "frontend:dev",
           "cwd": "apps/frontend",
           "icon": "terminal",
-          "commands": ["pnpm dev"]
+          "commands": [
+            "pnpm dev"
+          ]
         },
         {
           "name": "backend:dev",
           "cwd": "apps/backend",
           "icon": "terminal",
-          "commands": ["pnpm dev"]
+          "commands": [
+            "pnpm dev"
+          ]
         },
         {
           "name": "docker:db",
           "icon": "terminal",
-          "commands": ["docker compose up -d"]
+          "commands": [
+            "docker compose up -d"
+          ]
         },
         {
           "name": "ngrok",
           "icon": "terminal",
-          "commands": ["ngrok http 8080"]
+          "commands": [
+            "ngrok http 8080"
+          ]
         }
       ]
     ]
