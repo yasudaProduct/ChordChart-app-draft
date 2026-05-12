@@ -6,7 +6,13 @@ import { healthRoutes } from './routes/health'
 import { songRoutes } from './routes/songs'
 import { webhookRoutes } from './routes/webhooks'
 
+/** Cloudflare Workers の [vars] / シークレット（Hono の c.env） */
+export type WorkerBindings = {
+  ALLOWED_ORIGINS?: string
+}
+
 type AppEnv = {
+  Bindings: WorkerBindings
   Variables: AuthVariables
 }
 
@@ -19,9 +25,16 @@ app.use('*', logger())
 app.use(
   '*',
   cors({
-    origin: (origin) => {
-      const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(',')
-      return allowedOrigins.includes(origin) ? origin : allowedOrigins[0]
+    origin: (origin, c) => {
+      const raw =
+        c.env?.ALLOWED_ORIGINS?.trim() ||
+        process.env.ALLOWED_ORIGINS?.trim() ||
+        'http://localhost:3000'
+      const allowedOrigins = raw
+        .split(',')
+        .map((o) => o.trim())
+        .filter(Boolean)
+      return allowedOrigins.includes(origin) ? origin : null
     },
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization'],

@@ -22,6 +22,7 @@ Cloudflare Workers / Pages + Neon を使ったステージング環境の初回�
 Neon はプロジェクト作成時に `main` ブランチと `chordbook` データベースが自動作成されます。
 
 ステージング用に `staging` ブランチを作成:
+
 1. Neon コンソール → **Branches** → **Create Branch**
 2. ブランチ名: `staging`、親ブランチ: `main`
 
@@ -54,17 +55,18 @@ DATABASE_URL="postgresql://..." pnpm db:push
 2. **Create Token** → **Custom token**
 3. 以下のパーミッションを設定:
 
-| リソース | パーミッション |
-|----------|----------------|
-| Account > Workers Scripts | Edit |
-| Account > Cloudflare Pages | Edit |
-| Account > Account Settings | Read |
+| リソース                   | パーミッション |
+| -------------------------- | -------------- |
+| Account > Workers Scripts  | Edit           |
+| Account > Cloudflare Pages | Edit           |
+| Account > Account Settings | Read           |
 
 4. **Create Token** → トークンをコピー（一度しか表示されない）
 
 ### 2.2 Account ID の確認
 
 Cloudflare ダッシュボードのサイドバー右下、または URL から確認:
+
 ```
 https://dash.cloudflare.com/<ACCOUNT_ID>/...
 ```
@@ -85,6 +87,7 @@ pnpm deploy:staging
 ```
 
 デプロイ完了後、Workers の URL が表示されます:
+
 ```
 https://chordbook-api-staging.<あなたのサブドメイン>.workers.dev
 ```
@@ -113,13 +116,19 @@ npx wrangler secret put CLERK_WEBHOOK_SECRET
 
 フロントエンドデプロイ後に Pages の URL が確定したら `wrangler.toml` を更新:
 
+- **許可するのはフロント（Pages）のオリジン**（`https://` 付き）。API の Workers URL を入れないこと。
+- ローカルからステージング API を叩く場合は、カンマ区切りで `http://localhost:3000` を追加してよい。
+
 ```toml
 # apps/backend/wrangler.toml
 [vars]
-ALLOWED_ORIGINS = "https://chordbook-frontend-staging.pages.dev"
+ALLOWED_ORIGINS = "https://chordbook-frontend-staging.pages.dev,http://localhost:3000"
 ```
 
+また、`nodejs_compat` 利用時に vars / secrets が `process.env` に載るよう、`compatibility_date` は `2025-04-01` 以降にしておく（リポジトリの `wrangler.toml` を参照）。
+
 再デプロイ:
+
 ```bash
 pnpm deploy:staging
 ```
@@ -141,6 +150,7 @@ pnpm deploy:staging
 ```
 
 フロントエンドの URL が確定します:
+
 ```
 https://chordbook-frontend-staging.pages.dev
 ```
@@ -151,16 +161,16 @@ https://chordbook-frontend-staging.pages.dev
 
 GitHub リポジトリ → **Settings** → **Secrets and variables** → **Actions** → **New repository secret** で以下を登録:
 
-| シークレット名 | 値 | 取得元 |
-|---------------|-----|--------|
-| `CLOUDFLARE_API_TOKEN` | Cloudflare API トークン | 手順 2.1 |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare アカウント ID | 手順 2.2 |
-| `STAGING_DATABASE_URL` | Neon 接続文字列 | 手順 1.3 |
-| `STAGING_CLERK_ISSUER` | `https://xxx.clerk.accounts.dev` | Clerk ダッシュボード |
-| `STAGING_CLERK_WEBHOOK_SECRET` | `whsec_XXXXXXXX` | Clerk ダッシュボード |
-| `STAGING_CLERK_PUBLISHABLE_KEY` | `pk_test_XXXXXXXX` | Clerk ダッシュボード |
-| `STAGING_CLERK_SECRET_KEY` | `sk_test_XXXXXXXX` | Clerk ダッシュボード |
-| `STAGING_API_URL` | `https://chordbook-api-staging.xxx.workers.dev/api` | 手順 3.1 |
+| シークレット名                  | 値                                                  | 取得元               |
+| ------------------------------- | --------------------------------------------------- | -------------------- |
+| `CLOUDFLARE_API_TOKEN`          | Cloudflare API トークン                             | 手順 2.1             |
+| `CLOUDFLARE_ACCOUNT_ID`         | Cloudflare アカウント ID                            | 手順 2.2             |
+| `STAGING_DATABASE_URL`          | Neon 接続文字列                                     | 手順 1.3             |
+| `STAGING_CLERK_ISSUER`          | `https://xxx.clerk.accounts.dev`                    | Clerk ダッシュボード |
+| `STAGING_CLERK_WEBHOOK_SECRET`  | `whsec_XXXXXXXX`                                    | Clerk ダッシュボード |
+| `STAGING_CLERK_PUBLISHABLE_KEY` | `pk_test_XXXXXXXX`                                  | Clerk ダッシュボード |
+| `STAGING_CLERK_SECRET_KEY`      | `sk_test_XXXXXXXX`                                  | Clerk ダッシュボード |
+| `STAGING_API_URL`               | `https://chordbook-api-staging.xxx.workers.dev/api` | 手順 3.1             |
 
 > `STAGING_DATABASE_URL` は Workers のシークレットとも二重管理になりますが、
 > GitHub Actions のビルド時には不要です（Workers へは wrangler secret で設定済み）。

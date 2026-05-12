@@ -1,11 +1,12 @@
 name = "chordbook-api-staging"
 main = "src/worker.ts"
-compatibility_date = "2025-01-01"
+# nodejs_compat 利用時に vars / secrets を process.env に載せるため 2025-04-01 以降
+compatibility_date = "2025-04-15"
 compatibility_flags = ["nodejs_compat"]
 
 [vars]
-# Cloudflare Pages の URL に合わせて更新する
-ALLOWED_ORIGINS = "chordbook-api-staging.yuta-develop-ct.workers.dev"
+# CORS 許可はフロント（Pages）のオリジン（https を含む）。API ホスト名は入れない。
+ALLOWED_ORIGINS = "https://chordbook-frontend-staging.pages.dev,http://localhost:3000"
 
 # 以下はシークレット（wrangler secret put または GitHub Actions secrets で設定する）
 # DATABASE_URL

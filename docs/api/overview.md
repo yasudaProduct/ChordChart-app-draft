@@ -4,18 +4,18 @@ ChordBook REST API の概要と認証方式です。
 
 ## 基本情報
 
-| 項目 | 値 |
-|------|-----|
-| プロトコル | HTTPS |
-| 形式 | REST API |
-| データ形式 | JSON |
-| 文字コード | UTF-8 |
+| 項目       | 値       |
+| ---------- | -------- |
+| プロトコル | HTTPS    |
+| 形式       | REST API |
+| データ形式 | JSON     |
+| 文字コード | UTF-8    |
 
 ### ベース URL
 
-| 環境 | URL |
-|------|-----|
-| 開発 | http://localhost:8080/api |
+| 環境 | URL                                   |
+| ---- | ------------------------------------- |
+| 開発 | http://localhost:8080/api             |
 | 本番 | https://api.chordbook.example.com/api |
 
 ---
@@ -32,9 +32,9 @@ Authorization: Bearer <access_token>
 
 ### 認証レベル
 
-| レベル | 説明 | 未認証時の動作 |
-|--------|------|---------------|
-| 必須 (`authMiddleware`) | 認証が必要 | 401 Unauthorized |
+| レベル                                | 説明                     | 未認証時の動作     |
+| ------------------------------------- | ------------------------ | ------------------ |
+| 必須 (`authMiddleware`)               | 認証が必要               | 401 Unauthorized   |
 | オプション (`optionalAuthMiddleware`) | 認証なしでもアクセス可能 | 公開データのみ返却 |
 
 ---
@@ -43,10 +43,10 @@ Authorization: Bearer <access_token>
 
 ### ヘッダー
 
-| ヘッダー | 必須 | 説明 |
-|----------|------|------|
-| Content-Type | POST/PUT | `application/json` |
-| Authorization | エンドポイントによる | `Bearer <token>` |
+| ヘッダー      | 必須                 | 説明               |
+| ------------- | -------------------- | ------------------ |
+| Content-Type  | POST/PUT             | `application/json` |
+| Authorization | エンドポイントによる | `Bearer <token>`   |
 
 ### リクエストボディ
 
@@ -161,48 +161,62 @@ Authorization: Bearer <access_token>
 
 ### 成功
 
-| コード | 説明 | 用途 |
-|--------|------|------|
-| 200 | OK | GET/PUT 成功 |
-| 201 | Created | POST 成功（リソース作成） |
-| 204 | No Content | DELETE 成功 |
+| コード | 説明       | 用途                      |
+| ------ | ---------- | ------------------------- |
+| 200    | OK         | GET/PUT 成功              |
+| 201    | Created    | POST 成功（リソース作成） |
+| 204    | No Content | DELETE 成功               |
 
 ### クライアントエラー
 
-| コード | 説明 | 原因 |
-|--------|------|------|
-| 400 | Bad Request | バリデーションエラー |
-| 401 | Unauthorized | 認証エラー |
-| 404 | Not Found | リソースが存在しない |
+| コード | 説明         | 原因                 |
+| ------ | ------------ | -------------------- |
+| 400    | Bad Request  | バリデーションエラー |
+| 401    | Unauthorized | 認証エラー           |
+| 404    | Not Found    | リソースが存在しない |
 
 ### サーバーエラー
 
-| コード | 説明 | 原因 |
-|--------|------|------|
-| 500 | Internal Server Error | サーバー内部エラー |
+| コード | 説明                  | 原因               |
+| ------ | --------------------- | ------------------ |
+| 500    | Internal Server Error | サーバー内部エラー |
 
 ---
 
 ## CORS
 
-環境変数 `ALLOWED_ORIGINS` でオリジンを制御します。
+`ALLOWED_ORIGINS`（カンマ区切り）で許可オリジンを指定します。Cloudflare Workers では `wrangler.toml` の `[vars]` またはダッシュボードの Variables が Hono の `c.env` に載り、ローカル Node サーバーでは `process.env` と `.env` を参照します。
 
 ```typescript
-// app.ts
-app.use("*", cors({
-  origin: (origin) => allowedOrigins.includes(origin) ? origin : null,
-  allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
-}));
+// app.ts（概要）
+app.use(
+  "*",
+  cors({
+    origin: (origin, c) => {
+      const raw =
+        c.env?.ALLOWED_ORIGINS?.trim() ||
+        process.env.ALLOWED_ORIGINS?.trim() ||
+        "http://localhost:3000";
+      const allowed = raw
+        .split(",")
+        .map((o) => o.trim())
+        .filter(Boolean);
+      return allowed.includes(origin) ? origin : null;
+    },
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  }),
+);
 ```
 
 ### 許可オリジン
 
-| 環境 | オリジン |
-|------|----------|
-| 開発 | http://localhost:3000 |
-| 本番 | https://chordbook.vercel.app |
+| 環境               | オリジン                                     |
+| ------------------ | -------------------------------------------- |
+| 開発               | http://localhost:3000                        |
+| 本番               | https://chordbook.vercel.app                 |
+| ステージング（例） | https://chordbook-frontend-staging.pages.dev |
 
 ---
 
