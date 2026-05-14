@@ -195,6 +195,22 @@ I/O objects ... created in the context of one request handler cannot be accessed
 
 ---
 
+### Cloudflare Pages デプロイで `Invalid commit message`（code: 8000111）
+
+**症状**: GitHub Actions の `wrangler pages deploy` が次のような API エラーで止まる。
+
+```
+Invalid commit message, it must be a valid UTF-8 string. [code: 8000111]
+```
+
+**原因**: デプロイに付与するコミットメッセージが、API 入力として無効な UTF-8 として判定されることがある（マージコミットや外部ツール由来の異常バイトなど）。
+
+**対策**: `wrangler pages deploy` に `--commit-hash ${{ github.sha }}` と、`--commit-message` で ASCII のみの固定文字列（例: `deploy-staging-<sha>`）を明示する。
+
+本リポジトリでは staging 用ワークフロー（`.github/workflows/deploy-staging.yml`）で上記を指定している。
+
+---
+
 ## パフォーマンス
 
 ### API レスポンスが遅い

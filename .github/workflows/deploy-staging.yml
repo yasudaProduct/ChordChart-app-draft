@@ -62,7 +62,8 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/frontend
-          command: pages deploy .vercel/output/static --project-name=chordbook-frontend-staging --branch=develop
+          # コミット本文に不正 UTF-8 があると Pages API が 8000111 を返す。ASCII の代替メッセージを明示する。
+          command: pages deploy .vercel/output/static --project-name=chordbook-frontend-staging --branch=develop --commit-hash ${{ github.sha }} --commit-message deploy-staging-${{ github.sha }}
 
       - name: Set Cloudflare Pages runtime secrets
         run: |
