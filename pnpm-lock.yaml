@@ -20,15 +20,18 @@ importers:
       '@hono/zod-validator':
         specifier: ^0.4.0
         version: 0.4.3(hono@4.12.18)(zod@3.25.76)
+      '@neondatabase/serverless':
+        specifier: ^1.1.0
+        version: 1.1.0
       dotenv:
         specifier: ^16.4.0
         version: 16.6.1
       drizzle-orm:
         specifier: ^0.36.0
-        version: 0.36.4(@types/react@18.3.28)(postgres@3.4.9)(react@18.3.1)
+        version: 0.36.4(@neondatabase/serverless@1.1.0)(@types/react@18.3.28)(postgres@3.4.9)(react@18.3.1)
       drizzle-seed:
         specifier: ^0.3.1
-        version: 0.3.1(drizzle-orm@0.36.4(@types/react@18.3.28)(postgres@3.4.9)(react@18.3.1))
+        version: 0.3.1(drizzle-orm@0.36.4(@neondatabase/serverless@1.1.0)(@types/react@18.3.28)(postgres@3.4.9)(react@18.3.1))
       hono:
         specifier: ^4.6.0
         version: 4.12.18
@@ -1209,6 +1212,10 @@ packages:
 
   '@napi-rs/wasm-runtime@0.2.12':
     resolution: {integrity: sha512-ZVWUcfwY4E/yPitQJl481FjFo3K22D6qF0DuFH6Y/nbnE11GY5uguDxZMGXPQ8WQ0128MXQD7TnfHyK4oWoIJQ==}
+
+  '@neondatabase/serverless@1.1.0':
+    resolution: {integrity: sha512-r3ZZhRjEcfEdKIZnoB1RusNgvHuaBRqfCzV4Gi+5A9yUX0S4HTws/ASWqt13wL4y4I+0rqsWGdA2w7EQXHi3+Q==}
+    engines: {node: '>=19.0.0'}
 
   '@next/env@14.2.35':
     resolution: {integrity: sha512-DuhvCtj4t9Gwrx80dmz2F4t/zKQ4ktN8WrMwOuVzkJfBilwAwGr6v16M5eI8yCuZ63H9TTuEU09Iu2HqkzFPVQ==}
@@ -4497,6 +4504,8 @@ snapshots:
       '@tybys/wasm-util': 0.10.2
     optional: true
 
+  '@neondatabase/serverless@1.1.0': {}
+
   '@next/env@14.2.35': {}
 
   '@next/eslint-plugin-next@14.2.35':
@@ -5221,17 +5230,18 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.36.4(@types/react@18.3.28)(postgres@3.4.9)(react@18.3.1):
+  drizzle-orm@0.36.4(@neondatabase/serverless@1.1.0)(@types/react@18.3.28)(postgres@3.4.9)(react@18.3.1):
     optionalDependencies:
+      '@neondatabase/serverless': 1.1.0
       '@types/react': 18.3.28
       postgres: 3.4.9
       react: 18.3.1
 
-  drizzle-seed@0.3.1(drizzle-orm@0.36.4(@types/react@18.3.28)(postgres@3.4.9)(react@18.3.1)):
+  drizzle-seed@0.3.1(drizzle-orm@0.36.4(@neondatabase/serverless@1.1.0)(@types/react@18.3.28)(postgres@3.4.9)(react@18.3.1)):
     dependencies:
       pure-rand: 6.1.0
     optionalDependencies:
-      drizzle-orm: 0.36.4(@types/react@18.3.28)(postgres@3.4.9)(react@18.3.1)
+      drizzle-orm: 0.36.4(@neondatabase/serverless@1.1.0)(@types/react@18.3.28)(postgres@3.4.9)(react@18.3.1)
 
   dunder-proto@1.0.1:
     dependencies:

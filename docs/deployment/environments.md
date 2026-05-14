@@ -6,11 +6,11 @@ ChordBook の環境変数一覧と設定方法です。
 
 ### 必須環境変数
 
-| 変数名 | 説明 | 例 |
-|--------|------|-----|
-| NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY | Clerk 公開キー | pk_test_XXXXXXXX |
-| CLERK_SECRET_KEY | Clerk シークレットキー | sk_test_XXXXXXXX |
-| NEXT_PUBLIC_API_URL | バックエンドAPI URL | http://localhost:8080/api |
+| 変数名                            | 説明                   | 例                        |
+| --------------------------------- | ---------------------- | ------------------------- |
+| NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY | Clerk 公開キー         | pk_test_XXXXXXXX          |
+| CLERK_SECRET_KEY                  | Clerk シークレットキー | sk_test_XXXXXXXX          |
+| NEXT_PUBLIC_API_URL               | バックエンドAPI URL    | http://localhost:8080/api |
 
 ### 設定方法
 
@@ -28,6 +28,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8080/api
 #### Vercel（本番）
 
 Vercel ダッシュボードで設定:
+
 1. Project Settings → Environment Variables
 2. 各変数を追加（Production/Preview/Development を選択可能）
 
@@ -37,18 +38,19 @@ Vercel ダッシュボードで設定:
 
 ### 必須環境変数
 
-| 変数名 | 説明 | 例 |
-|--------|------|-----|
-| DATABASE_URL | PostgreSQL 接続文字列 | postgresql://postgres:postgres@127.0.0.1:5432/chordbook |
-| CLERK_ISSUER | Clerk Issuer URL（JWT検証用） | https://xxx.clerk.accounts.dev |
-| CLERK_WEBHOOK_SECRET | Clerk Webhook 署名検証シークレット | whsec_XXXXXXXX |
-| ALLOWED_ORIGINS | CORS 許可オリジン（カンマ区切り） | http://localhost:3000 |
+| 変数名               | 説明                                       | 例                                                      |
+| -------------------- | ------------------------------------------ | ------------------------------------------------------- |
+| DATABASE_URL         | PostgreSQL 接続文字列                      | postgresql://postgres:postgres@127.0.0.1:5432/chordbook |
+| DATABASE_DRIVER      | DB ドライバ（`postgres-js` / `neon-http`） | postgres-js                                             |
+| CLERK_ISSUER         | Clerk Issuer URL（JWT検証用）              | https://xxx.clerk.accounts.dev                          |
+| CLERK_WEBHOOK_SECRET | Clerk Webhook 署名検証シークレット         | whsec_XXXXXXXX                                          |
+| ALLOWED_ORIGINS      | CORS 許可オリジン（カンマ区切り）          | http://localhost:3000                                   |
 
 ### オプション環境変数
 
-| 変数名 | 説明 | デフォルト |
-|--------|------|-----------|
-| PORT | サーバーポート | 8080 |
+| 変数名 | 説明           | デフォルト |
+| ------ | -------------- | ---------- |
+| PORT   | サーバーポート | 8080       |
 
 ### 設定方法
 
@@ -59,6 +61,7 @@ Vercel ダッシュボードで設定:
 ```bash
 # backend/.env
 DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/chordbook
+DATABASE_DRIVER=postgres-js
 CLERK_ISSUER=https://your-clerk-instance.clerk.accounts.dev
 CLERK_WEBHOOK_SECRET=whsec_XXXXXXXX
 ALLOWED_ORIGINS=http://localhost:3000
@@ -68,11 +71,13 @@ PORT=8080
 #### Railway（本番）
 
 Railway ダッシュボードで設定:
+
 1. プロジェクト → Variables
 2. 各変数を追加
 
 ```
 DATABASE_URL=postgresql://postgres:xxx@db.xxx.neon.tech:5432/chordbook?sslmode=require
+DATABASE_DRIVER=postgres-js
 CLERK_ISSUER=https://xxx.clerk.accounts.dev
 CLERK_WEBHOOK_SECRET=whsec_XXXXXXXX
 ALLOWED_ORIGINS=https://chordbook.vercel.app
@@ -87,14 +92,15 @@ Clerk ダッシュボードから以下の情報を取得:
 
 ### Configure → API Keys
 
-| 項目 | 用途 |
-|------|------|
+| 項目            | 用途                              |
+| --------------- | --------------------------------- |
 | Publishable Key | NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY |
-| Secret Key | CLERK_SECRET_KEY |
+| Secret Key      | CLERK_SECRET_KEY                  |
 
 ### Configure → Webhooks
 
 Webhook エンドポイントを登録し、以下のイベントを有効化:
+
 - `user.created`
 - `user.updated`
 - `user.deleted`
@@ -109,21 +115,21 @@ Webhook シークレットを `CLERK_WEBHOOK_SECRET` に設定。
 
 ### 開発環境（Development）
 
-| サービス | 設定値 |
-|----------|--------|
-| フロントエンド URL | http://localhost:3000 |
-| バックエンド URL | http://localhost:8080 |
-| データベース | localhost:5432（Docker PostgreSQL） |
-| CORS | http://localhost:3000 |
+| サービス           | 設定値                              |
+| ------------------ | ----------------------------------- |
+| フロントエンド URL | http://localhost:3000               |
+| バックエンド URL   | http://localhost:8080               |
+| データベース       | localhost:5432（Docker PostgreSQL） |
+| CORS               | http://localhost:3000               |
 
 ### 本番環境（Production）
 
-| サービス | 設定値 |
-|----------|--------|
-| フロントエンド URL | https://chordbook.vercel.app |
-| バックエンド URL | https://chordbook-api.railway.app |
-| データベース | Neon PostgreSQL |
-| CORS | https://chordbook.vercel.app |
+| サービス           | 設定値                            |
+| ------------------ | --------------------------------- |
+| フロントエンド URL | https://chordbook.vercel.app      |
+| バックエンド URL   | https://chordbook-api.railway.app |
+| データベース       | Neon PostgreSQL                   |
+| CORS               | https://chordbook.vercel.app      |
 
 ---
 
@@ -133,7 +139,7 @@ Webhook シークレットを `CLERK_WEBHOOK_SECRET` に設定。
    - `.env.local` / `.env` は `.gitignore` に含まれている
    - `.env.example` には実際の値を入れない
 
-2. **NEXT_PUBLIC_ プレフィックス**
+2. **NEXT*PUBLIC* プレフィックス**
    - このプレフィックスの変数はブラウザに公開される
    - 秘密情報には使用しない（`CLERK_SECRET_KEY` は `NEXT_PUBLIC_` なし）
 

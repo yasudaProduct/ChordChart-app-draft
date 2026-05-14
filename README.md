@@ -8,13 +8,13 @@
 
 ## 技術スタック
 
-| レイヤー | 技術 |
-|----------|------|
+| レイヤー       | 技術                                                      |
+| -------------- | --------------------------------------------------------- |
 | フロントエンド | Next.js 14 (App Router), Tailwind CSS, shadcn/ui, Zustand |
-| バックエンド | Hono, Drizzle ORM, Zod, jose (JWT検証) |
-| データベース | PostgreSQL (Neon) |
-| 認証 | Clerk |
-| ホスティング | Vercel (FE), Railway (BE) |
+| バックエンド   | Hono, Drizzle ORM, Zod, jose (JWT検証)                    |
+| データベース   | PostgreSQL (Neon)                                         |
+| 認証           | Clerk                                                     |
+| ホスティング   | Vercel (FE), Railway (BE)                                 |
 
 ## プロジェクト構成
 
@@ -83,6 +83,7 @@ cp apps/backend/.env.example apps/backend/.env
 
 ```env
 DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/chordbook
+DATABASE_DRIVER=postgres-js
 CLERK_ISSUER=https://your-clerk-instance.clerk.accounts.dev
 CLERK_WEBHOOK_SECRET=
 ALLOWED_ORIGINS=http://localhost:3000

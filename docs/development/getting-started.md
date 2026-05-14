@@ -4,12 +4,12 @@ ChordBook の開発環境を構築する手順を説明します。
 
 ## 必要なツール
 
-| ツール | バージョン | 用途 |
-|--------|-----------|------|
-| Node.js | 20以上 | フロントエンド・バックエンド実行環境 |
-| pnpm | 10以上 | パッケージマネージャー（ワークスペース管理） |
-| Docker Desktop | 最新 | ローカル PostgreSQL |
-| Git | 最新 | バージョン管理 |
+| ツール         | バージョン | 用途                                         |
+| -------------- | ---------- | -------------------------------------------- |
+| Node.js        | 20以上     | フロントエンド・バックエンド実行環境         |
+| pnpm           | 10以上     | パッケージマネージャー（ワークスペース管理） |
+| Docker Desktop | 最新       | ローカル PostgreSQL                          |
+| Git            | 最新       | バージョン管理                               |
 
 ## インストール手順
 
@@ -22,7 +22,7 @@ cd chord-chart
 
 ### 2. 依存関係のインストール
 
-ルートディレクトリで一度実行するだけで、全ワークスペース（apps/frontend, apps/backend, packages/*）の依存関係がインストールされます。
+ルートディレクトリで一度実行するだけで、全ワークスペース（apps/frontend, apps/backend, packages/\*）の依存関係がインストールされます。
 
 ```bash
 pnpm install
@@ -47,6 +47,7 @@ cp apps/backend/.env.example apps/backend/.env
 ```bash
 # .env
 DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/chordbook
+DATABASE_DRIVER=postgres-js
 CLERK_ISSUER=https://your-clerk-instance.clerk.accounts.dev
 CLERK_WEBHOOK_SECRET=whsec_XXXXXXXX
 ALLOWED_ORIGINS=http://localhost:3000

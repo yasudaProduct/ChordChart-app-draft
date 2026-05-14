@@ -127,6 +127,8 @@ ALLOWED_ORIGINS = "https://chordbook-frontend-staging.pages.dev,http://localhost
 
 また、`nodejs_compat` 利用時に vars / secrets が `process.env` に載るよう、`compatibility_date` は `2025-04-01` 以降にしておく（リポジトリの `wrangler.toml` を参照）。
 
+バックエンドは `DATABASE_DRIVER` で DB ドライバを切り替える。staging の Workers では `wrangler.toml` の `[vars]` で `DATABASE_DRIVER = "neon-http"` を設定している（ローカルや Railway は `postgres-js` を使用）。
+
 再デプロイ:
 
 ```bash

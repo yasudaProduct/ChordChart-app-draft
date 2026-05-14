@@ -7,6 +7,8 @@ compatibility_flags = ["nodejs_compat"]
 [vars]
 # CORS 許可はフロント（Pages）のオリジン（https を含む）。API ホスト名は入れない。
 ALLOWED_ORIGINS = "https://chordbook-frontend-staging.pages.dev,http://localhost:3000"
+# Cloudflare Workers では neon-http を使用（postgres.js の request 間 I/O 共有を回避）
+DATABASE_DRIVER = "neon-http"
 
 # 以下はシークレット（wrangler secret put または GitHub Actions secrets で設定する）
 # DATABASE_URL
