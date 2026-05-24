@@ -50,7 +50,7 @@ export const songs = pgTable(
     key: varchar('Key', { length: 10 }),
     bpm: integer('Bpm'),
     timeSignature: varchar('TimeSignature', { length: 10 }).notNull().default('4/4'),
-    content: text('Content').notNull().default('[]'),
+    content: text('Content').notNull().default('{"sections":[]}'),
     visibility: visibilityEnum('Visibility').notNull().default('private'),
     createdAt: timestamp('CreatedAt', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('UpdatedAt', { withTimezone: true }).notNull().defaultNow(),

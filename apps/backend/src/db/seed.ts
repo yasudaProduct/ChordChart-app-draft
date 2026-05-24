@@ -1,8 +1,9 @@
 import 'dotenv/config'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
-import { seed } from 'drizzle-seed'
+import { reset, seed } from 'drizzle-seed'
 import * as schema from './schema'
+import { sampleSongContents } from './seedContent'
 
 const connectionString = process.env.DATABASE_URL
 if (!connectionString) {
@@ -13,28 +14,14 @@ if (!connectionString) {
 const client = postgres(connectionString)
 const db = drizzle(client, { schema })
 
-const sampleSections = [
-  JSON.stringify([
-    { type: 'section', name: 'Intro', bars: [{ chords: ['C', 'G', 'Am', 'F'] }] },
-    { type: 'section', name: 'Verse', bars: [{ chords: ['Am', 'F', 'C', 'G'] }] },
-    { type: 'section', name: 'Chorus', bars: [{ chords: ['F', 'G', 'C', 'Am'] }] },
-  ]),
-  JSON.stringify([
-    { type: 'section', name: 'Intro', bars: [{ chords: ['Em', 'C', 'G', 'D'] }] },
-    { type: 'section', name: 'Verse', bars: [{ chords: ['G', 'D', 'Em', 'C'] }] },
-  ]),
-  JSON.stringify([
-    { type: 'section', name: 'Verse', bars: [{ chords: ['Dm', 'Bb', 'F', 'C'] }] },
-    { type: 'section', name: 'Chorus', bars: [{ chords: ['Bb', 'C', 'F', 'Dm'] }] },
-  ]),
-]
-
 const keys = ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'Cm', 'Dm', 'Em', 'Am']
 const timeSignatures = ['4/4', '3/4', '6/8']
 
 async function main() {
-  console.log('Seeding database...')
+  console.log('Resetting database...')
+  await reset(db, schema)
 
+  console.log('Seeding database...')
   await seed(db, schema).refine((f) => ({
     users: {
       count: 5,
@@ -81,7 +68,7 @@ async function main() {
         key: f.valuesFromArray({ values: keys }),
         bpm: f.int({ minValue: 60, maxValue: 200 }),
         timeSignature: f.valuesFromArray({ values: timeSignatures }),
-        content: f.valuesFromArray({ values: sampleSections }),
+        content: f.valuesFromArray({ values: sampleSongContents }),
         visibility: f.valuesFromArray({
           values: ['private', 'url_only', 'specific_users', 'public'],
         }),

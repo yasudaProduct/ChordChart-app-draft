@@ -1,4 +1,5 @@
 import { api } from '@/lib/api'
+import { parseSongContent } from '@/lib/parseSongContent'
 import { useAuthStore } from '@/stores/authStore'
 import type { Section, Song, SongListItem, SongMeta, SongVisibility } from '@/types/song'
 
@@ -27,20 +28,6 @@ const isAuthenticated = (): boolean => {
   return useAuthStore.getState().user !== null
 }
 
-const safeJsonParse = (
-  value: string | { sections?: Section[] } | null
-): { sections: Section[] } => {
-  if (!value) return { sections: [] }
-  try {
-    const parsed = (typeof value === 'string' ? JSON.parse(value) : value) as {
-      sections?: Section[]
-    }
-    return { sections: Array.isArray(parsed.sections) ? parsed.sections : [] }
-  } catch {
-    return { sections: [] }
-  }
-}
-
 const mapVisibility = (value: ApiSongDto['visibility']): SongVisibility => {
   switch (value) {
     case 'url_only':
@@ -55,7 +42,7 @@ const mapVisibility = (value: ApiSongDto['visibility']): SongVisibility => {
 }
 
 const toSong = (dto: ApiSongDto): Song => {
-  const { sections } = safeJsonParse(dto.content)
+  const sections = parseSongContent(dto.content)
   return {
     id: dto.id,
     title: dto.title,

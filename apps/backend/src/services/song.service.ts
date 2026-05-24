@@ -150,7 +150,7 @@ const createSong = async (
       key: data.key ?? null,
       bpm: data.bpm ?? null,
       timeSignature: data.timeSignature ?? '4/4',
-      content: '[]',
+      content: '{"sections":[]}',
       visibility: Visibility.Private,
       createdAt: now,
       updatedAt: now,

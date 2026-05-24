@@ -63,27 +63,29 @@ Authorization: Bearer <access_token>
 
 ### Content（コード譜データ）
 
-`Song.content` は JSON 文字列として保存されるセクション配列です。
+`Song.content` は JSON 文字列として保存されるコード譜データです。現行形式は `{ "sections": [...] }` です。
 
 例:
 
 ```json
-[
-  {
-    "id": "section-1",
-    "name": "Aメロ",
-    "type": "lyrics-chord",
-    "lines": [
-      {
-        "lyrics": "きょうも いちにち",
-        "chords": [{ "chord": "C", "position": 0 }]
-      }
-    ]
-  }
-]
+{
+  "sections": [
+    {
+      "id": "section-1",
+      "name": "Aメロ",
+      "type": "lyrics-chord",
+      "content": "{\"lines\":[{\"id\":\"line-1\",\"lyrics\":\"きょうも いちにち\",\"chords\":[{\"id\":\"chord-1\",\"chord\":\"C\",\"offset\":0.05}]}]}"
+    }
+  ]
+}
 ```
 
-- `docs/database/tables.md`
+- 各セクションの `content` は `{ "lines": [...] }` 形式の JSON 文字列
+- セクション `type` は `lyrics-chord` または `chord-only`
+- コード位置は `offset`（0〜1 の相対位置）で表現
+- フロントエンドは旧形式（トップレベル配列など）も読み取り時に変換
+
+詳細は `docs/database/tables.md` を参照。
 
 ---
 
@@ -99,7 +101,7 @@ Authorization: Bearer <access_token>
   "key": "C",
   "bpm": 120,
   "timeSignature": "4/4",
-  "content": [],
+  "content": { "sections": [] },
   "visibility": 0,
   "createdAt": "2024-01-15T10:30:00Z",
   "updatedAt": "2024-01-15T10:30:00Z"

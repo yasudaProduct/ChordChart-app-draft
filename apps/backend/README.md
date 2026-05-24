@@ -6,15 +6,15 @@ ChordBook のバックエンド API サーバー。Hono + Drizzle ORM + TypeScri
 
 ## 技術スタック
 
-| カテゴリ | 技術 |
-|----------|------|
-| フレームワーク | Hono |
-| ORM | Drizzle ORM (postgres.js) |
+| カテゴリ       | 技術                      |
+| -------------- | ------------------------- |
+| フレームワーク | Hono                      |
+| ORM            | Drizzle ORM (postgres.js) |
 | バリデーション | Zod (@hono/zod-validator) |
-| JWT検証 | jose (JWKS / Clerk) |
-| テスト | Vitest |
-| ビルド | tsup |
-| ランタイム | Node.js 20+ |
+| JWT検証        | jose (JWKS / Clerk)       |
+| テスト         | Vitest                    |
+| ビルド         | tsup                      |
+| ランタイム     | Node.js 20+               |
 
 ## セットアップ
 
@@ -41,10 +41,10 @@ pnpm test -- --run # テスト1回実行
 ```bash
 pnpm db:generate   # スキーマ変更後にマイグレーションファイルを生成
 pnpm db:push       # DBに直接反映（開発環境向け）
-pnpm db:seed       # シードデータ投入
+pnpm db:seed       # 既存データを削除してシードデータ投入
 ```
 
-> **注意:** `db:seed` は既存データがある場合に重複エラーになる可能性がある。開発環境での使用を推奨。
+> **注意:** `db:seed` は実行前にスキーマ内の全テーブルをリセットする。開発環境での使用を推奨。
 
 ## Docker
 
@@ -65,13 +65,13 @@ docker run -p 8080:8080 \
 
 詳細は [docs/api/endpoints.md](../../docs/api/endpoints.md) を参照。
 
-| メソッド | パス | 認証 | 説明 |
-|---------|------|------|------|
-| GET | `/api/health` | 不要 | ヘルスチェック |
-| GET | `/api/songs` | オプション | 曲一覧 |
-| GET | `/api/songs/search?q=` | オプション | 曲検索 |
-| GET | `/api/songs/:id` | オプション | 曲詳細 |
-| POST | `/api/songs` | 必須 | 曲作成 |
-| PUT | `/api/songs/:id` | 必須 | 曲更新 |
-| DELETE | `/api/songs/:id` | 必須 | 曲削除 |
-| POST | `/api/webhooks/clerk` | 不要（署名検証） | Clerk Webhook（ユーザー同期） |
+| メソッド | パス                   | 認証             | 説明                          |
+| -------- | ---------------------- | ---------------- | ----------------------------- |
+| GET      | `/api/health`          | 不要             | ヘルスチェック                |
+| GET      | `/api/songs`           | オプション       | 曲一覧                        |
+| GET      | `/api/songs/search?q=` | オプション       | 曲検索                        |
+| GET      | `/api/songs/:id`       | オプション       | 曲詳細                        |
+| POST     | `/api/songs`           | 必須             | 曲作成                        |
+| PUT      | `/api/songs/:id`       | 必須             | 曲更新                        |
+| DELETE   | `/api/songs/:id`       | 必須             | 曲削除                        |
+| POST     | `/api/webhooks/clerk`  | 不要（署名検証） | Clerk Webhook（ユーザー同期） |
