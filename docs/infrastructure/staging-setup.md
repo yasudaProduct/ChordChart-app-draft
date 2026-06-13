@@ -38,12 +38,16 @@ postgresql://user:password@ep-xxx-xxx.ap-southeast-1.aws.neon.tech/chordbook?ssl
 
 ### 1.4 スキーマの適用
 
-ローカルで `DATABASE_URL` を Neon staging の接続文字列に変更して実行:
+初回は `develop` ブランチへプッシュすると GitHub Actions が `pnpm db:migrate` を実行し、Neon にテーブルを作成します（`STAGING_DATABASE_URL` が正しく設定されていること）。
+
+ローカルで手動適用する場合:
 
 ```bash
 cd apps/backend
-DATABASE_URL="postgresql://..." pnpm db:push
+DATABASE_URL="postgresql://..." pnpm db:migrate
 ```
+
+開発中のローカル DB 向けには `pnpm db:push` も利用できます。
 
 ---
 
@@ -174,9 +178,7 @@ GitHub リポジトリ → **Settings** → **Secrets and variables** → **Acti
 | `STAGING_CLERK_SECRET_KEY`      | `sk_test_XXXXXXXX`                                  | Clerk ダッシュボード |
 | `STAGING_API_URL`               | `https://chordbook-api-staging.xxx.workers.dev/api` | 手順 3.1             |
 
-> `STAGING_DATABASE_URL` は Workers のシークレットとも二重管理になりますが、
-> GitHub Actions のビルド時には不要です（Workers へは wrangler secret で設定済み）。
-> フロントエンドビルド時の変数としては不要なため、省略可能です。
+> `STAGING_DATABASE_URL` は CI の DB マイグレーション（`pnpm db:migrate`）と Workers のシークレット（`wrangler secret put DATABASE_URL`）の両方で使用します。値は Neon の接続文字列で揃えてください。
 
 ---
 
@@ -213,6 +215,7 @@ GitHub リポジトリ → **Settings** → **Secrets and variables** → **Acti
 develop ブランチへのプッシュ
         │
         ├──▶ deploy-backend ジョブ
+        │     ├── pnpm db:migrate → Neon（スキーマ適用）
         │     └── wrangler deploy → Cloudflare Workers
         │
         └──▶ deploy-frontend ジョブ

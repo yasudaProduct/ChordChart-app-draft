@@ -40,7 +40,8 @@ pnpm test -- --run # テスト1回実行
 
 ```bash
 pnpm db:generate   # スキーマ変更後にマイグレーションファイルを生成
-pnpm db:push       # DBに直接反映（開発環境向け）
+pnpm db:migrate    # マイグレーション適用（ステージングは CI が自動実行）
+pnpm db:push       # DBに直接反映（ローカル開発向け）
 pnpm db:seed       # 既存データを削除してシードデータ投入
 ```
 

@@ -175,7 +175,10 @@ cd apps/backend
 # スキーマ変更後にマイグレーション生成
 pnpm db:generate
 
-# 本番 DB へ適用（DATABASE_URL を本番に切り替えて実行）
+# ステージング DB へ適用（develop プッシュ時は CI が自動実行）
+pnpm db:migrate
+
+# ローカル開発 DB へスキーマを直接反映
 pnpm db:push
 ```
 

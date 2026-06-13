@@ -60,7 +60,8 @@ pnpm lint         # ESLint実行
 pnpm lint:fix     # ESLint自動修正
 pnpm format       # Prettierフォーマット適用
 pnpm db:generate  # Drizzleマイグレーション生成
-pnpm db:push      # DBスキーマをプッシュ
+pnpm db:migrate   # マイグレーション適用（CI/ステージング）
+pnpm db:push      # DBスキーマをプッシュ（ローカル開発向け）
 ```
 
 ## アーキテクチャ
@@ -139,6 +140,7 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 
 - **DBスキーマ変更は Drizzle ORM のスキーマファイル (`apps/backend/src/db/schema.ts`) を編集する**
   - `pnpm db:generate` でマイグレーションファイルを生成
+  - `pnpm db:migrate` でステージング等に適用（`develop` プッシュ時は CI が自動実行）
   - `pnpm db:push` でローカルDBに適用・検証
 - ローカルDB: `docker compose up -d` で起動
 

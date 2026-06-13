@@ -79,7 +79,15 @@ npx wrangler deploy --dry-run
 
 ## 自動デプロイ
 
-`main` ブランチへのマージで GitHub Actions / Cloudflare 連携により自動デプロイされます。デプロイフローの全体像は [インフラ構成概要](../infrastructure/overview.md) を参照。
+`develop` ブランチへのプッシュで `.github/workflows/deploy-staging.yml` が実行されます。
+
+バックエンド job の流れ:
+
+1. 依存関係のインストール
+2. `pnpm db:migrate` — `STAGING_DATABASE_URL` を使い Neon にマイグレーション適用
+3. `wrangler deploy` — Cloudflare Workers へデプロイ
+
+スキーマ変更時は `pnpm db:generate` でマイグレーションファイルを生成し、コミットしてから `develop` へプッシュしてください。詳細は [ステージング環境セットアップ](../infrastructure/staging-setup.md) を参照。
 
 ---
 
