@@ -62,6 +62,8 @@ pnpm format       # Prettierフォーマット適用
 pnpm db:generate  # Drizzleマイグレーション生成
 pnpm db:migrate   # マイグレーション適用（CI/ステージング）
 pnpm db:push      # DBスキーマをプッシュ（ローカル開発向け）
+pnpm db:seed      # 開発・テスト用データ投入（破壊的・全リセット）
+pnpm db:seed:demo # デモ曲のみ冪等投入（非破壊・CI/ステージング）
 ```
 
 ## アーキテクチャ
