@@ -214,11 +214,11 @@ app.use(
 
 ### 許可オリジン
 
-| 環境               | オリジン                                     |
-| ------------------ | -------------------------------------------- |
-| 開発               | http://localhost:3000                        |
-| 本番               | https://chordbook.vercel.app                 |
-| ステージング（例） | https://chordbook-frontend-staging.pages.dev |
+| 環境         | オリジン                                     |
+| ------------ | -------------------------------------------- |
+| 開発         | http://localhost:3000                        |
+| 本番（例）   | https://chordbook.app                        |
+| ステージング | https://chordbook-frontend-staging.pages.dev |
 
 ---
 

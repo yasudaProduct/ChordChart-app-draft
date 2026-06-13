@@ -1,88 +1,101 @@
-# バックエンドデプロイ（Railway）
+# バックエンドデプロイ（Cloudflare Workers）
 
-Hono (TypeScript) バックエンドを Railway にデプロイする手順です。
+Hono (TypeScript) バックエンドを Cloudflare Workers にデプロイする手順です。
+
+> インフラ全体の構成は [インフラ構成概要](../infrastructure/overview.md) を参照してください。
 
 ## 前提条件
 
 - GitHub アカウント
-- Railway アカウント
+- Cloudflare アカウント
+- Wrangler v4 系（`apps/backend` の devDependencies に含まれる）
 - リポジトリが GitHub にプッシュ済み
+
+---
+
+## 設定ファイル
+
+デプロイ設定は `apps/backend/wrangler.toml` で管理します。
+
+```toml
+name = "chordbook-api-staging"
+main = "src/worker.ts"
+compatibility_date = "2025-04-15"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ALLOWED_ORIGINS = "https://chordbook-frontend-staging.pages.dev,http://localhost:3000"
+# Cloudflare Workers では neon-http を使用（postgres.js の request 間 I/O 共有を回避）
+DATABASE_DRIVER = "neon-http"
+
+# 以下はシークレット（wrangler secret put または GitHub Actions secrets で設定する）
+# DATABASE_URL
+# CLERK_ISSUER
+# CLERK_WEBHOOK_SECRET
+```
+
+- エントリポイントは `src/worker.ts`（`export default app` で Workers にエクスポート）。
+- `[vars]` は公開してよい設定値。秘匿情報は `wrangler secret` で登録する。
 
 ---
 
 ## 初回セットアップ
 
-### 1. Railway にログイン
+### 1. Wrangler にログイン
 
-[railway.app](https://railway.app) にアクセスし、GitHub アカウントでログイン。
+```bash
+cd apps/backend
+npx wrangler login        # ブラウザで Cloudflare 認証
+npx wrangler whoami       # ログイン中のアカウントを確認
+```
 
-### 2. 新規プロジェクト作成
+### 2. シークレットの登録
 
-1. **New Project** をクリック
-2. **Deploy from GitHub repo** を選択
-3. リポジトリを選択
+`wrangler.toml` には書かず、`wrangler secret` で登録します（値はプロンプトで安全に入力）。
 
-### 3. サービス設定
+```bash
+cd apps/backend
+npx wrangler secret put DATABASE_URL
+npx wrangler secret put CLERK_ISSUER
+npx wrangler secret put CLERK_WEBHOOK_SECRET
 
-| 項目 | 値 |
-|------|-----|
-| Root Directory | apps/backend |
-| Build Command | pnpm build |
-| Start Command | pnpm start |
-
-### 4. 環境変数の設定
-
-**Variables** タブで以下を追加:
-
-| 変数名 | 値 |
-|--------|-----|
-| DATABASE_URL | postgresql://postgres:xxx@db.xxx.neon.tech:5432/chordbook |
-| CLERK_ISSUER | https://xxx.clerk.accounts.dev |
-| CLERK_WEBHOOK_SECRET | whsec_XXXXXXXX |
-| ALLOWED_ORIGINS | https://chordbook.vercel.app |
-| PORT | 8080 |
+# 登録済みシークレットの一覧
+npx wrangler secret list
+```
 
 詳細は [docs/deployment/environments.md](./environments.md) を参照。
 
-### 5. デプロイ
+### 3. デプロイ
 
-設定保存後、自動的にビルド・デプロイが開始されます。
+```bash
+cd apps/backend
+pnpm deploy:staging        # = wrangler deploy
+
+# デプロイ前に設定だけ検証したい場合
+npx wrangler deploy --dry-run
+```
 
 ---
 
 ## 自動デプロイ
 
-GitHub 連携により自動デプロイ:
-
-| ブランチ | 動作 |
-|----------|------|
-| main | 自動デプロイ |
-| その他 | 手動デプロイ |
-
-### トリガー設定
-
-1. プロジェクト設定 → **Deployments**
-2. **Watch Paths** で `apps/backend/**` を設定
+`main` ブランチへのマージで GitHub Actions / Cloudflare 連携により自動デプロイされます。デプロイフローの全体像は [インフラ構成概要](../infrastructure/overview.md) を参照。
 
 ---
 
 ## ドメイン設定
 
-### Railway 提供ドメイン
+### Workers 提供ドメイン
 
-デフォルトで `xxx.railway.app` が割り当てられます。
+デフォルトで `<name>.<account>.workers.dev` が割り当てられます（例: `chordbook-api-staging.<account>.workers.dev`）。
 
 ### カスタムドメイン
 
-1. Settings → **Domains**
-2. **Custom Domain** を追加
-3. DNS の CNAME レコードを設定
+Cloudflare ダッシュボード → Workers & Pages → 対象 Worker → **Settings → Domains & Routes** でカスタムドメイン（例: `api.chordbook.app`）を追加します。
 
 ---
 
 ## ヘルスチェック
-
-Railway は自動でヘルスチェックを行います。
 
 エンドポイント: `GET /api/health`
 
@@ -95,100 +108,54 @@ Railway は自動でヘルスチェックを行います。
 
 ---
 
-## スケーリング
-
-### リソース設定
-
-Settings → **Resources**:
-
-| 項目 | 推奨値 |
-|------|--------|
-| Memory | 256MB - 512MB |
-| CPU | 0.5 - 1 vCPU |
-
-### 自動スリープ
-
-無料プランでは非アクティブ時にスリープします。
-初回リクエスト時にコールドスタートが発生。
-
----
-
-## ログ確認
-
-### デプロイログ
-
-1. プロジェクト → **Deployments**
-2. 対象のデプロイを選択
-3. **Build Logs** / **Deploy Logs** を確認
-
-### ランタイムログ
-
-1. サービス → **Logs** タブ
-2. リアルタイムでログを確認
+## デプロイ状態・ログの確認
 
 ```bash
-# Railway CLI でログ確認
-railway logs
+cd apps/backend
+
+# 認証アカウント
+npx wrangler whoami
+
+# デプロイ履歴 / バージョン一覧
+npx wrangler deployments list
+npx wrangler versions list
+
+# ライブログ（稼働中 Worker にリクエストが来たときに流れる）
+npx wrangler tail
+npx wrangler tail --status error      # エラーのみ
+npx wrangler tail --format json       # JSON 出力
 ```
 
----
-
-## Railway CLI
-
-### インストール
+### ロールバック
 
 ```bash
-npm i -g @railway/cli
-```
-
-### 使用方法
-
-```bash
-# ログイン
-railway login
-
-# プロジェクト連携
-railway link
-
-# ローカルで環境変数を使って実行
-railway run pnpm dev
-
-# デプロイ
-railway up
+npx wrangler rollback                 # 直前のバージョンへ
+npx wrangler rollback <VERSION_ID>    # 指定バージョンへ
 ```
 
 ---
 
 ## トラブルシューティング
 
-### ビルドエラー
+### ビルド / デプロイエラー
 
 ```bash
-# ローカルでビルド確認
+# 設定とバンドルを検証（デプロイはしない）
 cd apps/backend
-pnpm build
-pnpm start
+npx wrangler deploy --dry-run
 ```
 
 ### 接続エラー
 
-- 環境変数の確認
-- SSL 設定を確認（`?sslmode=require`）
-
-### ポートエラー
-
-Railway は `PORT` 環境変数でポートを指定:
-
-```typescript
-// index.ts
-const port = process.env.PORT || "8080";
-serve({ fetch: app.fetch, port: Number(port) });
-```
+- シークレット（`DATABASE_URL` 等）が登録済みか `wrangler secret list` で確認
+- Neon 接続文字列の SSL 設定（`?sslmode=require`）を確認
+- Workers では `DATABASE_DRIVER = "neon-http"` を使用しているか確認（`postgres-js` は Workers では不可）
 
 ---
 
 ## 関連ドキュメント
 
+- [インフラ構成概要](../infrastructure/overview.md) - サービス全体の構成
 - [環境変数](./environments.md) - 環境変数一覧
-- [フロントエンドデプロイ](./frontend-deploy.md) - Vercel設定
+- [フロントエンドデプロイ](./frontend-deploy.md) - Cloudflare Pages 設定
 - [トラブルシューティング](./troubleshooting.md) - 問題解決

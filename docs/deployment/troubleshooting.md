@@ -111,16 +111,16 @@ ALLOWED_ORIGINS=http://localhost:3000
 
 ## デプロイ
 
-### Vercel ビルドエラー
+### Cloudflare Pages ビルドエラー
 
 **症状**: ビルド失敗
 
 **確認事項**:
 
 ```bash
-# ローカルでビルド確認
+# ローカルで Pages 向けビルドを確認
 cd apps/frontend
-pnpm build
+npx @cloudflare/next-on-pages
 ```
 
 **よくある原因**:
@@ -128,32 +128,32 @@ pnpm build
 - TypeScript 型エラー
 - ESLint エラー
 - 環境変数の未設定
+- Edge Runtime 非対応 API の使用
 
 **解決方法**:
 
-1. ローカルで `pnpm build` が通るか確認
-2. Vercel の環境変数を確認
+1. ローカルで `npx @cloudflare/next-on-pages` が通るか確認
+2. Cloudflare Pages の環境変数を確認
 3. `NEXT_PUBLIC_` プレフィックスを確認
 
 ---
 
-### Railway ビルドエラー
+### Cloudflare Workers デプロイエラー
 
-**症状**: ビルド失敗
+**症状**: デプロイ失敗
 
 **確認事項**:
 
 ```bash
-# ローカルでビルド確認
+# 設定とバンドルを検証（デプロイはしない）
 cd apps/backend
-pnpm build
-pnpm start
+npx wrangler deploy --dry-run
 ```
 
 **よくある原因**:
 
-- Root Directory の設定が `apps/backend` になっていない
-- 環境変数が未設定
+- シークレット（`DATABASE_URL` 等）が未登録（`wrangler secret list` で確認）
+- `compatibility_flags` に `nodejs_compat` が不足
 - TypeScript のコンパイルエラー
 
 ---
@@ -164,15 +164,17 @@ pnpm start
 
 **確認事項**:
 
-1. Railway のログを確認
-2. 環境変数が正しく設定されているか
+1. Workers のログを確認
+2. シークレット／環境変数が正しく設定されているか
 3. データベース接続が成功しているか
 
 **ログの確認**:
 
 ```bash
-# Railway CLI
-railway logs
+# ライブログ（稼働中 Worker にリクエストが来たときに流れる）
+cd apps/backend
+npx wrangler tail
+npx wrangler tail --status error
 ```
 
 ---
@@ -189,7 +191,7 @@ I/O objects ... created in the context of one request handler cannot be accessed
 
 **原因**: Workers 上では、あるリクエストの処理で作られたソケット／ストリームを別リクエストから触れない。`postgres.js` の TCP コネクションをモジュール先頭で共有するとこの制約に抵触する。
 
-**対策**: `DATABASE_DRIVER` でドライバを明示設定する。Cloudflare Workers は `neon-http`、Railway／ローカル Node は `postgres-js` を指定する。
+**対策**: `DATABASE_DRIVER` でドライバを明示設定する。Cloudflare Workers は `neon-http`、ローカル Node は `postgres-js` を指定する。
 
 詳細セットアップは [ステージング環境](../infrastructure/staging-setup.md) を参照。
 
@@ -319,7 +321,7 @@ pnpm dev
 curl http://localhost:8080/api/health
 
 # SSL 確認
-curl -v https://api.chordbook.railway.app/api/health
+curl -v https://chordbook-api-staging.<account>.workers.dev/api/health
 ```
 
 ---

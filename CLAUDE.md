@@ -16,7 +16,7 @@ ChordBook - コード譜を作成・管理・共有できるWebアプリケー�
 - **バックエンド:** Hono + Drizzle ORM + Zod + jose (JWT検証)
 - **データベース:** PostgreSQL (Neon)
 - **認証:** Clerk
-- **ホスティング:** Vercel (FE), Railway (BE)
+- **ホスティング:** Cloudflare Pages (FE), Cloudflare Workers (BE)
 
 ## コマンド
 

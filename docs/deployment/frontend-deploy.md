@@ -1,158 +1,86 @@
-# フロントエンドデプロイ（Vercel）
+# フロントエンドデプロイ（Cloudflare Pages）
 
-Next.js フロントエンドを Vercel にデプロイする手順です。
+Next.js フロントエンドを `@cloudflare/next-on-pages` アダプター経由で Cloudflare Pages にデプロイする手順です。
+
+> インフラ全体の構成は [インフラ構成概要](../infrastructure/overview.md) を参照してください。
 
 ## 前提条件
 
 - GitHub アカウント
-- Vercel アカウント
+- Cloudflare アカウント
+- Wrangler v4 系（`apps/frontend` の devDependencies に含まれる）
 - リポジトリが GitHub にプッシュ済み
 
 ---
 
-## 初回セットアップ
+## ビルド設定
 
-### 1. Vercel にログイン
+`@cloudflare/next-on-pages` で Next.js を Pages 向けにビルドします。出力は `.vercel/output/static` です。
 
-[vercel.com](https://vercel.com) にアクセスし、GitHub アカウントでログイン。
+| 項目               | 値                              |
+| ------------------ | ------------------------------- |
+| フレームワーク     | Next.js (App Router)            |
+| ビルドコマンド     | `npx @cloudflare/next-on-pages` |
+| 出力ディレクトリ   | `.vercel/output/static`         |
+| Node.js バージョン | 20                              |
+| ルートディレクトリ | `apps/frontend`                 |
 
-### 2. プロジェクトのインポート
+**環境変数（Cloudflare Pages ダッシュボード）**
 
-1. **Add New** → **Project** をクリック
-2. **Import Git Repository** でリポジトリを選択
-3. **Root Directory** を `apps/frontend` に設定
+| 変数名                              | 値（例）                                                  |
+| ----------------------------------- | --------------------------------------------------------- |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | `pk_live_XXXXXXXX`                                        |
+| `CLERK_SECRET_KEY`                  | `sk_live_XXXXXXXX`                                        |
+| `NEXT_PUBLIC_API_URL`               | `https://chordbook-api-staging.<account>.workers.dev/api` |
 
-### 3. ビルド設定
+詳細は [docs/deployment/environments.md](./environments.md) を参照。
 
-| 項目 | 値 |
-|------|-----|
-| Framework Preset | Next.js |
-| Root Directory | apps/frontend |
-| Build Command | pnpm build |
-| Install Command | pnpm install |
-| Output Directory | .next |
+---
 
-### 4. 環境変数の設定
+## 手動デプロイ（Wrangler）
 
-**Environment Variables** セクションで以下を追加:
+```bash
+cd apps/frontend
 
-| 変数名 | 値 |
-|--------|-----|
-| NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY | pk_live_XXXXXXXX |
-| CLERK_SECRET_KEY | sk_live_XXXXXXXX |
-| NEXT_PUBLIC_API_URL | https://api.chordbook.railway.app/api |
+# Cloudflare 認証（初回のみ）
+npx wrangler login
 
-### 5. デプロイ
+# Pages 向けにビルド
+npx @cloudflare/next-on-pages
 
-**Deploy** をクリック。初回ビルドが開始されます。
+# デプロイ（package.json の deploy:staging スクリプト）
+pnpm deploy:staging
+# = wrangler pages deploy .vercel/output/static --project-name=chordbook-frontend-staging
+```
+
+デプロイ先プロジェクトは `chordbook-frontend-staging`（URL: `https://chordbook-frontend-staging.pages.dev`）。
 
 ---
 
 ## 自動デプロイ
 
-GitHub 連携により自動デプロイが設定されます:
+`main` ブランチへのマージで GitHub 連携により自動デプロイされます。デプロイフローの全体像は [インフラ構成概要](../infrastructure/overview.md) を参照。
 
-| ブランチ | 環境 | URL |
-|----------|------|-----|
-| main | Production | chordbook.vercel.app |
-| その他 | Preview | chordbook-xxx-user.vercel.app |
-
-### トリガー
-
-- **main へのプッシュ** → Production デプロイ
-- **PR 作成** → Preview デプロイ
-
----
-
-## 手動デプロイ
-
-### Vercel CLI
-
-```bash
-# CLI インストール
-npm i -g vercel
-
-# ログイン
-vercel login
-
-# デプロイ（Preview）
-cd apps/frontend
-vercel
-
-# デプロイ（Production）
-vercel --prod
-```
-
----
-
-## 環境の管理
-
-### 環境の種類
-
-| 環境 | 説明 |
-|------|------|
-| Production | 本番環境（main ブランチ） |
-| Preview | PR・ブランチごとのプレビュー |
-| Development | ローカル開発 |
-
-### 環境変数の設定
-
-1. Project Settings → Environment Variables
-2. 変数を追加
-3. 適用環境を選択（Production / Preview / Development）
-
-```
-NEXT_PUBLIC_API_URL
-├── Production: https://api.chordbook.railway.app/api
-├── Preview: https://api-staging.chordbook.railway.app/api
-└── Development: http://localhost:5000/api
-```
+| ブランチ | 環境       |
+| -------- | ---------- |
+| main     | Production |
+| その他   | Preview    |
 
 ---
 
 ## カスタムドメイン
 
-### 設定手順
-
-1. Project Settings → Domains
-2. ドメイン名を入力（例: `chordbook.example.com`）
-3. DNS 設定を行う
-
-### DNS 設定
-
-| タイプ | 名前 | 値 |
-|--------|------|-----|
-| CNAME | chordbook | cname.vercel-dns.com |
-
-または
-
-| タイプ | 名前 | 値 |
-|--------|------|-----|
-| A | @ | 76.76.21.21 |
+Cloudflare ダッシュボード → Workers & Pages → 対象 Pages プロジェクト → **Custom domains** でドメイン（例: `chordbook.app`）を追加します。DNS は同一 Cloudflare アカウントなら自動設定されます。
 
 ---
 
-## ビルド最適化
+## デプロイ状態・ログの確認
 
-### キャッシュ
+```bash
+cd apps/frontend
 
-Vercel は自動的に以下をキャッシュ:
-- node_modules
-- .next/cache
-
-### ビルド時間の短縮
-
-```javascript
-// next.config.js
-module.exports = {
-  // 不要なページを除外
-  pageExtensions: ['tsx', 'ts'],
-
-  // 画像最適化
-  images: {
-    domains: ['img.clerk.com'],
-  },
-}
+# デプロイ一覧
+npx wrangler pages deployment list --project-name=chordbook-frontend-staging
 ```
 
 ---
@@ -162,15 +90,16 @@ module.exports = {
 ### ビルドエラー
 
 ```bash
-# ローカルでビルドを確認
+# ローカルで Pages 向けビルドを確認
 cd apps/frontend
-pnpm build
+npx @cloudflare/next-on-pages
 ```
 
 よくある原因:
-- TypeScript エラー
-- 環境変数の未設定
-- 依存関係のバージョン不整合
+
+- TypeScript / ESLint エラー
+- 環境変数の未設定（`NEXT_PUBLIC_` プレフィックスの付け忘れ）
+- Edge Runtime 非対応 API の使用（`@cloudflare/next-on-pages` は Edge ランタイムが前提）
 
 ### 環境変数が反映されない
 
@@ -178,32 +107,11 @@ pnpm build
 - 再デプロイを実行
 - ブラウザキャッシュをクリア
 
-### デプロイ後に404
-
-- `next.config.js` の設定を確認
-- 動的ルートの設定を確認
-
----
-
-## 監視
-
-### Analytics
-
-Vercel Analytics で以下を確認:
-- Core Web Vitals
-- ページビュー
-- 訪問者数
-
-### Logs
-
-Functions ログで API Routes のエラーを確認:
-1. Project → Deployments → 対象のデプロイ
-2. **Functions** タブ
-
 ---
 
 ## 関連ドキュメント
 
+- [インフラ構成概要](../infrastructure/overview.md) - サービス全体の構成
 - [環境変数](./environments.md) - 環境変数一覧
-- [バックエンドデプロイ](./backend-deploy.md) - Railway設定
+- [バックエンドデプロイ](./backend-deploy.md) - Cloudflare Workers 設定
 - [トラブルシューティング](./troubleshooting.md) - 問題解決

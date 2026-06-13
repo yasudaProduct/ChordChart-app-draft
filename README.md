@@ -14,7 +14,7 @@
 | バックエンド   | Hono, Drizzle ORM, Zod, jose (JWT検証)                    |
 | データベース   | PostgreSQL (Neon)                                         |
 | 認証           | Clerk                                                     |
-| ホスティング   | Vercel (FE), Railway (BE)                                 |
+| ホスティング   | Cloudflare Pages (FE), Cloudflare Workers (BE)            |
 
 ## プロジェクト構成
 
@@ -182,6 +182,73 @@ pnpm format
 ### デモモード
 
 バックエンドを起動せずにフロントエンドのみでも動作します。未ログイン状態ではローカルのモックデータを使用したデモモードで動作します。
+
+## デプロイ（Cloudflare）
+
+バックエンドは Cloudflare Workers、フロントエンドは Cloudflare Pages にデプロイします。CLI には [Wrangler](https://developers.cloudflare.com/workers/wrangler/)（v4 系、各アプリの devDependencies に同梱）を使用します。
+
+> 詳細手順は [バックエンドデプロイ](docs/deployment/backend-deploy.md) / [フロントエンドデプロイ](docs/deployment/frontend-deploy.md) を参照。
+
+### 認証
+
+```bash
+npx wrangler login    # ブラウザで Cloudflare 認証（初回のみ）
+npx wrangler whoami   # ログイン中のアカウントを確認
+```
+
+### バックエンド（Cloudflare Workers）
+
+```bash
+cd apps/backend
+
+# シークレットの登録（値はプロンプトで安全に入力）
+npx wrangler secret put DATABASE_URL
+npx wrangler secret put CLERK_ISSUER
+npx wrangler secret put CLERK_WEBHOOK_SECRET
+npx wrangler secret list             # 登録済みシークレット一覧
+
+# デプロイ
+pnpm deploy:staging                  # = wrangler deploy
+npx wrangler deploy --dry-run        # 設定だけ検証（デプロイしない）
+```
+
+### フロントエンド（Cloudflare Pages）
+
+```bash
+cd apps/frontend
+
+# Pages 向けにビルドしてデプロイ
+npx @cloudflare/next-on-pages
+pnpm deploy:staging
+# = wrangler pages deploy .vercel/output/static --project-name=chordbook-frontend-staging
+```
+
+### デプロイ状態・ログの確認
+
+```bash
+cd apps/backend
+
+# デプロイ履歴 / バージョン一覧
+npx wrangler deployments list
+npx wrangler versions list
+
+# ライブログ（稼働中 Worker にリクエストが来たときに流れる）
+npx wrangler tail
+npx wrangler tail --status error     # エラーのみ
+npx wrangler tail --format json      # JSON 出力
+
+# Pages のデプロイ一覧
+cd ../frontend
+npx wrangler pages deployment list --project-name=chordbook-frontend-staging
+```
+
+### ロールバック
+
+```bash
+cd apps/backend
+npx wrangler rollback                # 直前のバージョンへ
+npx wrangler rollback <VERSION_ID>   # 指定バージョンへ
+```
 
 ## ライセンス
 

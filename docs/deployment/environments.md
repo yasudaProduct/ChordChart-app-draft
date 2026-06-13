@@ -25,12 +25,12 @@ CLERK_SECRET_KEY=sk_test_XXXXXXXX
 NEXT_PUBLIC_API_URL=http://localhost:8080/api
 ```
 
-#### Vercel（本番）
+#### Cloudflare Pages（本番）
 
-Vercel ダッシュボードで設定:
+Cloudflare ダッシュボードで設定:
 
-1. Project Settings → Environment Variables
-2. 各変数を追加（Production/Preview/Development を選択可能）
+1. Workers & Pages → 対象 Pages プロジェクト → Settings → Environment variables
+2. 各変数を追加（Production / Preview を選択可能）
 
 ---
 
@@ -68,21 +68,27 @@ ALLOWED_ORIGINS=http://localhost:3000
 PORT=8080
 ```
 
-#### Railway（本番）
+#### Cloudflare Workers（本番）
 
-Railway ダッシュボードで設定:
+公開してよい設定値は `apps/backend/wrangler.toml` の `[vars]` に記述し、秘匿情報は `wrangler secret` で登録します。
 
-1. プロジェクト → Variables
-2. 各変数を追加
-
+```toml
+# apps/backend/wrangler.toml の [vars]
+[vars]
+ALLOWED_ORIGINS = "https://chordbook-frontend-staging.pages.dev,http://localhost:3000"
+# Cloudflare Workers では neon-http を使用（postgres-js は不可）
+DATABASE_DRIVER = "neon-http"
 ```
-DATABASE_URL=postgresql://postgres:xxx@db.xxx.neon.tech:5432/chordbook?sslmode=require
-DATABASE_DRIVER=postgres-js
-CLERK_ISSUER=https://xxx.clerk.accounts.dev
-CLERK_WEBHOOK_SECRET=whsec_XXXXXXXX
-ALLOWED_ORIGINS=https://chordbook.vercel.app
-PORT=8080
+
+```bash
+# 秘匿情報は wrangler secret で登録（値はプロンプトで安全に入力）
+cd apps/backend
+npx wrangler secret put DATABASE_URL
+npx wrangler secret put CLERK_ISSUER
+npx wrangler secret put CLERK_WEBHOOK_SECRET
 ```
+
+> Workers ランタイムにはポートの概念がないため `PORT` は不要です（ローカル Node 実行時のみ使用）。
 
 ---
 
@@ -105,7 +111,7 @@ Webhook エンドポイントを登録し、以下のイベントを有効化:
 - `user.updated`
 - `user.deleted`
 
-エンドポイント URL: `https://your-api.railway.app/api/webhooks/clerk`
+エンドポイント URL: `https://chordbook-api-staging.<account>.workers.dev/api/webhooks/clerk`
 
 Webhook シークレットを `CLERK_WEBHOOK_SECRET` に設定。
 
@@ -124,12 +130,12 @@ Webhook シークレットを `CLERK_WEBHOOK_SECRET` に設定。
 
 ### 本番環境（Production）
 
-| サービス           | 設定値                            |
-| ------------------ | --------------------------------- |
-| フロントエンド URL | https://chordbook.vercel.app      |
-| バックエンド URL   | https://chordbook-api.railway.app |
-| データベース       | Neon PostgreSQL                   |
-| CORS               | https://chordbook.vercel.app      |
+| サービス           | 設定値                                                |
+| ------------------ | ----------------------------------------------------- |
+| フロントエンド URL | https://chordbook-frontend-staging.pages.dev          |
+| バックエンド URL   | https://chordbook-api-staging.\<account\>.workers.dev |
+| データベース       | Neon PostgreSQL                                       |
+| CORS               | https://chordbook-frontend-staging.pages.dev          |
 
 ---
 
@@ -153,6 +159,6 @@ postgresql://postgres:xxx@db.xxx.neon.tech:5432/chordbook?sslmode=require
 
 ## 関連ドキュメント
 
-- [フロントエンドデプロイ](./frontend-deploy.md) - Vercel 設定
-- [バックエンドデプロイ](./backend-deploy.md) - Railway 設定
+- [フロントエンドデプロイ](./frontend-deploy.md) - Cloudflare Pages 設定
+- [バックエンドデプロイ](./backend-deploy.md) - Cloudflare Workers 設定
 - [環境構築](../development/getting-started.md) - ローカル開発
