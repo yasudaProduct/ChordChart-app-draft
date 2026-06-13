@@ -3,6 +3,8 @@ import type { Metadata } from 'next'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { SongListContent } from './SongListContent'
 
+export const runtime = 'edge'
+
 export const metadata: Metadata = {
   title: '楽曲一覧 | ChordBook',
   description: 'コード譜の一覧を表示します。',

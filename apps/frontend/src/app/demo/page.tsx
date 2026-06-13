@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { SongListContent } from '@/app/songs/SongListContent'
 
+export const runtime = 'edge'
+
 export const metadata: Metadata = {
   title: 'デモ | ChordBook',
   description: '登録不要でChordBookの機能を体験できます。',
