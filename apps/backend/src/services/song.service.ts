@@ -73,7 +73,7 @@ const listSongs = async (): Promise<SongListItemDto[]> => {
   const results = await db
     .select()
     .from(songs)
-    .where(eq(songs.visibility, Visibility.Public))
+    .where(and(eq(songs.visibility, Visibility.Public), eq(songs.isDemo, false)))
     .orderBy(desc(songs.updatedAt))
 
   return results.map(toSongListItemDto)
@@ -104,6 +104,7 @@ const searchSongs = async (query: string): Promise<SongListItemDto[]> => {
     .where(
       and(
         eq(songs.visibility, Visibility.Public),
+        eq(songs.isDemo, false),
         or(ilike(songs.title, pattern), ilike(songs.artist, pattern), ilike(songs.key, pattern))
       )
     )
