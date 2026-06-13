@@ -26,7 +26,8 @@
       "Bash(grep -rn \"isAuthenticated\" /Users/yuta/Develop/chord-chart/chord-chart/apps/frontend/src/ --include=\"*.ts\" --include=\"*.tsx\" 2>/dev/null | head -20)",
       "Bash(grep -rn \"songApi\\\\|api\\\\.\" /Users/yuta/Develop/chord-chart/chord-chart/apps/frontend/src/components/ --include=\"*.tsx\" --include=\"*.ts\" 2>/dev/null | head -30)",
       "Bash(npm info *)",
-      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\('description', ''\\)\\); print\\('\\\\n---deps---\\\\n'\\); print\\(json.dumps\\(d.get\\('dependencies', {}\\), indent=2\\)\\)\")"
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\('description', ''\\)\\); print\\('\\\\n---deps---\\\\n'\\); print\\(json.dumps\\(d.get\\('dependencies', {}\\), indent=2\\)\\)\")",
+      "Bash(grep -E \"\\\\.\\(ts|js\\)$\")"
     ]
   },
   "enableAllProjectMcpServers": true,

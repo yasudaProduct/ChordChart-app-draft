@@ -73,6 +73,11 @@ export const songApi = {
     return response.map(toSongListItem)
   },
 
+  async listDemo(): Promise<SongListItem[]> {
+    const response = await api.get<ApiSongListItemDto[]>('/songs/demo')
+    return response.map(toSongListItem)
+  },
+
   async get(id: string): Promise<Song> {
     const dto = await api.get<ApiSongDto>(`/songs/${id}`)
     return toSong(dto)

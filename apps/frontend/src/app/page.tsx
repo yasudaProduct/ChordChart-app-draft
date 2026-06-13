@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { SignedOut } from '@clerk/nextjs'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 
 export default function Home() {
@@ -28,12 +29,14 @@ export default function Home() {
             >
               無料で始める
             </Link>
-            <Link
-              href="/demo"
-              className="rounded-full border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
-            >
-              デモを見る
-            </Link>
+            <SignedOut>
+              <Link
+                href="/demo"
+                className="rounded-full border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
+              >
+                デモを見る
+              </Link>
+            </SignedOut>
           </div>
         </div>
 

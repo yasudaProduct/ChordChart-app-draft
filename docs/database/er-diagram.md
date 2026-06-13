@@ -31,6 +31,7 @@ ChordBook のデータベース設計を説明します。
 │    │ TimeSignature : VARCHAR      NOT NULL  DEFAULT '4/4'           │
 │    │ Content       : JSONB        NOT NULL  DEFAULT '[]'            │
 │    │ Visibility    : INT          NOT NULL  DEFAULT 0 (Private)     │
+│    │ IsDemo        : BOOLEAN      NOT NULL  DEFAULT false           │
 │    │ CreatedAt     : TIMESTAMP    NOT NULL                          │
 │    │ UpdatedAt     : TIMESTAMP    NOT NULL                          │
 └────┴────────────────────────────────────────────────────────────────┘
@@ -89,6 +90,7 @@ ChordBook のデータベース設計を説明します。
 | TimeSignature | VARCHAR(10)  | NO   | '4/4'      | 拍子                   |
 | Content       | JSONB        | NO   | '[]'       | コード譜データ（JSON） |
 | Visibility    | INT          | NO   | 0          | 公開設定（後述）       |
+| IsDemo        | BOOLEAN      | NO   | false      | デモ用曲フラグ         |
 | CreatedAt     | TIMESTAMP    | NO   | now()      | 作成日時               |
 | UpdatedAt     | TIMESTAMP    | NO   | now()      | 更新日時               |
 

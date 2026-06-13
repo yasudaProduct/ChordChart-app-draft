@@ -60,6 +60,7 @@ CREATE UNIQUE INDEX IX_Users_Email ON Users(Email);
 | TimeSignature | VARCHAR(10)  | NO   | '4/4'             | -              | 拍子            |
 | Content       | TEXT         | NO   | '{"sections":[]}' | -              | コード譜データ  |
 | Visibility    | INT          | NO   | 0                 | CHECK(0-3)     | 公開設定        |
+| IsDemo        | BOOLEAN      | NO   | false             | -              | デモ用曲フラグ  |
 | CreatedAt     | TIMESTAMP    | NO   | now()             | -              | 作成日時        |
 | UpdatedAt     | TIMESTAMP    | NO   | now()             | -              | 更新日時        |
 
@@ -79,6 +80,7 @@ CREATE UNIQUE INDEX IX_Users_Email ON Users(Email);
 | PK_Songs            | Id         | PRIMARY KEY |
 | IX_Songs_UserId     | UserId     | INDEX       |
 | IX_Songs_Visibility | Visibility | INDEX       |
+| IX_Songs_IsDemo     | IsDemo     | INDEX       |
 | FK_Songs_Users      | UserId     | FOREIGN KEY |
 
 ### SQL
@@ -94,12 +96,14 @@ CREATE TABLE Songs (
     TimeSignature VARCHAR(10) NOT NULL DEFAULT '4/4',
     Content TEXT NOT NULL DEFAULT '{"sections":[]}',
     Visibility INT NOT NULL DEFAULT 0 CHECK (Visibility BETWEEN 0 AND 3),
+    IsDemo BOOLEAN NOT NULL DEFAULT false,
     CreatedAt TIMESTAMP NOT NULL DEFAULT now(),
     UpdatedAt TIMESTAMP NOT NULL DEFAULT now()
 );
 
 CREATE INDEX IX_Songs_UserId ON Songs(UserId);
 CREATE INDEX IX_Songs_Visibility ON Songs(Visibility);
+CREATE INDEX IX_Songs_IsDemo ON Songs(IsDemo);
 ```
 
 ---

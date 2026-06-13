@@ -5,6 +5,7 @@ import {
   text,
   varchar,
   integer,
+  boolean,
   timestamp,
   index,
   uniqueIndex,
@@ -52,12 +53,14 @@ export const songs = pgTable(
     timeSignature: varchar('TimeSignature', { length: 10 }).notNull().default('4/4'),
     content: text('Content').notNull().default('{"sections":[]}'),
     visibility: visibilityEnum('Visibility').notNull().default('private'),
+    isDemo: boolean('IsDemo').notNull().default(false),
     createdAt: timestamp('CreatedAt', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('UpdatedAt', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     index('IX_Songs_UserId').on(table.userId),
     index('IX_Songs_Visibility').on(table.visibility),
+    index('IX_Songs_IsDemo').on(table.isDemo),
   ]
 )
 

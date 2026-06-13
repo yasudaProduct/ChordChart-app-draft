@@ -102,6 +102,23 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
 
+  /api/songs/demo:
+    get:
+      tags: [Songs]
+      summary: デモ用楽曲一覧取得
+      description: |
+        `isDemo = true` の楽曲を更新日時の降順で返します。
+        ログイン前に機能を試すためのエンドポイントで、認証は不要です。
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SongListItem"
+
   /api/songs/{id}:
     get:
       tags: [Songs]

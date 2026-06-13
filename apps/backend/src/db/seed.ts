@@ -72,6 +72,8 @@ async function main() {
         visibility: f.valuesFromArray({
           values: ['private', 'url_only', 'specific_users', 'public'],
         }),
+        // デモ用フラグはランダム生成させず、後段で明示的に作成するデモ曲のみ true にする
+        isDemo: f.valuesFromArray({ values: [false] }),
       },
     },
     bookmarks: {
@@ -84,6 +86,56 @@ async function main() {
       },
     },
   }))
+
+  console.log('Seeding demo songs...')
+  const [demoOwner] = await db.select().from(schema.users).limit(1)
+  if (!demoOwner) {
+    console.error('No user found to own demo songs')
+    process.exit(1)
+  }
+
+  const now = new Date()
+  await db.insert(schema.songs).values([
+    {
+      userId: demoOwner.id,
+      title: 'Demo Song - Acoustic Ballad',
+      artist: 'ChordBook',
+      key: 'C',
+      bpm: 72,
+      timeSignature: '4/4',
+      content: sampleSongContents[0],
+      visibility: 'public',
+      isDemo: true,
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      userId: demoOwner.id,
+      title: 'Demo Song - Up-tempo Rock',
+      artist: 'ChordBook',
+      key: 'G',
+      bpm: 132,
+      timeSignature: '4/4',
+      content: sampleSongContents[1],
+      visibility: 'public',
+      isDemo: true,
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      userId: demoOwner.id,
+      title: 'Demo Song - Jazz Standard',
+      artist: 'ChordBook',
+      key: 'F',
+      bpm: 96,
+      timeSignature: '3/4',
+      content: sampleSongContents[2],
+      visibility: 'public',
+      isDemo: true,
+      createdAt: now,
+      updatedAt: now,
+    },
+  ])
 
   console.log('Seeding complete!')
   process.exit(0)

@@ -4,14 +4,14 @@ import { useMemo, useState } from 'react'
 import { SongCard } from '@/components/song/SongCard'
 import { SongSearchInput } from '@/components/song/SongSearchInput'
 import { songApi } from '@/lib/songApi'
-import { useSongList } from '@/hooks/useSong'
+import { useSongListForMode } from '@/hooks/useSong'
 
 type SongListContentProps = {
   mode?: 'default' | 'demo'
 }
 
 export const SongListContent = ({ mode = 'default' }: SongListContentProps) => {
-  const { songs, error, isLoading, mutate } = useSongList()
+  const { songs, error, isLoading, mutate } = useSongListForMode(mode)
   const [query, setQuery] = useState('')
 
   const filtered = useMemo(() => {

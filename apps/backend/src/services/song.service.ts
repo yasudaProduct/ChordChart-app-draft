@@ -80,6 +80,19 @@ const listSongs = async (): Promise<SongListItemDto[]> => {
 }
 
 /**
+ * デモ用の曲一覧を取得する。
+ */
+const listDemoSongs = async (): Promise<SongListItemDto[]> => {
+  const results = await db
+    .select()
+    .from(songs)
+    .where(eq(songs.isDemo, true))
+    .orderBy(desc(songs.updatedAt))
+
+  return results.map(toSongListItemDto)
+}
+
+/**
  * 公開曲をタイトル・アーティスト・キーで検索する。
  */
 const searchSongs = async (query: string): Promise<SongListItemDto[]> => {
@@ -212,6 +225,7 @@ const deleteSong = async (id: string, userId: string): Promise<boolean> => {
 
 export const songService = {
   listSongs,
+  listDemoSongs,
   searchSongs,
   getSongById,
   createSong,

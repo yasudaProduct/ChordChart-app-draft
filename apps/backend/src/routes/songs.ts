@@ -55,6 +55,12 @@ songRoutes.get('/search', optionalAuthMiddleware(), async (c) => {
   return c.json(results)
 })
 
+// GET /demo — デモ用曲一覧（/:id より前に定義）
+songRoutes.get('/demo', async (c) => {
+  const results = await songService.listDemoSongs()
+  return c.json(results)
+})
+
 // GET / — 曲一覧
 songRoutes.get('/', async (c) => {
   const results = await songService.listSongs()
