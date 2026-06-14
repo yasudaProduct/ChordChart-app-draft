@@ -16,7 +16,7 @@ type SiteHeaderProps = {
 const navItems = [
   { href: '/songs', label: '楽曲一覧' },
   { href: '/search', label: '検索' },
-  { href: '/profile', label: 'プロフィール' },
+  { href: '/profile', label: 'マイページ' },
 ]
 
 export const SiteHeader = ({ variant = 'public' }: SiteHeaderProps) => {
