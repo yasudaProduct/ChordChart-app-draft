@@ -3,6 +3,7 @@ import { Noto_Sans_JP, Space_Grotesk } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
 import { AuthProvider } from '@/components/providers/AuthProvider'
 import { SWRProvider } from '@/components/providers/SWRProvider'
+import { AuthModal } from '@/components/auth/AuthModal'
 import '@/styles/globals.css'
 
 const bodyFont = Noto_Sans_JP({
@@ -28,7 +29,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <html lang="ja">
         <body className={`${bodyFont.variable} ${displayFont.variable} font-body`}>
           <SWRProvider>
-            <AuthProvider>{children}</AuthProvider>
+            <AuthProvider>
+              {children}
+              <AuthModal />
+            </AuthProvider>
           </SWRProvider>
         </body>
       </html>
