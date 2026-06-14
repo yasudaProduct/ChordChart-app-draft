@@ -85,7 +85,8 @@ npx wrangler deploy --dry-run
 
 1. 依存関係のインストール
 2. `pnpm db:migrate` — `STAGING_DATABASE_URL` を使い Neon にマイグレーション適用
-3. `wrangler deploy` — Cloudflare Workers へデプロイ
+3. `pnpm db:seed:demo` — デモ曲を冪等投入（非破壊）
+4. `wrangler deploy` — Cloudflare Workers へデプロイ
 
 スキーマ変更時は `pnpm db:generate` でマイグレーションファイルを生成し、コミットしてから `develop` へプッシュしてください。詳細は [ステージング環境セットアップ](../infrastructure/staging-setup.md) を参照。
 

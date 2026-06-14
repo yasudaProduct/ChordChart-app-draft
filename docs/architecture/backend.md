@@ -40,11 +40,13 @@ Hono (TypeScript) を使用したバックエンドの設計を説明します�
 
 ```
 apps/backend/src/
-├── index.ts              # エントリポイント（サーバー起動）
+├── index.ts              # Node.js 用エントリポイント（ローカル開発）
+├── worker.ts             # Cloudflare Workers 用エントリポイント
 ├── app.ts                # Hono アプリ定義（CORS, logger, エラーハンドラ）
 ├── routes/
 │   ├── health.ts         # GET /api/health
 │   ├── songs.ts          # Song CRUD + 検索（Zodバリデーション）
+│   ├── me.ts             # GET /api/me/*（マイページ）
 │   └── webhooks.ts       # Clerk Webhook（ユーザー同期）
 ├── middleware/
 │   └── auth.ts           # Clerk JWT 認証（jose）
@@ -139,14 +141,17 @@ Drizzle ORM によるスキーマ定義とデータベース接続。
 // db/schema.ts
 export const songs = pgTable("Songs", {
   id: uuid("Id").primaryKey().defaultRandom(),
-  userId: text("UserId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: text("UserId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   title: varchar("Title", { length: 200 }).notNull(),
   artist: varchar("Artist", { length: 200 }),
   key: varchar("Key", { length: 10 }),
   bpm: integer("Bpm"),
   timeSignature: varchar("TimeSignature", { length: 10 }).default("4/4"),
-  content: text("Content").default("[]"),
-  visibility: integer("Visibility").default(0),
+  content: text("Content").notNull().default('{"sections":[]}'),
+  visibility: visibilityEnum("Visibility").notNull().default("private"),
+  isDemo: boolean("IsDemo").notNull().default(false),
   createdAt: timestamp("CreatedAt").defaultNow(),
   updatedAt: timestamp("UpdatedAt").defaultNow(),
 });
@@ -206,9 +211,9 @@ Clerk が発行した JWT を JWKS（JSON Web Key Set）で検証します。
 
 ### 2種類のミドルウェア
 
-| ミドルウェア | 用途 | 使用エンドポイント |
-|---|---|---|
-| `authMiddleware()` | 認証必須（401を返す） | POST, PUT, DELETE |
+| ミドルウェア               | 用途                       | 使用エンドポイント      |
+| -------------------------- | -------------------------- | ----------------------- |
+| `authMiddleware()`         | 認証必須（401を返す）      | POST, PUT, DELETE       |
 | `optionalAuthMiddleware()` | 認証オプション（匿名許可） | GET（一覧・詳細・検索） |
 
 ## 主要な設計判断

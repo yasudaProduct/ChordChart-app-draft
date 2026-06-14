@@ -6,12 +6,12 @@ info:
     ChordBook のバックエンド REST API 仕様（v1）。
 
     - 形式: JSON / UTF-8
-    - 認証: なし（現在のフロント実装に合わせる）
+    - 認証: Clerk JWT（一部エンドポイントは不要）
 servers:
   - url: http://localhost:8080
     description: 開発（ローカル）
-  - url: https://api.chordbook.example.com
-    description: 本番（例）
+  - url: https://chordbook-api-staging.<account>.workers.dev
+    description: ステージング
 tags:
   - name: Health
     description: ヘルスチェック

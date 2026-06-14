@@ -13,10 +13,10 @@ ChordBook REST API の概要と認証方式です。
 
 ### ベース URL
 
-| 環境 | URL                                   |
-| ---- | ------------------------------------- |
-| 開発 | http://localhost:8080/api             |
-| 本番 | https://api.chordbook.example.com/api |
+| 環境         | URL                                                       |
+| ------------ | --------------------------------------------------------- |
+| 開発         | http://localhost:8080/api                                 |
+| ステージング | https://chordbook-api-staging.\<account\>.workers.dev/api |
 
 ---
 
@@ -102,7 +102,7 @@ Authorization: Bearer <access_token>
   "bpm": 120,
   "timeSignature": "4/4",
   "content": { "sections": [] },
-  "visibility": 0,
+  "visibility": "private",
   "createdAt": "2024-01-15T10:30:00Z",
   "updatedAt": "2024-01-15T10:30:00Z"
 }
@@ -217,7 +217,6 @@ app.use(
 | 環境         | オリジン                                     |
 | ------------ | -------------------------------------------- |
 | 開発         | http://localhost:3000                        |
-| 本番（例）   | https://chordbook.app                        |
 | ステージング | https://chordbook-frontend-staging.pages.dev |
 
 ---

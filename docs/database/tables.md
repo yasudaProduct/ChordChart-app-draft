@@ -10,35 +10,32 @@ ChordBook データベースの各テーブル詳細定義です。
 
 ### カラム定義
 
-| カラム名    | データ型     | NULL | デフォルト | 制約   | 説明                        |
-| ----------- | ------------ | ---- | ---------- | ------ | --------------------------- |
-| Id          | TEXT         | NO   | -          | PK     | 主キー（Clerk ユーザー ID） |
-| Email       | VARCHAR(255) | NO   | -          | UNIQUE | メールアドレス              |
-| DisplayName | VARCHAR(100) | YES  | NULL       | -      | 表示名                      |
-| AvatarUrl   | VARCHAR(500) | YES  | NULL       | -      | アバター画像URL             |
-| CreatedAt   | TIMESTAMP    | NO   | now()      | -      | 作成日時                    |
-| UpdatedAt   | TIMESTAMP    | NO   | now()      | -      | 更新日時                    |
+| カラム名    | データ型  | NULL | デフォルト | 制約 | 説明                        |
+| ----------- | --------- | ---- | ---------- | ---- | --------------------------- |
+| Id          | TEXT      | NO   | -          | PK   | 主キー（Clerk ユーザー ID） |
+| Email       | TEXT      | NO   | -          | -    | メールアドレス              |
+| DisplayName | TEXT      | YES  | NULL       | -    | 表示名                      |
+| AvatarUrl   | TEXT      | YES  | NULL       | -    | アバター画像URL             |
+| CreatedAt   | TIMESTAMP | NO   | now()      | -    | 作成日時                    |
+| UpdatedAt   | TIMESTAMP | NO   | now()      | -    | 更新日時                    |
 
 ### インデックス
 
 | インデックス名 | カラム | 種類        |
 | -------------- | ------ | ----------- |
 | PK_Users       | Id     | PRIMARY KEY |
-| IX_Users_Email | Email  | UNIQUE      |
 
 ### SQL
 
 ```sql
 CREATE TABLE Users (
     Id TEXT PRIMARY KEY,
-    Email VARCHAR(255) NOT NULL UNIQUE,
-    DisplayName VARCHAR(100),
-    AvatarUrl VARCHAR(500),
-    CreatedAt TIMESTAMP NOT NULL DEFAULT now(),
-    UpdatedAt TIMESTAMP NOT NULL DEFAULT now()
+    Email TEXT NOT NULL,
+    DisplayName TEXT,
+    AvatarUrl TEXT,
+    CreatedAt TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UpdatedAt TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
-CREATE UNIQUE INDEX IX_Users_Email ON Users(Email);
 ```
 
 ---
@@ -49,29 +46,31 @@ CREATE UNIQUE INDEX IX_Users_Email ON Users(Email);
 
 ### カラム定義
 
-| カラム名      | データ型     | NULL | デフォルト        | 制約           | 説明            |
-| ------------- | ------------ | ---- | ----------------- | -------------- | --------------- |
-| Id            | UUID         | NO   | gen_random_uuid() | PK             | 主キー          |
-| UserId        | TEXT         | NO   | -                 | FK → Users     | 所有者          |
-| Title         | VARCHAR(200) | NO   | -                 | -              | 曲名            |
-| Artist        | VARCHAR(200) | YES  | NULL              | -              | アーティスト名  |
-| Key           | VARCHAR(10)  | YES  | NULL              | -              | キー（C, Am等） |
-| Bpm           | INT          | YES  | NULL              | CHECK(Bpm > 0) | テンポ          |
-| TimeSignature | VARCHAR(10)  | NO   | '4/4'             | -              | 拍子            |
-| Content       | TEXT         | NO   | '{"sections":[]}' | -              | コード譜データ  |
-| Visibility    | INT          | NO   | 0                 | CHECK(0-3)     | 公開設定        |
-| IsDemo        | BOOLEAN      | NO   | false             | -              | デモ用曲フラグ  |
-| CreatedAt     | TIMESTAMP    | NO   | now()             | -              | 作成日時        |
-| UpdatedAt     | TIMESTAMP    | NO   | now()             | -              | 更新日時        |
+| カラム名      | データ型          | NULL | デフォルト        | 制約           | 説明            |
+| ------------- | ----------------- | ---- | ----------------- | -------------- | --------------- |
+| Id            | UUID              | NO   | gen_random_uuid() | PK             | 主キー          |
+| UserId        | TEXT              | NO   | -                 | FK → Users     | 所有者          |
+| Title         | VARCHAR(200)      | NO   | -                 | -              | 曲名            |
+| Artist        | VARCHAR(200)      | YES  | NULL              | -              | アーティスト名  |
+| Key           | VARCHAR(10)       | YES  | NULL              | -              | キー（C, Am等） |
+| Bpm           | INT               | YES  | NULL              | CHECK(Bpm > 0) | テンポ          |
+| TimeSignature | VARCHAR(10)       | NO   | '4/4'             | -              | 拍子            |
+| Content       | TEXT              | NO   | '{"sections":[]}' | -              | コード譜データ  |
+| Visibility    | visibility (ENUM) | NO   | 'private'         | -              | 公開設定        |
+| IsDemo        | BOOLEAN           | NO   | false             | -              | デモ用曲フラグ  |
+| CreatedAt     | TIMESTAMP         | NO   | now()             | -              | 作成日時        |
+| UpdatedAt     | TIMESTAMP         | NO   | now()             | -              | 更新日時        |
 
 ### Visibility 値
 
-| 値  | 名前          | 説明                  |
-| --- | ------------- | --------------------- |
-| 0   | Private       | 非公開（作成者のみ）  |
-| 1   | UrlOnly       | URLを知っている人のみ |
-| 2   | SpecificUsers | 特定ユーザーのみ      |
-| 3   | Public        | 全員に公開            |
+PostgreSQL の `visibility` ENUM 型（`apps/backend/src/db/schema.ts` で定義）:
+
+| 値               | 説明                  |
+| ---------------- | --------------------- |
+| `private`        | 非公開（作成者のみ）  |
+| `url_only`       | URLを知っている人のみ |
+| `specific_users` | 特定ユーザーのみ      |
+| `public`         | 全員に公開            |
 
 ### インデックス
 
@@ -86,19 +85,21 @@ CREATE UNIQUE INDEX IX_Users_Email ON Users(Email);
 ### SQL
 
 ```sql
+CREATE TYPE visibility AS ENUM ('private', 'url_only', 'specific_users', 'public');
+
 CREATE TABLE Songs (
     Id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     UserId TEXT NOT NULL REFERENCES Users(Id) ON DELETE CASCADE,
     Title VARCHAR(200) NOT NULL,
     Artist VARCHAR(200),
     Key VARCHAR(10),
-    Bpm INT CHECK (Bpm > 0),
+    Bpm INT,
     TimeSignature VARCHAR(10) NOT NULL DEFAULT '4/4',
     Content TEXT NOT NULL DEFAULT '{"sections":[]}',
-    Visibility INT NOT NULL DEFAULT 0 CHECK (Visibility BETWEEN 0 AND 3),
+    Visibility visibility NOT NULL DEFAULT 'private',
     IsDemo BOOLEAN NOT NULL DEFAULT false,
-    CreatedAt TIMESTAMP NOT NULL DEFAULT now(),
-    UpdatedAt TIMESTAMP NOT NULL DEFAULT now()
+    CreatedAt TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UpdatedAt TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX IX_Songs_UserId ON Songs(UserId);
@@ -222,4 +223,4 @@ Songs.Content に格納される JSON の構造（現行形式）:
 ## 関連ドキュメント
 
 - [ER図](./er-diagram.md) - エンティティ関連図
-- [バックエンドアーキテクチャ](../architecture/backend.md) - Entity Framework Core
+- [バックエンドアーキテクチャ](../architecture/backend.md) - Hono + Drizzle ORM

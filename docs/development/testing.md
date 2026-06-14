@@ -16,11 +16,10 @@ ChordBook プロジェクトのテスト方針と実行方法です。
         └───────────┘
 ```
 
-| レベル | 対象 | ツール |
-|--------|------|--------|
-| ユニット | 関数・モジュール単体 | vitest (BE), Jest (FE) |
-| 統合 | API エンドポイント | vitest + supertest |
-| E2E | ユーザーフロー | Playwright |
+| レベル   | 対象             | ツール          |
+| -------- | ---------------- | --------------- |
+| ユニット | ルート・サービス | vitest (BE)     |
+| E2E      | ユーザーフロー   | Playwright (FE) |
 
 ---
 
@@ -29,66 +28,64 @@ ChordBook プロジェクトのテスト方針と実行方法です。
 ### テストプロジェクト構成
 
 ```
-apps/backend-hono/
+apps/backend/
 ├── src/
 │   ├── routes/
 │   ├── services/
 │   ├── middleware/
 │   └── db/
-└── tests/                     # テストファイル
-    ├── routes/                # ルートテスト
-    ├── services/              # サービステスト
-    └── setup.ts               # テストセットアップ
+└── test/                      # テストファイル
+    └── routes/                # ルートテスト（health, songs, me）
 ```
 
 ### ユニットテスト例
 
 ```typescript
 // tests/services/song.service.test.ts
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi } from "vitest";
 
-describe('song.service', () => {
-  it('listSongs returns public songs when no userId', async () => {
-    const songs = await listSongs()
-    expect(songs).toBeDefined()
-    expect(Array.isArray(songs)).toBe(true)
-  })
-})
+describe("song.service", () => {
+  it("listSongs returns public songs when no userId", async () => {
+    const songs = await listSongs();
+    expect(songs).toBeDefined();
+    expect(Array.isArray(songs)).toBe(true);
+  });
+});
 ```
 
 ### 統合テスト例
 
 ```typescript
 // tests/routes/songs.test.ts
-import { describe, it, expect } from 'vitest'
-import { app } from '../../src/app'
+import { describe, it, expect } from "vitest";
+import { app } from "../../src/app";
 
-describe('GET /api/songs', () => {
-  it('returns 200 with song list', async () => {
-    const res = await app.request('/api/songs')
-    expect(res.status).toBe(200)
+describe("GET /api/songs", () => {
+  it("returns 200 with song list", async () => {
+    const res = await app.request("/api/songs");
+    expect(res.status).toBe(200);
 
-    const body = await res.json()
-    expect(Array.isArray(body)).toBe(true)
-  })
-})
+    const body = await res.json();
+    expect(Array.isArray(body)).toBe(true);
+  });
+});
 
-describe('POST /api/songs', () => {
-  it('returns 401 without auth token', async () => {
-    const res = await app.request('/api/songs', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: 'Test' }),
-    })
-    expect(res.status).toBe(401)
-  })
-})
+describe("POST /api/songs", () => {
+  it("returns 401 without auth token", async () => {
+    const res = await app.request("/api/songs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "Test" }),
+    });
+    expect(res.status).toBe(401);
+  });
+});
 ```
 
 ### テスト実行
 
 ```bash
-cd apps/backend-hono
+cd apps/backend
 
 # 全テスト実行
 pnpm test
@@ -105,105 +102,9 @@ pnpm test -- songs.test.ts
 
 ---
 
-## フロントエンド（TypeScript/React）
+## フロントエンド（E2E）
 
-### テストツール
-
-| ツール | 用途 |
-|--------|------|
-| Jest | テストランナー |
-| React Testing Library | コンポーネントテスト |
-| MSW | API モック |
-
-### ユニットテスト例
-
-```typescript
-// __tests__/utils/formatDate.test.ts
-import { formatDate } from '@/lib/utils'
-
-describe('formatDate', () => {
-  it('formats date correctly', () => {
-    const date = '2024-01-15T10:30:00Z'
-    const result = formatDate(date)
-    expect(result).toBe('2024/01/15')
-  })
-
-  it('returns empty string for invalid date', () => {
-    const result = formatDate('invalid')
-    expect(result).toBe('')
-  })
-})
-```
-
-### コンポーネントテスト例
-
-```typescript
-// __tests__/components/SongCard.test.tsx
-import { render, screen, fireEvent } from '@testing-library/react'
-import { SongCard } from '@/components/SongCard'
-
-describe('SongCard', () => {
-  const mockSong = {
-    id: '1',
-    title: 'Test Song',
-    artist: 'Test Artist',
-    key: 'C',
-    updatedAt: '2024-01-15',
-  }
-
-  it('renders song information', () => {
-    render(<SongCard song={mockSong} onSelect={jest.fn()} />)
-
-    expect(screen.getByText('Test Song')).toBeInTheDocument()
-    expect(screen.getByText('Test Artist')).toBeInTheDocument()
-  })
-
-  it('calls onSelect when clicked', () => {
-    const onSelect = jest.fn()
-    render(<SongCard song={mockSong} onSelect={onSelect} />)
-
-    fireEvent.click(screen.getByRole('button'))
-
-    expect(onSelect).toHaveBeenCalledWith('1')
-  })
-})
-```
-
-### API モック（MSW）
-
-```typescript
-// __tests__/mocks/handlers.ts
-import { rest } from 'msw'
-
-export const handlers = [
-  rest.get('/api/songs', (req, res, ctx) => {
-    return res(
-      ctx.json([
-        { id: '1', title: 'Song 1', artist: 'Artist 1' },
-        { id: '2', title: 'Song 2', artist: 'Artist 2' },
-      ])
-    )
-  }),
-]
-```
-
-### テスト実行
-
-```bash
-cd apps/frontend
-
-# 全テスト実行
-pnpm test
-
-# ウォッチモード
-pnpm test --watch
-
-# カバレッジ
-pnpm test --coverage
-
-# 特定ファイル
-pnpm test SongCard.test.tsx
-```
+フロントエンドの自動テストは Playwright による E2E テスト（`apps/frontend/e2e/`）を中心に実施します。コンポーネント単体テスト（Jest 等）は現時点では未導入です。
 
 ---
 
@@ -221,29 +122,29 @@ npx playwright install
 
 ```typescript
 // e2e/songs.spec.ts
-import { test, expect } from '@playwright/test'
+import { test, expect } from "@playwright/test";
 
-test.describe('Songs', () => {
-  test('should display song list', async ({ page }) => {
-    await page.goto('/songs')
+test.describe("Songs", () => {
+  test("should display song list", async ({ page }) => {
+    await page.goto("/songs");
 
     // 楽曲一覧が表示される
-    await expect(page.getByRole('heading', { name: '楽曲一覧' })).toBeVisible()
-  })
+    await expect(page.getByRole("heading", { name: "楽曲一覧" })).toBeVisible();
+  });
 
-  test('should create new song', async ({ page }) => {
-    await page.goto('/songs/new')
+  test("should create new song", async ({ page }) => {
+    await page.goto("/songs/new");
 
     // フォーム入力
-    await page.getByLabel('曲名').fill('新しい曲')
-    await page.getByLabel('アーティスト').fill('テストアーティスト')
-    await page.getByRole('button', { name: '作成' }).click()
+    await page.getByLabel("曲名").fill("新しい曲");
+    await page.getByLabel("アーティスト").fill("テストアーティスト");
+    await page.getByRole("button", { name: "作成" }).click();
 
     // 詳細ページに遷移
-    await expect(page).toHaveURL(/\/songs\/[a-z0-9-]+/)
-    await expect(page.getByText('新しい曲')).toBeVisible()
-  })
-})
+    await expect(page).toHaveURL(/\/songs\/[a-z0-9-]+/);
+    await expect(page.getByText("新しい曲")).toBeVisible();
+  });
+});
 ```
 
 ### 実行
@@ -265,13 +166,13 @@ npx playwright test --project=chromium
 
 ### 何をテストするか
 
-| 優先度 | 対象 |
-|--------|------|
-| 高 | ビジネスロジック（Service 層） |
-| 高 | API エンドポイントの正常系 |
-| 中 | バリデーション（Zod スキーマ） |
-| 中 | エラーハンドリング |
-| 低 | UI のスタイル |
+| 優先度 | 対象                           |
+| ------ | ------------------------------ |
+| 高     | ビジネスロジック（Service 層） |
+| 高     | API エンドポイントの正常系     |
+| 中     | バリデーション（Zod スキーマ） |
+| 中     | エラーハンドリング             |
+| 低     | UI のスタイル                  |
 
 ### テストのベストプラクティス
 
@@ -304,9 +205,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
       - run: |
-          cd apps/backend-hono
+          cd apps/backend
           pnpm install
           pnpm test
 
@@ -316,7 +217,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
       - run: |
           cd apps/frontend
           pnpm install

@@ -12,17 +12,19 @@ PlaywrightによるE2Eテストを導入し、ユーザーの実操作に近い�
 
 ## 実行タイミング
 
-| タイミング | トリガー | 対象ブランチ |
-|-----------|---------|-------------|
-| ローカル | `pnpm e2e` で任意実行 | 任意 |
-| CI | プルリクエスト作成・更新時 | main, develop |
+| タイミング | トリガー                   | 備考                                       |
+| ---------- | -------------------------- | ------------------------------------------ |
+| ローカル   | `pnpm e2e` で任意実行      | `playwright.config.ts` がフロントを起動    |
+| CI         | プルリクエスト作成・更新時 | `.github/workflows/ci.yml` の `e2e` ジョブ |
 
 ## ローカルDB環境
 
 ### 方針
+
 E2Eテストは **Dockerのローカル PostgreSQL** を使用する。本番DBへの影響を完全に排除する。
 
 ### ローカル環境
+
 ```bash
 # DB起動
 docker compose up -d
@@ -35,28 +37,28 @@ cd apps/backend && pnpm db:seed
 ```
 
 ### CI環境
-GitHub Actions上で以下のフローを実行:
-1. Docker PostgreSQL 起動
-2. `pnpm db:push`（スキーマ適用）
-3. `pnpm db:seed`（テストデータ投入）
-4. E2Eテスト実行
-5. Docker コンテナ停止
+
+GitHub Actions（`.github/workflows/ci.yml`）では以下を実行:
+
+1. 依存関係のインストール
+2. Playwright ブラウザ（Chromium）のインストール
+3. `playwright test` 実行（`playwright.config.ts` の `webServer` でフロントエンドを `pnpm build && pnpm start` で起動）
+4. テスト結果を PR コメントに投稿、レポートを Artifact として保存
+
+CI ではバックエンドや Docker PostgreSQL は起動しません。Clerk 認証テストには `@clerk/testing` を使用します。
 
 ### シードデータ
 
 `apps/backend/src/db/seed.ts` にテスト用データを定義:
 
-| テーブル | データ | 用途 |
-|---------|--------|------|
-| Users | test01@example.com | 楽曲操作テスト |
-| Songs | サンプル楽曲15件 | 一覧・詳細テスト |
+| テーブル | データ             | 用途             |
+| -------- | ------------------ | ---------------- |
+| Users    | test01@example.com | 楽曲操作テスト   |
+| Songs    | サンプル楽曲15件   | 一覧・詳細テスト |
 
 ## 認証（Clerk）
 
-E2EテストでのClerk認証は以下のいずれかの方式を採用:
-
-- **テスト用トークン**: Clerk のテストモードで発行したトークンを `.env.e2e` に設定して使用
-- **UI操作**: Playwright でClerkのログインフローを実際に操作
+E2Eテストでの Clerk 認証には `@clerk/testing`（`e2e/global-setup.ts` で `clerkSetup()`）を使用します。ローカルでは `.env.e2e` にテスト用キーを設定してください。
 
 ```bash
 # .env.e2e
@@ -86,6 +88,7 @@ UIは頻繁に変更される前提で、以下の方針でテストを壊れに
 ## テスト対象
 
 ### Phase 1: 認証（現在）
+
 - ログインページの表示
 - ログイン成功 → リダイレクト
 - ログイン失敗 → エラー表示
@@ -94,12 +97,14 @@ UIは頻繁に変更される前提で、以下の方針でテストを壊れに
 - ログアウト
 
 ### Phase 2: 楽曲管理（将来）
+
 - 楽曲一覧表示
 - 楽曲作成
 - 楽曲編集
 - 楽曲削除
 
 ### Phase 3: 共有・検索（将来）
+
 - 楽曲共有
 - 楽曲検索
 

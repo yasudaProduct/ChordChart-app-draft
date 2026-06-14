@@ -220,8 +220,7 @@ develop ブランチへのプッシュ
         │     └── wrangler deploy   → Cloudflare Workers
         │
         └──▶ deploy-frontend ジョブ
-              ├── next build
-              ├── @cloudflare/next-on-pages
+              ├── pnpm exec next-on-pages
               └── wrangler pages deploy → Cloudflare Pages
 ```
 

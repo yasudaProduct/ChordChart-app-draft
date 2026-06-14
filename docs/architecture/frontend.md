@@ -4,14 +4,15 @@ Next.js 14 を使用したフロントエンドの設計を説明します。
 
 ## 技術スタック
 
-| 技術 | バージョン | 用途 |
-|------|-----------|------|
-| Next.js | 14 | React フレームワーク |
-| React | 18.3 | UI ライブラリ |
-| TypeScript | 5.4 | 型安全な開発 |
-| Tailwind CSS | 3.4 | スタイリング |
-| Zustand | 最新 | 状態管理 |
-| shadcn/ui | 最新 | UI コンポーネント |
+| 技術         | バージョン | 用途                 |
+| ------------ | ---------- | -------------------- |
+| Next.js      | 14         | React フレームワーク |
+| React        | 18.3       | UI ライブラリ        |
+| TypeScript   | 5.4        | 型安全な開発         |
+| Tailwind CSS | 3.4        | スタイリング         |
+| Zustand      | 4.5        | クライアント状態管理 |
+| SWR          | 2.4        | サーバーデータ取得   |
+| Clerk        | 6.x        | 認証                 |
 
 ## ディレクトリ構成
 
@@ -21,37 +22,31 @@ apps/frontend/
 │   ├── app/                    # Next.js App Router
 │   │   ├── layout.tsx          # ルートレイアウト
 │   │   ├── page.tsx            # ホームページ
-│   │   ├── (auth)/             # 認証関連ページ（グループ）
-│   │   │   ├── login/
-│   │   │   └── register/
-│   │   ├── songs/              # 楽曲関連ページ
-│   │   │   ├── page.tsx        # 楽曲一覧
-│   │   │   ├── [id]/           # 楽曲詳細（動的ルート）
-│   │   │   └── new/            # 新規作成
-│   │   └── editor/             # エディター
-│   │       └── [id]/
+│   │   ├── login/              # ログイン
+│   │   ├── register/           # 新規登録
+│   │   ├── profile/            # マイページ
+│   │   ├── songs/              # 楽曲一覧・詳細・新規作成
+│   │   ├── editor/[id]/        # エディター
+│   │   ├── demo/               # デモモード
+│   │   ├── search/             # 検索
+│   │   └── share/[token]/      # 共有リンク
 │   │
-│   ├── components/             # 共通コンポーネント
-│   │   ├── ui/                 # shadcn/ui コンポーネント
-│   │   ├── layout/             # レイアウトコンポーネント
-│   │   └── features/           # 機能別コンポーネント
+│   ├── components/             # UI・機能コンポーネント
+│   │   ├── ui/                 # 共通 UI（Button, Input 等）
+│   │   ├── layout/             # レイアウト
+│   │   ├── editor/             # エディター
+│   │   ├── song/               # 楽曲表示
+│   │   ├── profile/            # プロフィール
+│   │   └── auth/               # 認証 UI
 │   │
-│   ├── lib/                    # ユーティリティ
-│   │   ├── api.ts              # API クライアント
-│   │   └── utils.ts            # 汎用ユーティリティ
-│   │
+│   ├── hooks/                  # カスタムフック（useSong, useMe 等）
+│   ├── lib/                    # API クライアント・ユーティリティ
 │   ├── stores/                 # Zustand ストア
-│   │   ├── authStore.ts        # 認証状態
-│   │   └── editorStore.ts      # エディター状態
-│   │
 │   ├── types/                  # TypeScript 型定義
-│   │   ├── api.ts              # API レスポンス型
-│   │   └── song.ts             # 楽曲関連型
-│   │
-│   └── styles/                 # グローバルスタイル
+│   └── styles/
 │       └── globals.css
 │
-├── public/                     # 静的ファイル
+├── public/
 ├── package.json
 ├── tsconfig.json
 ├── tailwind.config.ts
@@ -64,23 +59,29 @@ Next.js 14 の App Router を採用しています。
 
 ### ルーティング規則
 
-| パス | ファイル | 説明 |
-|------|----------|------|
-| `/` | `app/page.tsx` | ホームページ |
-| `/songs` | `app/songs/page.tsx` | 楽曲一覧 |
-| `/songs/123` | `app/songs/[id]/page.tsx` | 楽曲詳細 |
-| `/songs/new` | `app/songs/new/page.tsx` | 新規作成 |
-| `/editor/123` | `app/editor/[id]/page.tsx` | エディター |
+| パス             | ファイル                     | 説明         |
+| ---------------- | ---------------------------- | ------------ |
+| `/`              | `app/page.tsx`               | ホームページ |
+| `/login`         | `app/login/page.tsx`         | ログイン     |
+| `/register`      | `app/register/page.tsx`      | 新規登録     |
+| `/profile`       | `app/profile/page.tsx`       | マイページ   |
+| `/songs`         | `app/songs/page.tsx`         | 楽曲一覧     |
+| `/songs/123`     | `app/songs/[id]/page.tsx`    | 楽曲詳細     |
+| `/songs/new`     | `app/songs/new/page.tsx`     | 新規作成     |
+| `/editor/123`    | `app/editor/[id]/page.tsx`   | エディター   |
+| `/demo`          | `app/demo/page.tsx`          | デモ一覧     |
+| `/search`        | `app/search/page.tsx`        | 曲検索       |
+| `/share/[token]` | `app/share/[token]/page.tsx` | 共有リンク   |
 
 ### 特殊ファイル
 
-| ファイル | 用途 |
-|----------|------|
-| `layout.tsx` | 共通レイアウト（ヘッダー、フッター等） |
-| `page.tsx` | ページコンポーネント |
-| `loading.tsx` | ローディング UI |
-| `error.tsx` | エラーハンドリング |
-| `not-found.tsx` | 404 ページ |
+| ファイル        | 用途                                   |
+| --------------- | -------------------------------------- |
+| `layout.tsx`    | 共通レイアウト（ヘッダー、フッター等） |
+| `page.tsx`      | ページコンポーネント                   |
+| `loading.tsx`   | ローディング UI                        |
+| `error.tsx`     | エラーハンドリング                     |
+| `not-found.tsx` | 404 ページ                             |
 
 ## 状態管理（Zustand）
 
@@ -90,10 +91,10 @@ Next.js 14 の App Router を採用しています。
 
 ```typescript
 interface AuthState {
-  user: User | null
-  isLoading: boolean
-  setUser: (user: User | null) => void
-  setLoading: (loading: boolean) => void
+  user: User | null;
+  isLoading: boolean;
+  setUser: (user: User | null) => void;
+  setLoading: (loading: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -101,18 +102,18 @@ export const useAuthStore = create<AuthState>((set) => ({
   isLoading: true,
   setUser: (user) => set({ user }),
   setLoading: (loading) => set({ isLoading: loading }),
-}))
+}));
 ```
 
 **使用例**:
 
 ```tsx
 function Header() {
-  const { user, isLoading } = useAuthStore()
+  const { user, isLoading } = useAuthStore();
 
-  if (isLoading) return <Skeleton />
-  if (!user) return <LoginButton />
-  return <UserMenu user={user} />
+  if (isLoading) return <Skeleton />;
+  if (!user) return <LoginButton />;
+  return <UserMenu user={user} />;
 }
 ```
 
@@ -120,13 +121,13 @@ function Header() {
 
 ```typescript
 interface EditorState {
-  song: Song | null
-  isPreviewVisible: boolean
-  isDirty: boolean
-  setSong: (song: Song) => void
-  updateSong: (updates: Partial<Song>) => void
-  togglePreview: () => void
-  setDirty: (dirty: boolean) => void
+  song: Song | null;
+  isPreviewVisible: boolean;
+  isDirty: boolean;
+  setSong: (song: Song) => void;
+  updateSong: (updates: Partial<Song>) => void;
+  togglePreview: () => void;
+  setDirty: (dirty: boolean) => void;
 }
 ```
 
@@ -134,18 +135,21 @@ interface EditorState {
 
 ```tsx
 function Editor() {
-  const { song, updateSong, isDirty } = useEditorStore()
+  const { song, updateSong, isDirty } = useEditorStore();
 
   const handleTitleChange = (title: string) => {
-    updateSong({ title })  // 自動的に isDirty = true
-  }
+    updateSong({ title }); // 自動的に isDirty = true
+  };
 
   return (
     <div>
       {isDirty && <span>未保存の変更があります</span>}
-      <input value={song?.title} onChange={e => handleTitleChange(e.target.value)} />
+      <input
+        value={song?.title}
+        onChange={(e) => handleTitleChange(e.target.value)}
+      />
     </div>
-  )
+  );
 }
 ```
 
@@ -154,33 +158,33 @@ function Editor() {
 `src/lib/api.ts` で統一的な API 呼び出しを提供。
 
 ```typescript
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 
 export const api = {
   get: <T>(endpoint: string) => apiClient<T>(endpoint),
   post: <T>(endpoint: string, body: unknown) =>
-    apiClient<T>(endpoint, { method: 'POST', body }),
+    apiClient<T>(endpoint, { method: "POST", body }),
   put: <T>(endpoint: string, body: unknown) =>
-    apiClient<T>(endpoint, { method: 'PUT', body }),
-  delete: <T>(endpoint: string) =>
-    apiClient<T>(endpoint, { method: 'DELETE' }),
-}
+    apiClient<T>(endpoint, { method: "PUT", body }),
+  delete: <T>(endpoint: string) => apiClient<T>(endpoint, { method: "DELETE" }),
+};
 ```
 
 **使用例**:
 
 ```typescript
 // 楽曲一覧取得
-const songs = await api.get<SongListItem[]>('/songs')
+const songs = await api.get<SongListItem[]>("/songs");
 
 // 楽曲作成
-const newSong = await api.post<Song>('/songs', {
-  title: '新しい曲',
-  artist: 'アーティスト',
-})
+const newSong = await api.post<Song>("/songs", {
+  title: "新しい曲",
+  artist: "アーティスト",
+});
 
 // 楽曲更新
-await api.put(`/songs/${id}`, updatedSong)
+await api.put(`/songs/${id}`, updatedSong);
 ```
 
 ## 型定義
@@ -188,25 +192,25 @@ await api.put(`/songs/${id}`, updatedSong)
 ### song.ts（楽曲関連）
 
 ```typescript
-export type SectionType = 'lyrics-chord' | 'bar'
+export type SectionType = "lyrics-chord" | "bar";
 
 export interface Section {
-  id: string
-  name: string
-  type: SectionType
-  lines: LyricsChordLine[] | BarLine[]
+  id: string;
+  name: string;
+  type: SectionType;
+  lines: LyricsChordLine[] | BarLine[];
 }
 
 export interface Song {
-  id: string
-  title: string
-  artist: string
-  key: string
-  bpm: number
-  timeSignature: string
-  sections: Section[]
-  createdAt: string
-  updatedAt: string
+  id: string;
+  title: string;
+  artist: string;
+  key: string;
+  bpm: number;
+  timeSignature: string;
+  sections: Section[];
+  createdAt: string;
+  updatedAt: string;
 }
 ```
 
@@ -222,18 +226,13 @@ export interface Song {
 </button>
 ```
 
-### shadcn/ui
+### 共通 UI コンポーネント
 
-Radix UI ベースの再利用可能なコンポーネント。
+`src/components/ui/` に Button、Input、Dialog 等の共通コンポーネントを配置しています。Tailwind CSS でスタイリングします。
 
-```tsx
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+## データ取得（SWR）
 
-<Button variant="outline">キャンセル</Button>
-<Button>保存</Button>
-<Input placeholder="曲名を入力" />
-```
+`src/lib/swr.ts` と `src/components/providers/SWRProvider.tsx` で SWR を設定。`useSong`、`useMe` 等のフックで API データを取得・キャッシュします。
 
 ## データフロー
 
@@ -257,11 +256,11 @@ import { Input } from '@/components/ui/input'
 
 ## 環境変数
 
-| 変数 | 説明 |
-|------|------|
-| NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY | Clerk 公開キー |
-| CLERK_SECRET_KEY | Clerk シークレットキー |
-| NEXT_PUBLIC_API_URL | バックエンド API URL |
+| 変数                              | 説明                   |
+| --------------------------------- | ---------------------- |
+| NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY | Clerk 公開キー         |
+| CLERK_SECRET_KEY                  | Clerk シークレットキー |
+| NEXT_PUBLIC_API_URL               | バックエンド API URL   |
 
 **注意**: `NEXT_PUBLIC_` プレフィックスの変数はブラウザに公開されます。
 
