@@ -6,7 +6,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { AuthForm } from './AuthForm'
 
 export const AuthModal = () => {
-  const { isOpen, mode, redirectComplete, setMode, close } = useAuthModalStore()
+  const { isOpen, redirectComplete, close } = useAuthModalStore()
   const user = useAuthStore((s) => s.user)
 
   // すでにログイン済みなら開かない（保険）
@@ -53,7 +53,7 @@ export const AuthModal = () => {
           </svg>
         </button>
 
-        <AuthForm mode={mode} onModeChange={setMode} redirectComplete={redirectComplete} />
+        <AuthForm redirectComplete={redirectComplete} />
       </div>
     </div>
   )

@@ -1,28 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import { useSignIn, useSignUp } from '@clerk/nextjs'
-import { cn } from '@/lib/utils'
-import type { AuthModalMode } from '@/stores/authModalStore'
+import { useSignIn } from '@clerk/nextjs'
 
 type AuthFormProps = {
-  mode: AuthModalMode
-  onModeChange: (mode: AuthModalMode) => void
   redirectComplete?: string
 }
 
-const COPY: Record<AuthModalMode, { title: string; subtitle: string; cta: string }> = {
-  login: {
-    title: 'おかえりなさい',
-    subtitle: 'Google アカウントでログインして、コード譜の続きを。',
-    cta: 'Google でログイン',
-  },
-  register: {
-    title: 'ChordBook をはじめる',
-    subtitle: 'Google アカウントで登録して、すぐにコード譜を作成。',
-    cta: 'Google で新規登録',
-  },
-}
+const COPY = {
+  title: 'アカウントで続ける',
+  subtitle: 'Google アカウントでログイン、または新規登録できます。',
+} as const
+
+const GOOGLE_CTA = 'Googleで続ける'
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
@@ -45,32 +35,21 @@ const GoogleIcon = () => (
   </svg>
 )
 
-export const AuthForm = ({ mode, onModeChange, redirectComplete = '/songs' }: AuthFormProps) => {
-  const { signIn, isLoaded: isSignInLoaded } = useSignIn()
-  const { signUp, isLoaded: isSignUpLoaded } = useSignUp()
+export const AuthForm = ({ redirectComplete = '/songs' }: AuthFormProps) => {
+  const { signIn, isLoaded } = useSignIn()
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const isLoaded = isSignInLoaded && isSignUpLoaded
-  const copy = COPY[mode]
 
   const handleGoogle = async () => {
     if (!isLoaded || isSubmitting) return
     setError('')
     setIsSubmitting(true)
     try {
-      const strategy = 'oauth_google'
-      const options = {
-        strategy,
+      await signIn!.authenticateWithRedirect({
+        strategy: 'oauth_google',
         redirectUrl: '/sso-callback',
         redirectUrlComplete: redirectComplete,
-      } as const
-
-      if (mode === 'register') {
-        await signUp!.authenticateWithRedirect(options)
-      } else {
-        await signIn!.authenticateWithRedirect(options)
-      }
+      })
     } catch {
       setError('Google 認証を開始できませんでした。時間をおいて再度お試しください。')
       setIsSubmitting(false)
@@ -83,29 +62,8 @@ export const AuthForm = ({ mode, onModeChange, redirectComplete = '/songs' }: Au
         <span className="font-display text-lg font-semibold tracking-tight text-slate-900">
           ChordBook
         </span>
-        <h2 className="font-display text-xl font-semibold text-slate-900">{copy.title}</h2>
-        <p className="text-sm text-slate-500">{copy.subtitle}</p>
-      </div>
-
-      <div className="flex rounded-full bg-slate-100 p-1 text-sm font-semibold">
-        {(['login', 'register'] as const).map((m) => (
-          <button
-            key={m}
-            type="button"
-            onClick={() => {
-              setError('')
-              onModeChange(m)
-            }}
-            className={cn(
-              'flex-1 rounded-full px-4 py-2 transition',
-              mode === m
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700'
-            )}
-          >
-            {m === 'login' ? 'ログイン' : '新規登録'}
-          </button>
-        ))}
+        <h2 className="font-display text-xl font-semibold text-slate-900">{COPY.title}</h2>
+        <p className="text-sm text-slate-500">{COPY.subtitle}</p>
       </div>
 
       <button
@@ -115,7 +73,7 @@ export const AuthForm = ({ mode, onModeChange, redirectComplete = '/songs' }: Au
         className="flex items-center justify-center gap-3 rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-60"
       >
         <GoogleIcon />
-        {isSubmitting ? 'リダイレクト中...' : copy.cta}
+        {isSubmitting ? 'リダイレクト中...' : GOOGLE_CTA}
       </button>
 
       {error && (
