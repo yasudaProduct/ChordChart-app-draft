@@ -29,8 +29,8 @@ ChordBook のデータベース設計を説明します。
 │    │ Key           : VARCHAR      NULL                              │
 │    │ Bpm           : INT          NULL                              │
 │    │ TimeSignature : VARCHAR      NOT NULL  DEFAULT '4/4'           │
-│    │ Content       : JSONB        NOT NULL  DEFAULT '[]'            │
-│    │ Visibility    : INT          NOT NULL  DEFAULT 0 (Private)     │
+│    │ Content       : TEXT         NOT NULL  DEFAULT '{"sections":[]}' │
+│    │ Visibility    : visibility   NOT NULL  DEFAULT 'private'         │
 │    │ IsDemo        : BOOLEAN      NOT NULL  DEFAULT false           │
 │    │ CreatedAt     : TIMESTAMP    NOT NULL                          │
 │    │ UpdatedAt     : TIMESTAMP    NOT NULL                          │
@@ -79,20 +79,20 @@ ChordBook のデータベース設計を説明します。
 
 コード譜の楽曲情報を管理するテーブル。
 
-| カラム        | 型           | NULL | デフォルト | 説明                   |
-| ------------- | ------------ | ---- | ---------- | ---------------------- |
-| Id            | UUID         | NO   | newguid()  | 主キー                 |
-| UserId        | TEXT         | NO   | -          | 所有者（FK → Users）   |
-| Title         | VARCHAR(200) | NO   | -          | 曲名                   |
-| Artist        | VARCHAR(200) | YES  | NULL       | アーティスト名         |
-| Key           | VARCHAR(10)  | YES  | NULL       | キー（C, Am, etc.）    |
-| Bpm           | INT          | YES  | NULL       | テンポ                 |
-| TimeSignature | VARCHAR(10)  | NO   | '4/4'      | 拍子                   |
-| Content       | JSONB        | NO   | '[]'       | コード譜データ（JSON） |
-| Visibility    | INT          | NO   | 0          | 公開設定（後述）       |
-| IsDemo        | BOOLEAN      | NO   | false      | デモ用曲フラグ         |
-| CreatedAt     | TIMESTAMP    | NO   | now()      | 作成日時               |
-| UpdatedAt     | TIMESTAMP    | NO   | now()      | 更新日時               |
+| カラム        | 型           | NULL | デフォルト        | 説明                          |
+| ------------- | ------------ | ---- | ----------------- | ----------------------------- |
+| Id            | UUID         | NO   | newguid()         | 主キー                        |
+| UserId        | TEXT         | NO   | -                 | 所有者（FK → Users）          |
+| Title         | VARCHAR(200) | NO   | -                 | 曲名                          |
+| Artist        | VARCHAR(200) | YES  | NULL              | アーティスト名                |
+| Key           | VARCHAR(10)  | YES  | NULL              | キー（C, Am, etc.）           |
+| Bpm           | INT          | YES  | NULL              | テンポ                        |
+| TimeSignature | VARCHAR(10)  | NO   | '4/4'             | 拍子                          |
+| Content       | TEXT         | NO   | '{"sections":[]}' | コード譜データ（JSON 文字列） |
+| Visibility    | visibility   | NO   | 'private'         | 公開設定（ENUM、後述）        |
+| IsDemo        | BOOLEAN      | NO   | false             | デモ用曲フラグ                |
+| CreatedAt     | TIMESTAMP    | NO   | now()             | 作成日時                      |
+| UpdatedAt     | TIMESTAMP    | NO   | now()             | 更新日時                      |
 
 ### Bookmarks
 
@@ -125,12 +125,14 @@ ChordBook のデータベース設計を説明します。
 
 ### Visibility（公開設定）
 
-| 値  | 名前          | 説明                  |
-| --- | ------------- | --------------------- |
-| 0   | Private       | 非公開（作成者のみ）  |
-| 1   | UrlOnly       | URLを知っている人のみ |
-| 2   | SpecificUsers | 特定ユーザーのみ      |
-| 3   | Public        | 全員に公開            |
+PostgreSQL の `visibility` ENUM 型:
+
+| 値               | 説明                  |
+| ---------------- | --------------------- |
+| `private`        | 非公開（作成者のみ）  |
+| `url_only`       | URLを知っている人のみ |
+| `specific_users` | 特定ユーザーのみ      |
+| `public`         | 全員に公開            |
 
 ## Content カラムの JSON 構造
 
@@ -165,4 +167,4 @@ Songs.Content には `{ "sections": [...] }` 形式でコード譜データが�
 ## 関連ドキュメント
 
 - [API仕様](../api/endpoints.md) - CRUD操作のAPI
-- [バックエンドアーキテクチャ](../architecture/backend.md) - Entity Framework Core の設定
+- [バックエンドアーキテクチャ](../architecture/backend.md) - Hono + Drizzle ORM

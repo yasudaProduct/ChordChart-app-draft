@@ -4,26 +4,28 @@ ChordBook バックエンド API のエンドポイント一覧です。
 
 ## 基本情報
 
-| 項目              | 値                                    |
-| ----------------- | ------------------------------------- |
-| ベースURL（開発） | http://localhost:8080/api             |
-| ベースURL（本番） | https://api.chordbook.example.com/api |
-| 形式              | REST API                              |
-| データ形式        | JSON                                  |
-| 認証              | Clerk JWT                             |
+| 項目                      | 値                                                        |
+| ------------------------- | --------------------------------------------------------- |
+| ベースURL（開発）         | http://localhost:8080/api                                 |
+| ベースURL（ステージング） | https://chordbook-api-staging.\<account\>.workers.dev/api |
+| 形式                      | REST API                                                  |
+| データ形式                | JSON                                                      |
+| 認証                      | Clerk JWT                                                 |
 
 ## エンドポイント一覧
 
 | メソッド | パス                | 認証             | 説明                          |
 | -------- | ------------------- | ---------------- | ----------------------------- |
 | GET      | /api/health         | 不要             | ヘルスチェック                |
-| GET      | /api/songs          | オプション       | 曲一覧取得                    |
+| GET      | /api/songs          | 不要             | 公開曲一覧取得                |
 | GET      | /api/songs/demo     | 不要             | デモ用曲一覧取得              |
 | GET      | /api/songs/search   | オプション       | 公開曲検索                    |
 | GET      | /api/songs/:id      | オプション       | 曲詳細取得                    |
 | POST     | /api/songs          | 必須             | 曲作成                        |
 | PUT      | /api/songs/:id      | 必須             | 曲更新                        |
 | DELETE   | /api/songs/:id      | 必須             | 曲削除                        |
+| GET      | /api/me/summary     | 必須             | 自分の曲数（可視性別集計）    |
+| GET      | /api/me/songs       | 必須             | 自分の曲一覧                  |
 | POST     | /api/webhooks/clerk | 不要（署名検証） | Clerk Webhook（ユーザー同期） |
 
 ---
@@ -51,12 +53,9 @@ ChordBook バックエンド API のエンドポイント一覧です。
 
 #### GET /api/songs
 
-楽曲一覧を取得します。デモ用曲（`isDemo = true`）は含まれません。
+楽曲一覧を取得します。公開曲（`visibility = "public"`）のみを返却し、デモ用曲（`isDemo = true`）は含まれません。自分の曲一覧は `GET /api/me/songs` を使用してください。
 
-**認証**: オプション
-
-- 認証あり: 自分の曲一覧を返却
-- 認証なし: 公開曲（visibility = 3）のみ返却（デモ用曲は除外）
+**認証**: 不要
 
 **レスポンス**
 
@@ -159,7 +158,7 @@ ChordBook バックエンド API のエンドポイント一覧です。
       }
     ]
   },
-  "visibility": 0,
+  "visibility": "private",
   "createdAt": "2024-01-10T08:00:00Z",
   "updatedAt": "2024-01-15T10:30:00Z"
 }
@@ -210,7 +209,7 @@ ChordBook バックエンド API のエンドポイント一覧です。
   "bpm": 100,
   "timeSignature": "4/4",
   "content": "{\"sections\":[]}",
-  "visibility": 0,
+  "visibility": "private",
   "createdAt": "2024-01-15T10:30:00Z",
   "updatedAt": "2024-01-15T10:30:00Z"
 }
@@ -281,6 +280,67 @@ ChordBook バックエンド API のエンドポイント一覧です。
 | ステータス | 説明                                 |
 | ---------- | ------------------------------------ |
 | 404        | 楽曲が見つからない（または権限なし） |
+
+### Visibility（公開設定）
+
+API レスポンスの `visibility` は文字列 ENUM です:
+
+| 値               | 説明                  |
+| ---------------- | --------------------- |
+| `private`        | 非公開（作成者のみ）  |
+| `url_only`       | URLを知っている人のみ |
+| `specific_users` | 特定ユーザーのみ      |
+| `public`         | 全員に公開            |
+
+---
+
+### Me（マイページ）
+
+#### GET /api/me/summary
+
+自分の曲数を可視性別に集計します。デモ用曲（`isDemo = true`）は集計から除外されます。
+
+**認証**: 必須
+
+**レスポンス**
+
+```json
+{
+  "total": 5,
+  "private": 2,
+  "urlOnly": 1,
+  "specificUsers": 0,
+  "public": 2
+}
+```
+
+---
+
+#### GET /api/me/songs
+
+自分の曲一覧を取得します。デモ用曲は除外され、更新日時の降順で返却されます。
+
+**認証**: 必須
+
+**クエリパラメータ**
+
+| パラメータ | 型     | 必須 | 説明                      |
+| ---------- | ------ | ---- | ------------------------- |
+| limit      | number | No   | 取得件数（最近 N 件のみ） |
+
+**レスポンス**
+
+```json
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "title": "マイソング",
+    "artist": "アーティスト",
+    "key": "C",
+    "updatedAt": "2024-01-15T10:30:00Z"
+  }
+]
+```
 
 ---
 

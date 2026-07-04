@@ -8,13 +8,13 @@
 
 ## 技術スタック
 
-| レイヤー       | 技術                                                      |
-| -------------- | --------------------------------------------------------- |
-| フロントエンド | Next.js 14 (App Router), Tailwind CSS, shadcn/ui, Zustand |
-| バックエンド   | Hono, Drizzle ORM, Zod, jose (JWT検証)                    |
-| データベース   | PostgreSQL (Neon)                                         |
-| 認証           | Clerk                                                     |
-| ホスティング   | Cloudflare Pages (FE), Cloudflare Workers (BE)            |
+| レイヤー       | 技術                                                       |
+| -------------- | ---------------------------------------------------------- |
+| フロントエンド | Next.js 14 (App Router), Tailwind CSS, SWR, Zustand, Clerk |
+| バックエンド   | Hono, Drizzle ORM, Zod, jose (JWT検証)                     |
+| データベース   | PostgreSQL (Neon)                                          |
+| 認証           | Clerk                                                      |
+| ホスティング   | Cloudflare Pages (FE), Cloudflare Workers (BE)             |
 
 ## プロジェクト構成
 
@@ -218,7 +218,7 @@ npx wrangler deploy --dry-run        # 設定だけ検証（デプロイしな�
 cd apps/frontend
 
 # Pages 向けにビルドしてデプロイ
-npx @cloudflare/next-on-pages
+pnpm build:cf
 pnpm deploy:staging
 # = wrangler pages deploy .vercel/output/static --project-name=chordbook-frontend-staging
 ```

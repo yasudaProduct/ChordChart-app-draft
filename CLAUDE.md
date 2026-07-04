@@ -46,6 +46,8 @@ pnpm build        # 本番ビルド
 pnpm lint         # ESLint実行
 pnpm lint:fix     # ESLint自動修正
 pnpm format       # Prettierフォーマット適用
+pnpm build:cf     # Cloudflare Pages 向けビルド (next-on-pages)
+pnpm deploy:staging # ステージングへデプロイ
 ```
 
 ### バックエンド (apps/backend)
@@ -64,6 +66,7 @@ pnpm db:migrate   # マイグレーション適用（CI/ステージング）
 pnpm db:push      # DBスキーマをプッシュ（ローカル開発向け）
 pnpm db:seed      # 開発・テスト用データ投入（破壊的・全リセット）
 pnpm db:seed:demo # デモ曲のみ冪等投入（非破壊・CI/ステージング）
+pnpm deploy:staging # Cloudflare Workers へデプロイ
 ```
 
 ## アーキテクチャ
@@ -85,6 +88,8 @@ chord-chart/
 ```
 apps/frontend/src/
 ├── app/          # Next.js App Router (ページ・レイアウト)
+├── components/   # UI・機能コンポーネント
+├── hooks/        # カスタムフック
 ├── lib/          # API通信、ユーティリティ
 ├── stores/       # Zustand ストア (authStore, editorStore)
 └── types/        # TypeScript型定義
@@ -94,11 +99,13 @@ apps/frontend/src/
 
 ```
 apps/backend/src/
-├── index.ts              # エントリポイント
+├── index.ts              # Node.js 用エントリポイント（ローカル開発）
+├── worker.ts             # Cloudflare Workers 用エントリポイント
 ├── app.ts                # Honoアプリ定義（CORS, logger, エラーハンドラ）
 ├── routes/
 │   ├── health.ts         # GET /api/health
 │   ├── songs.ts          # Song CRUD + 検索（Zodバリデーション）
+│   ├── me.ts             # GET /api/me/*（マイページ）
 │   └── webhooks.ts       # Clerk Webhook（ユーザー同期）
 ├── middleware/
 │   └── auth.ts           # Clerk JWT認証（jose）

@@ -17,13 +17,13 @@ Next.js フロントエンドを `@cloudflare/next-on-pages` アダプター経�
 
 `@cloudflare/next-on-pages` で Next.js を Pages 向けにビルドします。出力は `.vercel/output/static` です。
 
-| 項目               | 値                              |
-| ------------------ | ------------------------------- |
-| フレームワーク     | Next.js (App Router)            |
-| ビルドコマンド     | `npx @cloudflare/next-on-pages` |
-| 出力ディレクトリ   | `.vercel/output/static`         |
-| Node.js バージョン | 20                              |
-| ルートディレクトリ | `apps/frontend`                 |
+| 項目               | 値                                   |
+| ------------------ | ------------------------------------ |
+| フレームワーク     | Next.js (App Router)                 |
+| ビルドコマンド     | `pnpm build:cf`（= `next-on-pages`） |
+| 出力ディレクトリ   | `.vercel/output/static`              |
+| Node.js バージョン | 20                                   |
+| ルートディレクトリ | `apps/frontend`                      |
 
 **環境変数（Cloudflare Pages ダッシュボード）**
 
@@ -46,7 +46,7 @@ cd apps/frontend
 npx wrangler login
 
 # Pages 向けにビルド
-npx @cloudflare/next-on-pages
+pnpm build:cf
 
 # デプロイ（package.json の deploy:staging スクリプト）
 pnpm deploy:staging
@@ -59,12 +59,13 @@ pnpm deploy:staging
 
 ## 自動デプロイ
 
-`main` ブランチへのマージで GitHub 連携により自動デプロイされます。デプロイフローの全体像は [インフラ構成概要](../infrastructure/overview.md) を参照。
+`develop` ブランチへのプッシュで `.github/workflows/deploy-staging.yml` が実行され、Cloudflare Pages へ自動デプロイされます。デプロイフローの全体像は [インフラ構成概要](../infrastructure/overview.md) を参照。
 
-| ブランチ | 環境       |
-| -------- | ---------- |
-| main     | Production |
-| その他   | Preview    |
+| ブランチ | 環境       | デプロイ方法                   |
+| -------- | ---------- | ------------------------------ |
+| develop  | Staging    | GitHub Actions（自動）         |
+| main     | Production | 未設定（将来の本番リリース用） |
+| その他   | Preview    | 手動デプロイ時のみ             |
 
 ---
 
@@ -92,7 +93,7 @@ npx wrangler pages deployment list --project-name=chordbook-frontend-staging
 ```bash
 # ローカルで Pages 向けビルドを確認
 cd apps/frontend
-npx @cloudflare/next-on-pages
+pnpm build:cf
 ```
 
 よくある原因:

@@ -224,6 +224,71 @@ const deleteSong = async (id: string, userId: string): Promise<boolean> => {
   return results.length > 0
 }
 
+// ============================================================
+// マイページ用
+// ============================================================
+
+type MySongSummaryDto = {
+  total: number
+  private: number
+  urlOnly: number
+  specificUsers: number
+  public: number
+}
+
+/**
+ * 自分の曲一覧を取得する（デモ除外、更新日の降順）。
+ * limit を指定すると最近 N 件のみ返す。
+ */
+const listMySongs = async (userId: string, limit?: number): Promise<SongListItemDto[]> => {
+  const baseQuery = db
+    .select()
+    .from(songs)
+    .where(and(eq(songs.userId, userId), eq(songs.isDemo, false)))
+    .orderBy(desc(songs.updatedAt))
+
+  const results = limit !== undefined ? await baseQuery.limit(limit) : await baseQuery
+
+  return results.map(toSongListItemDto)
+}
+
+/**
+ * 自分の曲数を可視性別に集計する（デモ除外）。
+ */
+const getMySongSummary = async (userId: string): Promise<MySongSummaryDto> => {
+  const results = await db
+    .select()
+    .from(songs)
+    .where(and(eq(songs.userId, userId), eq(songs.isDemo, false)))
+
+  const summary: MySongSummaryDto = {
+    total: results.length,
+    private: 0,
+    urlOnly: 0,
+    specificUsers: 0,
+    public: 0,
+  }
+
+  for (const song of results) {
+    switch (song.visibility) {
+      case Visibility.Public:
+        summary.public += 1
+        break
+      case Visibility.UrlOnly:
+        summary.urlOnly += 1
+        break
+      case Visibility.SpecificUsers:
+        summary.specificUsers += 1
+        break
+      default:
+        summary.private += 1
+        break
+    }
+  }
+
+  return summary
+}
+
 export const songService = {
   listSongs,
   listDemoSongs,
@@ -232,4 +297,6 @@ export const songService = {
   createSong,
   updateSong,
   deleteSong,
+  listMySongs,
+  getMySongSummary,
 }

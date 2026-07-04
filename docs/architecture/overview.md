@@ -49,14 +49,13 @@ ChordBook のシステム全体構成を説明します。
 
 ### フロントエンド
 
-| 技術         | バージョン | 用途                              |
-| ------------ | ---------- | --------------------------------- |
-| Next.js      | 14         | React フレームワーク (App Router) |
-| React        | 18.3       | UI ライブラリ                     |
-| TypeScript   | 5.4        | 型安全な JavaScript               |
-| Tailwind CSS | 3.4        | ユーティリティファースト CSS      |
-| Zustand      | 最新       | 状態管理                          |
-| shadcn/ui    | 最新       | UI コンポーネント                 |
+| Next.js | 14 | React フレームワーク (App Router) |
+| React | 18.3 | UI ライブラリ |
+| TypeScript | 5.4 | 型安全な JavaScript |
+| Tailwind CSS | 3.4 | ユーティリティファースト CSS |
+| Zustand | 4.5 | クライアント状態管理 |
+| SWR | 2.4 | サーバーデータ取得・キャッシュ |
+| Clerk | 6.x | 認証 |
 
 ### バックエンド
 
@@ -126,7 +125,8 @@ chord-chart/
 │   │
 │   └── backend/                  # Hono バックエンド
 │       └── src/
-│           ├── index.ts          # エントリポイント
+│           ├── index.ts          # Node.js 用エントリポイント
+│           ├── worker.ts         # Cloudflare Workers 用エントリポイント
 │           ├── app.ts            # Hono アプリ定義
 │           ├── routes/           # ルート定義
 │           ├── middleware/       # 認証ミドルウェア

@@ -1,15 +1,17 @@
 import { test, expect } from './fixtures/test-base'
 
 test.describe('ログインページ', () => {
-  test('ログインページにClerk SignInコンポーネントが表示される', async ({ page }) => {
+  test('ログインページに独自ログインフォーム（Google）が表示される', async ({ page }) => {
     await page.goto('/login')
 
-    await expect(page.locator('.cl-rootBox')).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByText('アカウントで続ける')).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByRole('button', { name: 'Googleで続ける' })).toBeVisible()
   })
 
-  test('新規登録ページにClerk SignUpコンポーネントが表示される', async ({ page }) => {
+  test('新規登録ページに独自登録フォーム（Google）が表示される', async ({ page }) => {
     await page.goto('/register')
 
-    await expect(page.locator('.cl-rootBox')).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByText('アカウントで続ける')).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByRole('button', { name: 'Googleで続ける' })).toBeVisible()
   })
 })

@@ -128,14 +128,18 @@ Webhook シークレットを `CLERK_WEBHOOK_SECRET` に設定。
 | データベース       | localhost:5432（Docker PostgreSQL） |
 | CORS               | http://localhost:3000               |
 
-### 本番環境（Production）
+### ステージング環境（Staging）
 
 | サービス           | 設定値                                                |
 | ------------------ | ----------------------------------------------------- |
 | フロントエンド URL | https://chordbook-frontend-staging.pages.dev          |
 | バックエンド URL   | https://chordbook-api-staging.\<account\>.workers.dev |
-| データベース       | Neon PostgreSQL                                       |
+| データベース       | Neon PostgreSQL（`staging` ブランチ）                 |
 | CORS               | https://chordbook-frontend-staging.pages.dev          |
+
+### 本番環境（Production）
+
+カスタムドメイン（`chordbook.app` / `api.chordbook.app`）と Neon `main` ブランチは本番リリース時に設定予定。現時点では上記ステージング環境を利用します。
 
 ---
 
