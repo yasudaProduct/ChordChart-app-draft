@@ -31,9 +31,24 @@
       "mcp__plugin_figma_figma__get_screenshot",
       "mcp__plugin_figma_figma__use_figma",
       "Bash(head -20 stores/authStore.ts stores/authModalStore.ts)",
-      "Bash(head -40 hooks/useMe.ts hooks/useRequireAuth.ts)"
+      "Bash(head -40 hooks/useMe.ts hooks/useRequireAuth.ts)",
+      "Bash(sort -t: -k1)",
+      "Bash(awk -F: '{print $1\":\"$2\": \"$3}')",
+      "Bash(pnpm vitest *)",
+      "Bash(pnpm test *)",
+      "Bash(pnpm format:check)",
+      "Bash(docker exec chord-chart-postgres-1 *)",
+      "Bash(curl -s -o /dev/null -w \"health: %{http_code}\\\\n\" http://localhost:8080/api/health)",
+      "Bash(curl -s -w \"\\\\nstatus: %{http_code}\\\\n\" http://localhost:8080/api/shares/verify-token-valid)",
+      "Bash(curl -s -w \"\\\\nstatus: %{http_code}\\\\n\" http://localhost:8080/api/shares/verify-token-expired)",
+      "Bash(curl -s -w \"\\\\nstatus: %{http_code}\\\\n\" http://localhost:8080/api/shares/verify-token-private)",
+      "Bash(curl -s -w \"\\\\nstatus: %{http_code}\\\\n\" http://localhost:8080/api/shares/no-such-token)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   },
   "enableAllProjectMcpServers": true,
-  "enabledMcpjsonServers": ["supabase"]
+  "enabledMcpjsonServers": [
+    "supabase"
+  ]
 }
