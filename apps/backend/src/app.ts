@@ -4,6 +4,7 @@ import { logger } from 'hono/logger'
 import type { AuthVariables } from './middleware/auth'
 import { healthRoutes } from './routes/health'
 import { meRoutes } from './routes/me'
+import { shareRoutes } from './routes/shares'
 import { songRoutes } from './routes/songs'
 import { webhookRoutes } from './routes/webhooks'
 
@@ -46,6 +47,7 @@ app.use(
 // ルート
 app.route('/api/health', healthRoutes)
 app.route('/api/songs', songRoutes)
+app.route('/api/shares', shareRoutes)
 app.route('/api/me', meRoutes)
 app.route('/api/webhooks', webhookRoutes)
 

@@ -31,10 +31,15 @@ export const SongPreview = ({ song, className }: SongPreviewProps) => {
         {parsedSections.map((section) => {
           const content = section.parsed
           return (
-            <div key={section.id} className="rounded-2xl border border-slate-200 bg-white/80 p-4">
-              <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-slate-400">
+            <div
+              key={section.id}
+              className="print-avoid-break rounded-2xl border border-slate-200 bg-white/80 p-4 print:border-slate-300 print:bg-white"
+            >
+              <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-slate-400 print:text-slate-600">
                 <span>{section.name}</span>
-                <span>{section.type === 'lyrics-chord' ? 'Lyrics' : 'Chord'}</span>
+                <span className="print:hidden">
+                  {section.type === 'lyrics-chord' ? 'Lyrics' : 'Chord'}
+                </span>
               </div>
               <div className="mt-4 space-y-3">
                 {content.lines.map((line) => (
@@ -43,7 +48,7 @@ export const SongPreview = ({ song, className }: SongPreviewProps) => {
                       {line.chords.map((chord) => (
                         <span
                           key={chord.id}
-                          className="absolute rounded-md bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-primary"
+                          className="absolute rounded-md bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-primary print:bg-transparent print:px-0 print:font-bold print:text-black"
                           style={{
                             left: `${chord.offset * 100}%`,
                             transform: 'translateX(-50%)',
@@ -54,12 +59,14 @@ export const SongPreview = ({ song, className }: SongPreviewProps) => {
                       ))}
                     </div>
                     {section.type === 'lyrics-chord' && (
-                      <div className="text-sm text-slate-700">{line.lyrics || '　'}</div>
+                      <div className="text-sm text-slate-700 print:text-black">
+                        {line.lyrics || '　'}
+                      </div>
                     )}
                   </div>
                 ))}
                 {content.lines.length === 0 && (
-                  <div className="text-sm text-slate-400">（未入力）</div>
+                  <div className="text-sm text-slate-400 print:hidden">（未入力）</div>
                 )}
               </div>
             </div>

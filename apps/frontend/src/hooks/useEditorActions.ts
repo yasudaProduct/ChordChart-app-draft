@@ -1,6 +1,7 @@
 import { useCallback } from 'react'
 import { useEditorStore, type ChordDialogState } from '@/stores/editorStore'
 import { songApi } from '@/lib/songApi'
+import { transposeSong } from '@/lib/music'
 import {
   createEmptyLine,
   createSection,
@@ -31,21 +32,20 @@ const cloneSectionContent = (content: string) => {
 }
 
 export const useEditorActions = (saveFn?: SaveFn) => {
-  const {
-    song,
-    updateSong,
-    updateSectionLines,
-    setSong,
-    setDirty,
-    setSaving,
-    setDialog,
-    setShareMessage,
-    dialog,
-  } = useEditorStore()
+  const { song, updateSong, updateSectionLines, setSong, setDirty, setSaving, setDialog, dialog } =
+    useEditorStore()
 
   const handleMetaChange = useCallback(
     (field: keyof Song, value: string | number | undefined) => {
       updateSong((prev) => ({ ...prev, [field]: value }))
+    },
+    [updateSong]
+  )
+
+  /** 全セクションのコードを移調してキーを変更する（G5: 移調）。 */
+  const applyTranspose = useCallback(
+    (semitones: number, targetKey: string) => {
+      updateSong((prev) => ({ ...transposeSong(prev, semitones), key: targetKey }))
     },
     [updateSong]
   )
@@ -62,18 +62,6 @@ export const useEditorActions = (saveFn?: SaveFn) => {
       setSaving(false)
     }
   }, [song, setSaving, setSong, setDirty, saveFn])
-
-  const handleShare = useCallback(async () => {
-    if (!song || typeof window === 'undefined') return
-    const url = `${window.location.origin}/share/${song.id}`
-    try {
-      await navigator.clipboard.writeText(url)
-      setShareMessage('共有URLをコピーしました')
-    } catch {
-      setShareMessage('共有URLのコピーに失敗しました')
-    }
-    setTimeout(() => setShareMessage(''), 2500)
-  }, [song, setShareMessage])
 
   const addSection = useCallback(
     (name: string, type: SectionType) => {
@@ -303,8 +291,8 @@ export const useEditorActions = (saveFn?: SaveFn) => {
 
   return {
     handleMetaChange,
+    applyTranspose,
     handleSave,
-    handleShare,
     addSection,
     duplicateSection,
     moveSection,

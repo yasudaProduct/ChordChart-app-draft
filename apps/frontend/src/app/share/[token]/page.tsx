@@ -26,14 +26,14 @@ export default async function SharePage({ params }: SharePageProps) {
             <div>
               <h1 className="font-display text-2xl font-semibold text-slate-900">共有コード譜</h1>
               <p className="text-sm text-slate-500">
-                このページはURL共有で閲覧できる想定です（MVP）。
+                共有リンクから閲覧しています。ログインすると自分のコード譜も作成できます。
               </p>
             </div>
             <Link
               href="/login"
-              className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-400"
+              className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-400 print:hidden"
             >
-              ログインして編集
+              ログインして始める
             </Link>
           </div>
 

@@ -1,7 +1,13 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
-const isProtectedRoute = createRouteMatcher(['/songs/new(.*)', '/editor(.*)', '/profile(.*)'])
+// /songs（マイライブラリ）はログイン必須。/songs/[id]（曲詳細）は公開曲の閲覧があるため除外。
+const isProtectedRoute = createRouteMatcher([
+  '/songs',
+  '/songs/new(.*)',
+  '/editor(.*)',
+  '/profile(.*)',
+])
 const isDemoRoute = createRouteMatcher(['/demo(.*)'])
 
 export default clerkMiddleware(async (auth, req) => {

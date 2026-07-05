@@ -1,5 +1,14 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'
 
+/** API エラーから HTTP ステータスを取り出す（fetch 失敗等で無い場合は undefined）。 */
+export const getApiErrorStatus = (error: unknown): number | undefined => {
+  if (typeof error === 'object' && error !== null && 'status' in error) {
+    const status = (error as { status: unknown }).status
+    return typeof status === 'number' ? status : undefined
+  }
+  return undefined
+}
+
 let getToken: (() => Promise<string | null>) | null = null
 
 export function setTokenGetter(fn: () => Promise<string | null>) {
@@ -37,7 +46,8 @@ async function apiClient<T>(endpoint: string, options: RequestOptions = {}): Pro
       message: 'エラーが発生しました',
       code: 'UNKNOWN_ERROR',
     }))
-    throw error
+    // 呼び出し側で 404 等を判別できるよう HTTP ステータスを付与する
+    throw Object.assign(error, { status: response.status })
   }
 
   if (response.status === 204) {

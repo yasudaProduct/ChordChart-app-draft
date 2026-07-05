@@ -1,15 +1,24 @@
 'use client'
 
+import { useMemo } from 'react'
 import { Dialog } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
+import {
+  getDiatonicSuggestions,
+  getNextChordSuggestions,
+  getSubstituteSuggestions,
+} from '@/lib/music'
 import type { ChordDialogState } from '@/stores/editorStore'
 
-const CHORD_LIBRARY = ['A', 'Am', 'A7', 'Am7', 'Amaj7', 'Asus4', 'Aadd9']
-const NEXT_CHORDS = ['G', 'C', 'Am', 'Dm']
-const SUBSTITUTE_CHORDS = ['Am7', 'Fmaj7', 'Dm7']
+// キー未設定時のフォールバック候補（よく使う基本コード）
+const FALLBACK_LIBRARY = ['C', 'G', 'Am', 'F', 'Dm', 'Em', 'D', 'A', 'E', 'B7']
 
 type ChordDialogProps = {
   state: ChordDialogState
+  /** 曲のキー（ダイアトニック候補・予測の基準） */
+  songKey?: string
+  /** 挿入位置の直前のコード（次のコード予測の基準） */
+  previousChord?: string | null
   onValueChange: (value: string) => void
   onConfirm: () => void
   onDelete: () => void
@@ -25,8 +34,8 @@ type ChordGroupProps = {
 
 const variantStyles = {
   default: 'border-slate-200 text-slate-600 hover:border-primary hover:text-primary',
-  next: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-  substitute: 'border-orange-200 bg-orange-50 text-orange-700',
+  next: 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-400',
+  substitute: 'border-orange-200 bg-orange-50 text-orange-700 hover:border-orange-400',
 }
 
 const ChordGroup = ({ title, chords, variant, onSelect }: ChordGroupProps) => (
@@ -49,11 +58,31 @@ const ChordGroup = ({ title, chords, variant, onSelect }: ChordGroupProps) => (
 
 export const ChordDialog = ({
   state,
+  songKey,
+  previousChord,
   onValueChange,
   onConfirm,
   onDelete,
   onClose,
 }: ChordDialogProps) => {
+  // キーに基づくダイアトニック候補（キー未設定時は基本コード）
+  const candidates = useMemo(() => {
+    const diatonic = getDiatonicSuggestions(songKey)
+    return diatonic.length > 0 ? diatonic : FALLBACK_LIBRARY
+  }, [songKey])
+
+  // 直前のコードから次に続きやすいコード
+  const nextChords = useMemo(
+    () => getNextChordSuggestions(songKey, previousChord),
+    [songKey, previousChord]
+  )
+
+  // 入力中のコードの代理コード
+  const substitutes = useMemo(
+    () => getSubstituteSuggestions(songKey, state.value),
+    [songKey, state.value]
+  )
+
   return (
     <Dialog position={state.position} onClose={onClose}>
       <input
@@ -71,23 +100,27 @@ export const ChordDialog = ({
 
       <div className="mt-4 space-y-4 text-xs text-slate-500">
         <ChordGroup
-          title="コード候補"
-          chords={CHORD_LIBRARY}
+          title={songKey ? `コード候補（Key: ${songKey}）` : 'コード候補'}
+          chords={candidates}
           variant="default"
           onSelect={onValueChange}
         />
-        <ChordGroup
-          title="次のコード予測"
-          chords={NEXT_CHORDS}
-          variant="next"
-          onSelect={onValueChange}
-        />
-        <ChordGroup
-          title="代理コード"
-          chords={SUBSTITUTE_CHORDS}
-          variant="substitute"
-          onSelect={onValueChange}
-        />
+        {nextChords.length > 0 && previousChord && (
+          <ChordGroup
+            title={`次のコード予測（${previousChord} の後）`}
+            chords={nextChords}
+            variant="next"
+            onSelect={onValueChange}
+          />
+        )}
+        {substitutes.length > 0 && (
+          <ChordGroup
+            title={`代理コード（${state.value.trim()}）`}
+            chords={substitutes}
+            variant="substitute"
+            onSelect={onValueChange}
+          />
+        )}
       </div>
 
       <div className="mt-4 flex items-center justify-between">

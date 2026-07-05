@@ -1,7 +1,11 @@
 'use client'
 
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { PerformanceMode } from '@/components/song/PerformanceMode'
 import { SongPreview } from '@/components/song/SongPreview'
+import { TransposeControl } from '@/components/song/TransposeControl'
+import { transposeSong } from '@/lib/music'
 import { useSong } from '@/hooks/useSong'
 import { useRequireAuth } from '@/hooks/useRequireAuth'
 import type { Song } from '@/types/song'
@@ -29,6 +33,14 @@ export const SongDetailContent = ({
   const isLoading = externalLoading !== undefined ? externalLoading : fetched.isLoading
   const error = externalError !== undefined ? externalError : fetched.error
 
+  // 非破壊のビュー移調（保存されない・この画面と演奏モードのみに反映）
+  const [transpose, setTranspose] = useState(0)
+  const [isPerforming, setPerforming] = useState(false)
+  const displaySong = useMemo(
+    () => (song && transpose !== 0 ? transposeSong(song, transpose) : song),
+    [song, transpose]
+  )
+
   const isDemo = mode === 'demo'
   const editHref = isDemo ? `/demo/editor/${id}` : `/editor/${id}`
   const backHref = isDemo ? '/demo' : '/songs'
@@ -41,7 +53,7 @@ export const SongDetailContent = ({
     )
   }
 
-  if (isLoading || !song) {
+  if (isLoading || !song || !displaySong) {
     return <div className="mx-auto max-w-4xl px-6 py-16 text-sm text-slate-500">読み込み中...</div>
   }
 
@@ -59,11 +71,18 @@ export const SongDetailContent = ({
         <div>
           <h1 className="font-display text-2xl font-semibold text-slate-900">{song.title}</h1>
           <p className="text-sm text-slate-500">
-            {song.artist || 'アーティスト未設定'} · Key {song.key || '-'} · BPM {song.bpm ?? '-'} ·{' '}
-            {song.timeSignature}
+            {song.artist || 'アーティスト未設定'} · Key {displaySong.key || '-'} · BPM{' '}
+            {song.bpm ?? '-'} · {song.timeSignature}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 print:hidden">
+          <button
+            type="button"
+            onClick={() => setPerforming(true)}
+            className="rounded-full bg-indigo-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-indigo-400"
+          >
+            ▶ 演奏モード
+          </button>
           <button
             type="button"
             onClick={handleEdit}
@@ -76,7 +95,7 @@ export const SongDetailContent = ({
             onClick={() => window.print()}
             className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-400"
           >
-            印刷
+            印刷 / PDF
           </button>
           <button
             type="button"
@@ -88,9 +107,21 @@ export const SongDetailContent = ({
         </div>
       </div>
 
-      <div className="mt-8 rounded-3xl border border-white/60 bg-white/80 p-6 shadow-[0_30px_80px_-50px_rgba(15,23,42,0.5)] print:border-none print:bg-white print:shadow-none">
-        <SongPreview song={song} />
+      <div className="mt-4 print:hidden">
+        <TransposeControl semitones={transpose} onChange={setTranspose} baseKey={song.key} />
       </div>
+
+      <div className="mt-6 rounded-3xl border border-white/60 bg-white/80 p-6 shadow-[0_30px_80px_-50px_rgba(15,23,42,0.5)] print:mt-2 print:border-none print:bg-white print:p-0 print:shadow-none">
+        <SongPreview song={displaySong} />
+      </div>
+
+      {isPerforming && (
+        <PerformanceMode
+          song={song}
+          initialTranspose={transpose}
+          onClose={() => setPerforming(false)}
+        />
+      )}
     </section>
   )
 }
