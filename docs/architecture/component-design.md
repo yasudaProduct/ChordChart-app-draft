@@ -8,14 +8,17 @@
 
 各コンポーネントは **ひとつの役割** のみを持つ。UI の描画、状態管理、データ取得を同一コンポーネント内で行わない。
 
-### 1.2 Presentational / Container 分離
+### 1.2 レイヤ分離（データ取得と UI の分離）
 
-| 区分 | 役割 | 特徴 |
-|------|------|------|
-| **Presentational** | UIの描画に専念 | Props を受け取り JSX を返す。状態・副作用を持たない |
-| **Container** | ロジック・状態管理 | カスタムフック・ストアを通じてデータを取得し Presentational に渡す |
+厳密な Presentational / Container 二分法は採らず、**データ取得・副作用はカスタムフックまたは Server Component へ寄せ、コンポーネント本体は UI と UI ロジックに集中する**ことを原則とする。
 
-Page コンポーネント（`app/*/page.tsx`）が Container の役割を担い、`components/` 内のコンポーネントは原則 Presentational とする。
+| レイヤ                                                | 役割        | ロジック                                                        |
+| ----------------------------------------------------- | ----------- | --------------------------------------------------------------- |
+| UI プリミティブ（`components/ui/`）                   | 汎用 UI     | 純粋・controlled（データ取得・副作用なし）                      |
+| 機能コンポーネント（`components/{song,editor,...}/`） | ドメイン UI | UI ロジック可・データ取得はフック経由でコロケーション可         |
+| ページ（`app/**/page.tsx`）                           | 画面構成    | 可能なら Server Component、データ取得部は `*Content.tsx` へ分離 |
+
+実装時の判断基準は [コンポーネント実装ガイドライン](../development/component-guidelines.md) を参照。
 
 ### 1.3 Composition（合成）
 
@@ -33,32 +36,33 @@ Props でコンポーネントをカスタマイズするのではなく、小�
 
 ```typescript
 type SectionEditorProps = {
-  section: Section
-  onUpdate: (section: Section) => void
-  onDelete: (sectionId: string) => void
-}
+  section: Section;
+  onUpdate: (section: Section) => void;
+  onDelete: (sectionId: string) => void;
+};
 ```
 
 ## 2. ディレクトリ構成
 
 ```
 src/
-├── app/                          # Next.js App Router（Container 層）
+├── app/                          # Next.js App Router（ページ・ルーティング）
 │   ├── layout.tsx
-│   ├── page.tsx
-│   ├── login/page.tsx
-│   ├── register/page.tsx
-│   ├── songs/
+│   ├── page.tsx                  # ホーム（Server Component）
+│   ├── login/・register/・sso-callback/
+│   ├── songs/                    # page.tsx（Server）+ *Content.tsx（Client）
 │   │   ├── page.tsx
-│   │   ├── [id]/page.tsx
+│   │   ├── SongListContent.tsx
+│   │   ├── [id]/                 # page.tsx + SongDetailContent.tsx
 │   │   └── new/page.tsx
-│   ├── editor/[id]/page.tsx
+│   ├── editor/[id]/page.tsx      # EditorContent に fetchSong/saveFn を注入
+│   ├── demo/                     # デモモード（localStorage 版を再利用）
 │   ├── search/page.tsx
-│   ├── profile/page.tsx
-│   └── share/[token]/page.tsx
+│   ├── profile/                  # page.tsx + account/
+│   └── share/[token]/            # page.tsx + ShareContent.tsx
 │
-├── components/                   # Presentational コンポーネント
-│   ├── ui/                       # 汎用UIプリミティブ
+├── components/                   # UI・機能コンポーネント
+│   ├── ui/                       # 汎用UIプリミティブ（純粋・controlled）
 │   │   ├── Button.tsx
 │   │   ├── Input.tsx
 │   │   ├── Select.tsx
@@ -74,21 +78,38 @@ src/
 │   │   ├── SongCard.tsx
 │   │   └── SongSearchInput.tsx
 │   │
-│   └── editor/                   # エディタ機能コンポーネント
-│       ├── EditorHeader.tsx
-│       ├── MetadataPanel.tsx
-│       ├── SectionEditor.tsx
-│       ├── SectionHeader.tsx
-│       ├── LineEditor.tsx
-│       ├── ChordRow.tsx
-│       ├── ChordDialog.tsx
-│       ├── PreviewPanel.tsx
-│       └── SectionAddButtons.tsx
+│   ├── editor/                   # エディタ機能コンポーネント
+│   │   ├── EditorContent.tsx     # エディタ統括（DI で本番/デモ再利用）
+│   │   ├── EditorHeader.tsx
+│   │   ├── MetadataPanel.tsx
+│   │   ├── SectionEditor.tsx
+│   │   ├── SectionHeader.tsx
+│   │   ├── LineEditor.tsx
+│   │   ├── ChordRow.tsx
+│   │   ├── ChordDialog.tsx
+│   │   ├── PreviewPanel.tsx
+│   │   └── SectionAddButtons.tsx
+│   │
+│   ├── profile/                  # マイページ（各カードが自前でデータ取得）
+│   │   ├── ProfileHeaderCard.tsx
+│   │   ├── StatsGrid.tsx
+│   │   ├── RecentSongs.tsx
+│   │   └── AccountSettingsCard.tsx
+│   │
+│   ├── auth/                     # 認証 UI
+│   │   ├── AuthForm.tsx
+│   │   └── AuthModal.tsx
+│   │
+│   └── providers/                # Context プロバイダ
+│       ├── AuthProvider.tsx
+│       └── SWRProvider.tsx
 │
 ├── hooks/                        # カスタムフック
-│   ├── useEditorActions.ts
-│   ├── useChordDrag.ts
-│   └── useSectionDrag.ts
+│   ├── useEditorActions.ts       # エディタ CRUD
+│   ├── useChordDrag.ts           # コード D&D
+│   ├── useSectionDrag.ts         # セクション並び替え
+│   ├── useSong.ts / useMe.ts     # SWR データ取得
+│   └── useRequireAuth.ts         # 認可ガード
 │
 ├── stores/                       # Zustand ストア
 │   ├── authStore.ts
@@ -115,48 +136,48 @@ src/
 
 アプリ全体で再利用される最小単位のUIコンポーネント。ビジネスロジックを一切含まない。
 
-| コンポーネント | 責務 | Props 概要 |
-|---------------|------|-----------|
-| `Button` | ボタン描画 | `variant`, `size`, `disabled`, `onClick`, `children` |
-| `Input` | テキスト入力 | `label`, `value`, `onChange`, `placeholder`, `type` |
-| `Select` | セレクトボックス | `label`, `value`, `onChange`, `options` |
-| `Toggle` | ON/OFF 切替 | `checked`, `onChange`, `label` |
-| `Dialog` | モーダルダイアログ | `open`, `onClose`, `position`, `children` |
-| `Toast` | 一時的な通知メッセージ | `message`, `visible` |
+| コンポーネント | 責務                   | Props 概要                                           |
+| -------------- | ---------------------- | ---------------------------------------------------- |
+| `Button`       | ボタン描画             | `variant`, `size`, `disabled`, `onClick`, `children` |
+| `Input`        | テキスト入力           | `label`, `value`, `onChange`, `placeholder`, `type`  |
+| `Select`       | セレクトボックス       | `label`, `value`, `onChange`, `options`              |
+| `Toggle`       | ON/OFF 切替            | `checked`, `onChange`, `label`                       |
+| `Dialog`       | モーダルダイアログ     | `open`, `onClose`, `position`, `children`            |
+| `Toast`        | 一時的な通知メッセージ | `message`, `visible`                                 |
 
 ### 3.2 レイアウトコンポーネント (`components/layout/`)
 
 ページ共通のレイアウト構造を提供する。
 
-| コンポーネント | 責務 |
-|---------------|------|
-| `SiteHeader` | ナビゲーションヘッダー（`variant: 'public' \| 'app'`） |
+| コンポーネント | 責務                                                   |
+| -------------- | ------------------------------------------------------ |
+| `SiteHeader`   | ナビゲーションヘッダー（`variant: 'public' \| 'app'`） |
 
 ### 3.3 楽曲コンポーネント (`components/song/`)
 
 楽曲の表示・一覧に関するコンポーネント。
 
-| コンポーネント | 責務 | 使用箇所 |
-|---------------|------|---------|
-| `SongPreview` | 楽曲の読み取り専用プレビュー | 楽曲詳細、共有ページ |
-| `SongCard` | 一覧での楽曲カード表示 | 楽曲一覧、検索結果 |
+| コンポーネント    | 責務                                | 使用箇所             |
+| ----------------- | ----------------------------------- | -------------------- |
+| `SongPreview`     | 楽曲の読み取り専用プレビュー        | 楽曲詳細、共有ページ |
+| `SongCard`        | 一覧での楽曲カード表示              | 楽曲一覧、検索結果   |
 | `SongSearchInput` | 検索入力フィールド + ヒット件数表示 | 楽曲一覧、検索ページ |
 
 ### 3.4 エディタコンポーネント (`components/editor/`)
 
 エディタページの各領域を個別コンポーネントに分割する。
 
-| コンポーネント | 責務 | 行数目安 |
-|---------------|------|---------|
-| `EditorHeader` | ツールバー（保存・共有・印刷・プレビュー切替） | ~70行 |
-| `MetadataPanel` | 曲名・アーティスト・キー・BPM・拍子の入力 | ~70行 |
-| `SectionEditor` | 1つのセクション全体（ヘッダー + 行リスト） | ~50行 |
-| `SectionHeader` | セクション名・タイプ切替・操作ボタン群 | ~70行 |
-| `LineEditor` | 1行分（コード配置エリア + 歌詞入力） | ~40行 |
-| `ChordRow` | コード配置エリア（クリックで追加、ドラッグで移動） | ~40行 |
-| `ChordDialog` | コード入力ダイアログ（候補・予測・代理コード） | ~100行 |
-| `PreviewPanel` | 右側プレビューパネル | ~60行 |
-| `SectionAddButtons` | セクション追加プリセットボタン群 | ~40行 |
+| コンポーネント      | 責務                                               | 行数目安 |
+| ------------------- | -------------------------------------------------- | -------- |
+| `EditorHeader`      | ツールバー（保存・共有・印刷・プレビュー切替）     | ~70行    |
+| `MetadataPanel`     | 曲名・アーティスト・キー・BPM・拍子の入力          | ~70行    |
+| `SectionEditor`     | 1つのセクション全体（ヘッダー + 行リスト）         | ~50行    |
+| `SectionHeader`     | セクション名・タイプ切替・操作ボタン群             | ~70行    |
+| `LineEditor`        | 1行分（コード配置エリア + 歌詞入力）               | ~40行    |
+| `ChordRow`          | コード配置エリア（クリックで追加、ドラッグで移動） | ~40行    |
+| `ChordDialog`       | コード入力ダイアログ（候補・予測・代理コード）     | ~100行   |
+| `PreviewPanel`      | 右側プレビューパネル                               | ~60行    |
+| `SectionAddButtons` | セクション追加プリセットボタン群                   | ~40行    |
 
 ## 4. エディタ分割の詳細設計
 
@@ -187,32 +208,35 @@ EditorPage (app/editor/[id]/page.tsx)  ← Container（データ取得・スト�
 ```typescript
 interface EditorState {
   // データ
-  song: Song | null
+  song: Song | null;
   // UI状態
-  isPreviewVisible: boolean
-  isDirty: boolean
-  isSaving: boolean
-  dialog: ChordDialogState | null
-  shareMessage: string
+  isPreviewVisible: boolean;
+  isDirty: boolean;
+  isSaving: boolean;
+  dialog: ChordDialogState | null;
+  shareMessage: string;
   // アクション
-  setSong: (song: Song) => void
-  updateSong: (updater: (song: Song) => Song) => void
-  updateSection: (sectionId: string, updater: (section: Section) => Section) => void
-  setDirty: (dirty: boolean) => void
-  setSaving: (saving: boolean) => void
-  setDialog: (dialog: ChordDialogState | null) => void
-  setShareMessage: (message: string) => void
-  togglePreview: () => void
+  setSong: (song: Song) => void;
+  updateSong: (updater: (song: Song) => Song) => void;
+  updateSection: (
+    sectionId: string,
+    updater: (section: Section) => Section,
+  ) => void;
+  setDirty: (dirty: boolean) => void;
+  setSaving: (saving: boolean) => void;
+  setDialog: (dialog: ChordDialogState | null) => void;
+  setShareMessage: (message: string) => void;
+  togglePreview: () => void;
 }
 ```
 
 ### 4.3 カスタムフック
 
-| フック | 責務 | 依存 |
-|--------|------|------|
-| `useEditorActions` | 楽曲・セクション・行・コードの CRUD 操作 | `editorStore` |
-| `useChordDrag` | コードブロックのドラッグ＆ドロップ | `editorStore`, PointerEvent |
-| `useSectionDrag` | セクションのドラッグ並び替え | `editorStore`, DragEvent |
+| フック             | 責務                                     | 依存                        |
+| ------------------ | ---------------------------------------- | --------------------------- |
+| `useEditorActions` | 楽曲・セクション・行・コードの CRUD 操作 | `editorStore`               |
+| `useChordDrag`     | コードブロックのドラッグ＆ドロップ       | `editorStore`, PointerEvent |
+| `useSectionDrag`   | セクションのドラッグ並び替え             | `editorStore`, DragEvent    |
 
 ### 4.4 データフロー
 
@@ -237,87 +261,91 @@ editorStore (Zustand)
 
 ```typescript
 type EditorHeaderProps = {
-  title: string
-  isDirty: boolean
-  isSaving: boolean
-  isPreview: boolean
-  onSave: () => void
-  onShare: () => void
-  onPrint: () => void
-  onTogglePreview: () => void
-  onBack: () => void
-}
+  title: string;
+  isDirty: boolean;
+  isSaving: boolean;
+  isPreview: boolean;
+  onSave: () => void;
+  onShare: () => void;
+  onPrint: () => void;
+  onTogglePreview: () => void;
+  onBack: () => void;
+};
 ```
 
 ### MetadataPanel
 
 ```typescript
 type MetadataPanelProps = {
-  song: Song
-  onChange: (field: keyof SongMeta, value: string | number | undefined) => void
-}
+  song: Song;
+  onChange: (field: keyof SongMeta, value: string | number | undefined) => void;
+};
 ```
 
 ### SectionEditor
 
 ```typescript
 type SectionEditorProps = {
-  section: Section
-  index: number
-  totalSections: number
-  onUpdate: (updater: (section: Section) => Section) => void
-  onDuplicate: () => void
-  onMove: (direction: -1 | 1) => void
-  onDelete: () => void
-  onAddLine: () => void
-  onChordRowClick: (event: React.MouseEvent, lineId: string) => void
-  onChordPointerDown: (event: React.PointerEvent, lineId: string, chord: ChordBlock) => void
-  onLineLyricsChange: (lineId: string, lyrics: string) => void
-  isDragging: boolean
-  onDragStart: (event: React.DragEvent) => void
-  onDragOver: (event: React.DragEvent) => void
-  onDragEnd: () => void
-}
+  section: Section;
+  index: number;
+  totalSections: number;
+  onUpdate: (updater: (section: Section) => Section) => void;
+  onDuplicate: () => void;
+  onMove: (direction: -1 | 1) => void;
+  onDelete: () => void;
+  onAddLine: () => void;
+  onChordRowClick: (event: React.MouseEvent, lineId: string) => void;
+  onChordPointerDown: (
+    event: React.PointerEvent,
+    lineId: string,
+    chord: ChordBlock,
+  ) => void;
+  onLineLyricsChange: (lineId: string, lyrics: string) => void;
+  isDragging: boolean;
+  onDragStart: (event: React.DragEvent) => void;
+  onDragOver: (event: React.DragEvent) => void;
+  onDragEnd: () => void;
+};
 ```
 
 ### ChordDialog
 
 ```typescript
 type ChordDialogProps = {
-  state: ChordDialogState
-  onValueChange: (value: string) => void
-  onConfirm: () => void
-  onDelete: () => void
-  onClose: () => void
-}
+  state: ChordDialogState;
+  onValueChange: (value: string) => void;
+  onConfirm: () => void;
+  onDelete: () => void;
+  onClose: () => void;
+};
 ```
 
 ### PreviewPanel
 
 ```typescript
 type PreviewPanelProps = {
-  song: Song
-}
+  song: Song;
+};
 ```
 
 ### SectionAddButtons
 
 ```typescript
 type SectionAddButtonsProps = {
-  onAddSection: (name: string, type: SectionType) => void
-  hasSections: boolean
-}
+  onAddSection: (name: string, type: SectionType) => void;
+  hasSections: boolean;
+};
 ```
 
 ## 6. 命名規則
 
-| 対象 | 規則 | 例 |
-|------|------|-----|
-| コンポーネントファイル | PascalCase | `SectionEditor.tsx` |
-| カスタムフック | `use` + PascalCase | `useEditorActions.ts` |
-| Props 型 | コンポーネント名 + `Props` | `SectionEditorProps` |
-| コールバック Props | `on` + 動詞 | `onUpdate`, `onDelete` |
-| 状態更新 Props | `is` / `has` + 形容詞 | `isDirty`, `hasSections` |
+| 対象                   | 規則                       | 例                       |
+| ---------------------- | -------------------------- | ------------------------ |
+| コンポーネントファイル | PascalCase                 | `SectionEditor.tsx`      |
+| カスタムフック         | `use` + PascalCase         | `useEditorActions.ts`    |
+| Props 型               | コンポーネント名 + `Props` | `SectionEditorProps`     |
+| コールバック Props     | `on` + 動詞                | `onUpdate`, `onDelete`   |
+| 状態更新 Props         | `is` / `has` + 形容詞      | `isDirty`, `hasSections` |
 
 ## 7. 実装ガイドライン
 
@@ -349,45 +377,45 @@ export const Example = ({ title, isActive, onAction }: ExampleProps) => {
 ### 7.2 カスタムフックの書き方
 
 ```typescript
-import { useCallback } from 'react'
-import { useEditorStore } from '@/stores/editorStore'
+import { useCallback } from "react";
+import { useEditorStore } from "@/stores/editorStore";
 
 export const useEditorActions = () => {
-  const { updateSong } = useEditorStore()
+  const { updateSong } = useEditorStore();
 
   const addSection = useCallback(
     (name: string, type: SectionType) => {
       updateSong((prev) => ({
         ...prev,
         sections: [...prev.sections, createSection(name, type)],
-      }))
+      }));
     },
-    [updateSong]
-  )
+    [updateSong],
+  );
 
-  return { addSection }
-}
+  return { addSection };
+};
 ```
 
 ### 7.3 インポート順序
 
 ```typescript
 // 1. React / Next.js
-import { useState, useCallback } from 'react'
-import Link from 'next/link'
+import { useState, useCallback } from "react";
+import Link from "next/link";
 
 // 2. 外部ライブラリ（なし or 最小限）
 
 // 3. 内部モジュール
-import { cn } from '@/lib/utils'
-import { useEditorStore } from '@/stores/editorStore'
+import { cn } from "@/lib/utils";
+import { useEditorStore } from "@/stores/editorStore";
 
 // 4. コンポーネント
-import { Button } from '@/components/ui/Button'
-import { SectionEditor } from '@/components/editor/SectionEditor'
+import { Button } from "@/components/ui/Button";
+import { SectionEditor } from "@/components/editor/SectionEditor";
 
 // 5. 型定義
-import type { Song, Section } from '@/types/song'
+import type { Song, Section } from "@/types/song";
 ```
 
 ## 8. 関連ドキュメント

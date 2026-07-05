@@ -29,11 +29,11 @@
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\('description', ''\\)\\); print\\('\\\\n---deps---\\\\n'\\); print\\(json.dumps\\(d.get\\('dependencies', {}\\), indent=2\\)\\)\")",
       "Bash(grep -E \"\\\\.\\(ts|js\\)$\")",
       "mcp__plugin_figma_figma__get_screenshot",
-      "mcp__plugin_figma_figma__use_figma"
+      "mcp__plugin_figma_figma__use_figma",
+      "Bash(head -20 stores/authStore.ts stores/authModalStore.ts)",
+      "Bash(head -40 hooks/useMe.ts hooks/useRequireAuth.ts)"
     ]
   },
   "enableAllProjectMcpServers": true,
-  "enabledMcpjsonServers": [
-    "supabase"
-  ]
+  "enabledMcpjsonServers": ["supabase"]
 }
