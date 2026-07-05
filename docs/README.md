@@ -53,13 +53,20 @@
 
 - [機能一覧](./features/overview.md) - アプリケーションの機能概要
 
+### 開発計画・改善計画
+
+- [機能拡充ロードマップ](./plans/feature-roadmap.md) - 実装ギャップ分析に基づく、不足機能・拡大機能の優先度付き実行計画
+- [フロントエンド コンポーネント規約策定 & リファクタリング計画](./plans/frontend-component-guidelines-and-refactoring.md) - React ベストプラクティス準拠のための規約・テスト基盤・リファクタ計画
+- [バックエンド移行計画](./plans/backend-migration-to-hono.md) - ASP.NET Core → Hono 移行の記録
+
 ## クイックリンク
 
-| 用途 | リンク |
-|------|--------|
-| プロジェクトを理解する | [コンセプト](./project/concept.md) |
-| 画面仕様を見る | [画面一覧](./ui/screens.md) |
-| 開発を始める | [環境構築](./development/getting-started.md) |
-| APIを使う | [エンドポイント](./api/endpoints.md) |
-| DB設計を見る | [ER図](./database/er-diagram.md) |
-| デプロイする | [環境変数](./deployment/environments.md) |
+| 用途                   | リンク                                             |
+| ---------------------- | -------------------------------------------------- |
+| プロジェクトを理解する | [コンセプト](./project/concept.md)                 |
+| 画面仕様を見る         | [画面一覧](./ui/screens.md)                        |
+| 開発を始める           | [環境構築](./development/getting-started.md)       |
+| APIを使う              | [エンドポイント](./api/endpoints.md)               |
+| DB設計を見る           | [ER図](./database/er-diagram.md)                   |
+| デプロイする           | [環境変数](./deployment/environments.md)           |
+| 今後の計画を見る       | [機能拡充ロードマップ](./plans/feature-roadmap.md) |

@@ -16,10 +16,11 @@ ChordBook プロジェクトのテスト方針と実行方法です。
         └───────────┘
 ```
 
-| レベル   | 対象             | ツール          |
-| -------- | ---------------- | --------------- |
-| ユニット | ルート・サービス | vitest (BE)     |
-| E2E      | ユーザーフロー   | Playwright (FE) |
+| レベル   | 対象                                | ツール          |
+| -------- | ----------------------------------- | --------------- |
+| ユニット | ルート・サービス                    | vitest (BE)     |
+| ユニット | lib/ の純粋関数（音楽理論ロジック） | vitest (FE)     |
+| E2E      | ユーザーフロー                      | Playwright (FE) |
 
 ---
 
@@ -35,7 +36,7 @@ apps/backend/
 │   ├── middleware/
 │   └── db/
 └── test/                      # テストファイル
-    └── routes/                # ルートテスト（health, songs, me）
+    └── routes/                # ルートテスト（health, songs, shares, me）
 ```
 
 ### ユニットテスト例
@@ -87,11 +88,11 @@ describe("POST /api/songs", () => {
 ```bash
 cd apps/backend
 
-# 全テスト実行
+# 全テスト実行（1回実行）
 pnpm test
 
 # ウォッチモード
-pnpm test -- --watch
+pnpm test:watch
 
 # カバレッジ
 pnpm test -- --coverage
@@ -102,9 +103,34 @@ pnpm test -- songs.test.ts
 
 ---
 
-## フロントエンド（E2E）
+## フロントエンド（ユニットテスト）
 
-フロントエンドの自動テストは Playwright による E2E テスト（`apps/frontend/e2e/`）を中心に実施します。コンポーネント単体テスト（Jest 等）は現時点では未導入です。
+`lib/` の純粋関数（音楽理論ロジック `lib/music/`、`sectionContent` 等）を Vitest でテストします。
+テストファイルは対象と同じディレクトリにコロケーション（`*.test.ts`）します。
+
+```
+apps/frontend/
+├── vitest.config.ts           # 最小構成（environment: node, エイリアス @）
+└── src/lib/
+    ├── music/
+    │   ├── chords.ts
+    │   ├── chords.test.ts     # コロケーション
+    │   └── ...
+    └── sectionContent.test.ts
+```
+
+```bash
+cd apps/frontend
+
+# 全テスト実行（1回実行）
+pnpm test
+
+# ウォッチモード
+pnpm test:watch
+```
+
+> コンポーネント単体テスト（jsdom + Testing Library）は未導入です。導入計画は
+> [フロントエンド コンポーネント規約策定 & リファクタリング計画](../plans/frontend-component-guidelines-and-refactoring.md) の Phase 2 を参照。
 
 ---
 
