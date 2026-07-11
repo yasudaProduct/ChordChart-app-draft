@@ -8,6 +8,8 @@ ChordBook データベースの各テーブル詳細定義です。
 
 ユーザー情報を管理します。Clerk と連携。
 
+> レコードは Clerk Webhook（`user.created` / `user.updated`）で同期されるほか、`authMiddleware()` による JIT（Just-in-Time）プロビジョニングでも作成される。Webhook 未達・レースコンディション時の `Songs` 等への外部キー制約違反を防ぐためのフォールバック。詳細は [バックエンドアーキテクチャ](../architecture/backend.md#ユーザー同期webhook--jitプロビジョニング) を参照。
+
 ### カラム定義
 
 | カラム名    | データ型  | NULL | デフォルト | 制約 | 説明                        |
