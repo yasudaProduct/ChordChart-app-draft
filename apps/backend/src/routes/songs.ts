@@ -3,11 +3,15 @@ import { zValidator } from '@hono/zod-validator'
 import { z } from 'zod'
 import type { AuthVariables } from '../middleware/auth'
 import { authMiddleware, optionalAuthMiddleware } from '../middleware/auth'
+import { shareService } from '../services/share.service'
 import { songService } from '../services/song.service'
 
 // ============================================================
 // Zod バリデーションスキーマ
 // ============================================================
+
+// specific_users は共有先管理（ロードマップ G4）実装まで受け付けない
+const visibilitySchema = z.enum(['private', 'url_only', 'public'])
 
 const createSongSchema = z.object({
   title: z.string().min(1),
@@ -15,6 +19,7 @@ const createSongSchema = z.object({
   key: z.string().nullable().optional(),
   bpm: z.number().int().nullable().optional(),
   timeSignature: z.string().optional().default('4/4'),
+  visibility: visibilitySchema.optional(),
 })
 
 const updateSongSchema = z.object({
@@ -24,6 +29,15 @@ const updateSongSchema = z.object({
   bpm: z.number().int().nullable().optional(),
   timeSignature: z.string().optional().default('4/4'),
   content: z.string().optional(),
+  visibility: visibilitySchema.optional(),
+})
+
+const patchSongSchema = z.object({
+  visibility: visibilitySchema,
+})
+
+const createShareSchema = z.object({
+  expiresInDays: z.number().int().min(1).max(365).nullable().optional(),
 })
 
 // ============================================================
@@ -112,6 +126,25 @@ songRoutes.put(
   }
 )
 
+// PATCH /:id — 曲の部分更新（公開範囲の変更）
+songRoutes.patch(
+  '/:id',
+  authMiddleware(),
+  zValidator('json', patchSongSchema, validationHook),
+  async (c) => {
+    const id = c.req.param('id')
+    const userId = c.get('userId')!
+    const body = c.req.valid('json')
+    const song = await songService.updateSongVisibility(id, userId, body.visibility)
+
+    if (!song) {
+      return c.json({ error: 'Song not found' }, 404)
+    }
+
+    return c.json(song)
+  }
+)
+
 // DELETE /:id — 曲削除
 songRoutes.delete('/:id', authMiddleware(), async (c) => {
   const id = c.req.param('id')
@@ -120,6 +153,60 @@ songRoutes.delete('/:id', authMiddleware(), async (c) => {
 
   if (!deleted) {
     return c.json({ error: 'Song not found' }, 404)
+  }
+
+  return c.body(null, 204)
+})
+
+// ============================================================
+// 共有リンク（所有者のみ）
+// ============================================================
+
+// GET /:id/share — 曲の有効な共有リンクを取得
+songRoutes.get('/:id/share', authMiddleware(), async (c) => {
+  const id = c.req.param('id')
+  const userId = c.get('userId')!
+  const share = await shareService.getShareForSong(id, userId)
+
+  if (share === undefined) {
+    return c.json({ error: 'Song not found' }, 404)
+  }
+  if (share === null) {
+    return c.json({ error: 'Share not found' }, 404)
+  }
+
+  return c.json(share)
+})
+
+// POST /:id/share — 共有リンクを発行（既に有効なリンクがあればそれを返す）
+songRoutes.post(
+  '/:id/share',
+  authMiddleware(),
+  zValidator('json', createShareSchema, validationHook),
+  async (c) => {
+    const id = c.req.param('id')
+    const userId = c.get('userId')!
+    const body = c.req.valid('json')
+    const result = await shareService.createShare(id, userId, {
+      expiresInDays: body.expiresInDays ?? null,
+    })
+
+    if (!result) {
+      return c.json({ error: 'Song not found' }, 404)
+    }
+
+    return c.json(result.share, result.created ? 201 : 200)
+  }
+)
+
+// DELETE /:id/share — 共有リンクを失効
+songRoutes.delete('/:id/share', authMiddleware(), async (c) => {
+  const id = c.req.param('id')
+  const userId = c.get('userId')!
+  const deleted = await shareService.deleteShare(id, userId)
+
+  if (!deleted) {
+    return c.json({ error: 'Share not found' }, 404)
   }
 
   return c.body(null, 204)

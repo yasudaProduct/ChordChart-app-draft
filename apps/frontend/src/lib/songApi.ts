@@ -3,7 +3,7 @@ import { parseSongContent } from '@/lib/parseSongContent'
 import { useAuthStore } from '@/stores/authStore'
 import type { Section, Song, SongListItem, SongMeta, SongVisibility } from '@/types/song'
 
-type ApiSongDto = {
+export type ApiSongDto = {
   id: string
   title: string
   artist: string | null
@@ -41,7 +41,19 @@ const mapVisibility = (value: ApiSongDto['visibility']): SongVisibility => {
   }
 }
 
-const toSong = (dto: ApiSongDto): Song => {
+/** フロントの kebab-case 表記を API の snake_case 表記へ変換する。 */
+const toApiVisibility = (value: SongVisibility): string => {
+  switch (value) {
+    case 'url-only':
+      return 'url_only'
+    case 'specific-users':
+      return 'specific_users'
+    default:
+      return value
+  }
+}
+
+export const toSong = (dto: ApiSongDto): Song => {
   const sections = parseSongContent(dto.content)
   return {
     id: dto.id,
@@ -68,11 +80,6 @@ const toSongListItem = (dto: ApiSongListItemDto): SongListItem => ({
 const toContent = (sections: Section[]) => JSON.stringify({ sections })
 
 export const songApi = {
-  async list(): Promise<SongListItem[]> {
-    const response = await api.get<ApiSongListItemDto[]>('/songs')
-    return response.map(toSongListItem)
-  },
-
   async listDemo(): Promise<SongListItem[]> {
     const response = await api.get<ApiSongListItemDto[]>('/songs/demo')
     return response.map(toSongListItem)
@@ -83,7 +90,7 @@ export const songApi = {
     return toSong(dto)
   },
 
-  async create(meta: SongMeta, _visibility?: SongVisibility): Promise<Song> {
+  async create(meta: SongMeta, visibility?: SongVisibility): Promise<Song> {
     if (!isAuthenticated()) {
       throw new Error('ログインが必要です')
     }
@@ -93,6 +100,7 @@ export const songApi = {
       key: meta.key ?? null,
       bpm: meta.bpm ?? null,
       timeSignature: meta.timeSignature || '4/4',
+      ...(visibility ? { visibility: toApiVisibility(visibility) } : {}),
     })
     return toSong(dto)
   },
@@ -108,6 +116,18 @@ export const songApi = {
       bpm: updates.bpm ?? null,
       timeSignature: updates.timeSignature ?? '4/4',
       content: toContent(updates.sections ?? []),
+      visibility: toApiVisibility(updates.visibility ?? 'private'),
+    })
+    return toSong(dto)
+  },
+
+  /** 公開範囲のみを変更する（他の編集内容には影響しない）。 */
+  async updateVisibility(id: string, visibility: SongVisibility): Promise<Song> {
+    if (!isAuthenticated()) {
+      throw new Error('ログインが必要です')
+    }
+    const dto = await api.patch<ApiSongDto>(`/songs/${id}`, {
+      visibility: toApiVisibility(visibility),
     })
     return toSong(dto)
   },

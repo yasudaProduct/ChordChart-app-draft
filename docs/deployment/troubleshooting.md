@@ -109,6 +109,27 @@ ALLOWED_ORIGINS=http://localhost:3000
 
 ---
 
+### `POST /api/songs` などで外部キー制約違反（500）が発生する
+
+**症状**: 認証は成功する（401 にならない）のに、曲作成時に以下のようなエラーで 500 が返る。
+
+```
+PostgresError: insert or update on table "Songs" violates foreign key constraint "Songs_UserId_Users_Id_fk"
+detail: Key (UserId)=(user_xxx) is not present in table "Users".
+```
+
+**原因**: Clerk の JWT 認証と `Users` テーブルへの同期（Clerk Webhook）が別経路のため、Webhook がまだ届いていない・失敗している状態で書き込み系 API にアクセスすると発生しうる（[Issue #19](https://github.com/yasudaProduct/chord-chart/issues/19)）。
+
+**対策（実装済み）**: `authMiddleware()` が JWT 検証成功時に JIT（Just-in-Time）プロビジョニングとして `Users` テーブルへの存在保証を行うため、通常はこのエラーは発生しない。詳細は [バックエンドアーキテクチャ「ユーザー同期」](../architecture/backend.md#ユーザー同期webhook--jitプロビジョニング) を参照。
+
+**それでも発生する場合**:
+
+1. ローカル DB が起動しているか（`docker compose ps`）
+2. `pnpm db:seed` 等で `Users` テーブルだけ削除・リセットしていないか
+3. デプロイ直後で新しいコードがまだ反映されていないか
+
+---
+
 ## デプロイ
 
 ### Cloudflare Pages ビルドエラー

@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useClerk } from '@clerk/nextjs'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/authStore'
+import { useAuthModalStore } from '@/stores/authModalStore'
 
 type HeaderVariant = 'public' | 'app'
 
@@ -15,7 +16,7 @@ type SiteHeaderProps = {
 const navItems = [
   { href: '/songs', label: '楽曲一覧' },
   { href: '/search', label: '検索' },
-  { href: '/profile', label: 'プロフィール' },
+  { href: '/profile', label: 'マイページ' },
 ]
 
 export const SiteHeader = ({ variant = 'public' }: SiteHeaderProps) => {
@@ -23,6 +24,7 @@ export const SiteHeader = ({ variant = 'public' }: SiteHeaderProps) => {
   const router = useRouter()
   const { user } = useAuthStore()
   const { signOut } = useClerk()
+  const openAuthModal = useAuthModalStore((s) => s.open)
 
   return (
     <header className="print-hidden sticky top-0 z-40 border-b border-white/60 bg-white/80 backdrop-blur">
@@ -73,12 +75,13 @@ export const SiteHeader = ({ variant = 'public' }: SiteHeaderProps) => {
                   </button>
                 </div>
               ) : (
-                <Link
-                  href="/login"
+                <button
+                  type="button"
+                  onClick={() => openAuthModal('login')}
                   className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 transition hover:border-slate-400"
                 >
                   ログイン
-                </Link>
+                </button>
               )}
             </>
           ) : (
@@ -92,15 +95,20 @@ export const SiteHeader = ({ variant = 'public' }: SiteHeaderProps) => {
                 </Link>
               ) : (
                 <>
-                  <Link href="/login" className="text-sm text-slate-600 hover:text-slate-900">
+                  <button
+                    type="button"
+                    onClick={() => openAuthModal('login')}
+                    className="text-sm text-slate-600 hover:text-slate-900"
+                  >
                     ログイン
-                  </Link>
-                  <Link
-                    href="/register"
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openAuthModal('register')}
                     className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
                   >
                     新規登録
-                  </Link>
+                  </button>
                 </>
               )}
             </>

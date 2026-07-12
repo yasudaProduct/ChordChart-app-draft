@@ -9,7 +9,8 @@ type EditorHeaderProps = {
   isSaving: boolean
   isPreview: boolean
   onSave: () => void
-  onShare: () => void
+  /** 未指定の場合は共有ボタンを表示しない（デモモード等） */
+  onShare?: () => void
   onPrint: () => void
   onTogglePreview: () => void
   onBack: () => void
@@ -48,15 +49,14 @@ export const EditorHeader = ({
           label="プレビュー"
           aria-label="プレビュー切替"
         />
-        <Button variant="ghost" onClick={() => {}}>
-          ⌘K ショートカット
-        </Button>
         <Button variant="secondary" onClick={onPrint}>
-          🖨 印刷
+          🖨 印刷 / PDF
         </Button>
-        <Button variant="secondary" onClick={onShare}>
-          ↗ 共有
-        </Button>
+        {onShare && (
+          <Button variant="secondary" onClick={onShare}>
+            ↗ 共有
+          </Button>
+        )}
         <Button variant="primary" onClick={onSave} disabled={isSaving}>
           {isSaving ? '保存中...' : '保存'}
         </Button>

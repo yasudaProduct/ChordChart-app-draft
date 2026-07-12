@@ -9,26 +9,7 @@ export function generateId(): string {
   return Math.random().toString(36).substring(2, 15)
 }
 
-// Musical keys
-export const KEYS = [
-  'C',
-  'C#',
-  'Db',
-  'D',
-  'D#',
-  'Eb',
-  'E',
-  'F',
-  'F#',
-  'Gb',
-  'G',
-  'G#',
-  'Ab',
-  'A',
-  'A#',
-  'Bb',
-  'B',
-] as const
+// キーの一覧は @/lib/music の KEY_SELECT_OPTIONS を使用する
 
 // Time signatures
 export const TIME_SIGNATURES = ['4/4', '3/4', '6/8', '2/4'] as const

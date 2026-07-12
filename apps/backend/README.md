@@ -32,8 +32,8 @@ cp .env.example .env
 pnpm dev           # 開発サーバー起動（tsx watch, localhost:8080）
 pnpm build         # 本番ビルド → dist/index.js
 pnpm start         # 本番起動
-pnpm test          # テスト実行（ウォッチモード）
-pnpm test -- --run # テスト1回実行
+pnpm test          # テスト実行（1回実行）
+pnpm test:watch    # テスト実行（ウォッチモード）
 ```
 
 ## データベース操作
@@ -42,10 +42,13 @@ pnpm test -- --run # テスト1回実行
 pnpm db:generate   # スキーマ変更後にマイグレーションファイルを生成
 pnpm db:migrate    # マイグレーション適用（ステージングは CI が自動実行）
 pnpm db:push       # DBに直接反映（ローカル開発向け）
-pnpm db:seed       # 既存データを削除してシードデータ投入
+pnpm db:seed       # 全テーブルをリセットして開発・テスト用データを投入（破壊的）
+pnpm db:seed:demo  # デモ曲のみを冪等に投入（非破壊・ステージングは CI が自動実行）
 ```
 
-> **注意:** `db:seed` は実行前にスキーマ内の全テーブルをリセットする。開発環境での使用を推奨。
+> **注意:** `db:seed` は実行前にスキーマ内の全テーブルをリセットするため、開発・テスト環境専用。
+> ステージング・本番のデモデータ投入には、実データを削除しない `db:seed:demo` を使う。
+> デモ曲の定義は `src/db/demoSongs.ts` で両 seed 共通管理。
 
 ## Docker
 
@@ -66,13 +69,21 @@ docker run -p 8080:8080 \
 
 詳細は [docs/api/endpoints.md](../../docs/api/endpoints.md) を参照。
 
-| メソッド | パス                   | 認証             | 説明                          |
-| -------- | ---------------------- | ---------------- | ----------------------------- |
-| GET      | `/api/health`          | 不要             | ヘルスチェック                |
-| GET      | `/api/songs`           | オプション       | 曲一覧                        |
-| GET      | `/api/songs/search?q=` | オプション       | 曲検索                        |
-| GET      | `/api/songs/:id`       | オプション       | 曲詳細                        |
-| POST     | `/api/songs`           | 必須             | 曲作成                        |
-| PUT      | `/api/songs/:id`       | 必須             | 曲更新                        |
-| DELETE   | `/api/songs/:id`       | 必須             | 曲削除                        |
-| POST     | `/api/webhooks/clerk`  | 不要（署名検証） | Clerk Webhook（ユーザー同期） |
+| メソッド | パス                   | 認証             | 説明                           |
+| -------- | ---------------------- | ---------------- | ------------------------------ |
+| GET      | `/api/health`          | 不要             | ヘルスチェック                 |
+| GET      | `/api/songs`           | 不要             | 公開曲一覧                     |
+| GET      | `/api/songs/demo`      | 不要             | デモ用曲一覧                   |
+| GET      | `/api/songs/search?q=` | オプション       | 公開曲検索                     |
+| GET      | `/api/songs/:id`       | オプション       | 曲詳細                         |
+| POST     | `/api/songs`           | 必須             | 曲作成                         |
+| PUT      | `/api/songs/:id`       | 必須             | 曲更新                         |
+| PATCH    | `/api/songs/:id`       | 必須             | 曲の部分更新（公開範囲の変更） |
+| DELETE   | `/api/songs/:id`       | 必須             | 曲削除                         |
+| GET      | `/api/songs/:id/share` | 必須             | 共有リンク取得（所有者のみ）   |
+| POST     | `/api/songs/:id/share` | 必須             | 共有リンク発行（所有者のみ）   |
+| DELETE   | `/api/songs/:id/share` | 必須             | 共有リンク失効（所有者のみ）   |
+| GET      | `/api/shares/:token`   | 不要             | 共有トークンから曲を取得       |
+| GET      | `/api/me/summary`      | 必須             | 自分の曲数（可視性別集計）     |
+| GET      | `/api/me/songs`        | 必須             | 自分の曲一覧                   |
+| POST     | `/api/webhooks/clerk`  | 不要（署名検証） | Clerk Webhook（ユーザー同期）  |

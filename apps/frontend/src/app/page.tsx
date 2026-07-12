@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { SignedOut } from '@clerk/nextjs'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 
+export const runtime = 'edge'
+
 export default function Home() {
   return (
     <main className="min-h-screen">

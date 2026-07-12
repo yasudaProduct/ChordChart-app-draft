@@ -16,6 +16,8 @@ ChordBook のインフラ構成をまとめたドキュメントです。
 
 ## アーキテクチャ図
 
+現時点のデプロイ先はステージング環境（`develop` ブランチへのプッシュで自動デプロイ）。本番用カスタムドメイン（`chordbook.app` 等）は未設定の場合があります。
+
 ```
                         Cloudflare
 ┌──────────────────────────────────────────────────────┐
@@ -23,13 +25,16 @@ ChordBook のインフラ構成をまとめたドキュメントです。
 │   ┌─────────────────┐     ┌──────────────────────┐  │
 │   │  Cloudflare      │     │  Cloudflare Workers  │  │
 │   │  Pages           │────▶│  (Hono API)          │  │
-│   │  (Next.js)       │     │  api.chordbook.app   │  │
-│   │  chordbook.app   │     └──────────┬───────────┘  │
+│   │  (Next.js)       │     │  chordbook-api-      │  │
+│   │  chordbook-      │     │  staging.workers.dev │  │
+│   │  frontend-       │     └──────────┬───────────┘  │
+│   │  staging.pages   │                │              │
+│   │  .dev            │                │              │
 │   └────────┬─────────┘                │              │
 │            │                          │              │
 │   ┌────────▼────────┐      ┌──────────▼───────────┐  │
 │   │  Clerk          │      │  Neon PostgreSQL      │  │
-│   │  (認証)         │      │  (Database)           │  │
+│   │  (認証)         │      │  (staging ブランチ)   │  │
 │   └─────────────────┘      └──────────────────────┘  │
 │                                                      │
 └──────────────────────────────────────────────────────┘
@@ -41,14 +46,12 @@ ChordBook のインフラ構成をまとめたドキュメントです。
 
 ### ドメイン管理
 
-Cloudflare でドメインを取得・管理します。
+| 環境         | フロントエンド                                 | バックエンド API                                      |
+| ------------ | ---------------------------------------------- | ----------------------------------------------------- |
+| ステージング | `https://chordbook-frontend-staging.pages.dev` | `https://chordbook-api-staging.<account>.workers.dev` |
+| 本番（予定） | `chordbook.app`（カスタムドメイン設定後）      | `api.chordbook.app`（カスタムドメイン設定後）         |
 
-| 設定項目         | 値                                        |
-| ---------------- | ----------------------------------------- |
-| フロントエンド   | `chordbook.app`（または取得したドメイン） |
-| バックエンド API | `api.chordbook.app`                       |
-
-DNS レコードは Cloudflare Pages / Workers と連携後に自動設定されます。
+カスタムドメインを追加する場合は、Cloudflare ダッシュボードの Pages / Workers 設定から行います。DNS は同一 Cloudflare アカウントなら自動設定されます。
 
 ### Cloudflare Pages（フロントエンド）
 
@@ -56,40 +59,26 @@ Next.js を `@cloudflare/next-on-pages` アダプター経由でデプロイし�
 
 **ビルド設定**
 
-| 項目               | 値                              |
-| ------------------ | ------------------------------- |
-| フレームワーク     | Next.js                         |
-| ビルドコマンド     | `npx @cloudflare/next-on-pages` |
-| 出力ディレクトリ   | `.vercel/output/static`         |
-| Node.js バージョン | 20                              |
-| ルートディレクトリ | `apps/frontend`                 |
+| 項目               | 値                                   |
+| ------------------ | ------------------------------------ |
+| フレームワーク     | Next.js (App Router)                 |
+| ビルドコマンド     | `pnpm build:cf`（= `next-on-pages`） |
+| 出力ディレクトリ   | `.vercel/output/static`              |
+| Node.js バージョン | 22（CI）/ 20 以上（ローカル）        |
+| ルートディレクトリ | `apps/frontend`                      |
+| Pages プロジェクト | `chordbook-frontend-staging`         |
 
-**必要パッケージ**
+`@cloudflare/next-on-pages` と `wrangler` は `apps/frontend` の devDependencies に含まれています。
 
-```bash
-cd apps/frontend
-pnpm add -D @cloudflare/next-on-pages wrangler
-```
+**環境変数（Cloudflare Pages）**
 
-**`apps/frontend/next.config.ts` の設定**
+| 変数名                              | 値（ステージング例）                                      |
+| ----------------------------------- | --------------------------------------------------------- |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | `pk_test_XXXXXXXX`                                        |
+| `CLERK_SECRET_KEY`                  | `sk_test_XXXXXXXX`                                        |
+| `NEXT_PUBLIC_API_URL`               | `https://chordbook-api-staging.<account>.workers.dev/api` |
 
-```typescript
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  // Cloudflare Pages 向け設定
-};
-
-export default nextConfig;
-```
-
-**環境変数（Cloudflare Pages ダッシュボード）**
-
-| 変数名                              | 値                              |
-| ----------------------------------- | ------------------------------- |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | `pk_live_XXXXXXXX`              |
-| `CLERK_SECRET_KEY`                  | `sk_live_XXXXXXXX`              |
-| `NEXT_PUBLIC_API_URL`               | `https://api.chordbook.app/api` |
+詳細は [環境変数](../deployment/environments.md) を参照。
 
 ---
 
@@ -162,10 +151,10 @@ pnpm wrangler deploy
 
 Neon のブランチ機能を活用してデータを分離します:
 
-| ブランチ  | 用途             |
-| --------- | ---------------- |
-| `main`    | 本番データベース |
-| `develop` | 開発・検証用     |
+| ブランチ  | 用途                       |
+| --------- | -------------------------- |
+| `main`    | 本番データベース（将来用） |
+| `staging` | ステージング（CI が接続）  |
 
 ### マイグレーション
 
@@ -181,6 +170,17 @@ pnpm db:migrate
 # ローカル開発 DB へスキーマを直接反映
 pnpm db:push
 ```
+
+### シードデータ
+
+seed は用途別に 2 種類に分かれる。
+
+| コマンド            | 用途               | 挙動                                                                                               |
+| ------------------- | ------------------ | -------------------------------------------------------------------------------------------------- |
+| `pnpm db:seed`      | 開発・テスト       | 全テーブルを `reset` し、ランダムデータ + デモ曲を投入（**破壊的**）                               |
+| `pnpm db:seed:demo` | ステージング・本番 | デモ用固定ユーザーと `isDemo` 曲のみを冪等投入（**非破壊**。`develop` プッシュ時は CI が自動実行） |
+
+デモ曲の定義は `apps/backend/src/db/demoSongs.ts` に集約し、両 seed で共有する。
 
 ---
 
@@ -202,54 +202,64 @@ pnpm db:push
 
 バックエンドにユーザー情報を同期するために Webhook を設定します。
 
-| 項目               | 値                                             |
-| ------------------ | ---------------------------------------------- |
-| エンドポイント URL | `https://api.chordbook.app/api/webhooks/clerk` |
-| 購読イベント       | `user.created`, `user.updated`, `user.deleted` |
+| 項目               | 値                                                                       |
+| ------------------ | ------------------------------------------------------------------------ |
+| エンドポイント URL | `https://chordbook-api-staging.<account>.workers.dev/api/webhooks/clerk` |
+| 購読イベント       | `user.created`, `user.updated`, `user.deleted`                           |
 
 Webhook シークレットを `CLERK_WEBHOOK_SECRET` に設定してください。
 
 **Allowed Origins**
 
-Clerk ダッシュボードの `Configure → Domains` でフロントエンドのドメインを追加:
+Clerk ダッシュボードの `Configure → Domains` でフロントエンドのオリジンを追加:
 
-- `https://chordbook.app`
+- `https://chordbook-frontend-staging.pages.dev`
+- `http://localhost:3000`（ローカル開発時）
 
 ---
 
 ## 環境別設定
 
+### ステージング環境（Staging）
+
+| サービス         | URL                                                   |
+| ---------------- | ----------------------------------------------------- |
+| フロントエンド   | `https://chordbook-frontend-staging.pages.dev`        |
+| バックエンド API | `https://chordbook-api-staging.<account>.workers.dev` |
+| データベース     | Neon `staging` ブランチ                               |
+
+### ローカル開発環境（Development）
+
+| サービス       | URL                                   |
+| -------------- | ------------------------------------- |
+| フロントエンド | `http://localhost:3000`               |
+| バックエンド   | `http://localhost:8080`               |
+| データベース   | Docker PostgreSQL（`localhost:5432`） |
+
 ### 本番環境（Production）
 
-| サービス         | URL                         |
-| ---------------- | --------------------------- |
-| フロントエンド   | `https://chordbook.app`     |
-| バックエンド API | `https://api.chordbook.app` |
-| データベース     | Neon `main` ブランチ        |
-
-### 開発環境（Development）
-
-| サービス       | URL                                                                 |
-| -------------- | ------------------------------------------------------------------- |
-| フロントエンド | `http://localhost:3000`                                             |
-| バックエンド   | `http://localhost:8080`                                             |
-| データベース   | Docker PostgreSQL（`localhost:5432`）または Neon `develop` ブランチ |
+カスタムドメイン（`chordbook.app` / `api.chordbook.app`）と Neon `main` ブランチは、本番リリース時に設定予定。現時点ではステージング環境で動作確認を行います。
 
 ---
 
 ## デプロイフロー
 
 ```
-GitHub (main ブランチへのマージ)
+develop ブランチへのプッシュ
         │
-        ├──▶ Cloudflare Pages（自動デプロイ）
-        │         └── Next.js ビルド → chordbook.app
+        ├──▶ deploy-backend ジョブ（GitHub Actions）
+        │     ├── pnpm db:migrate   → Neon（スキーマ適用）
+        │     ├── pnpm db:seed:demo → Neon（デモ曲を冪等投入）
+        │     └── wrangler deploy   → Cloudflare Workers
         │
-        └──▶ Cloudflare Workers（自動デプロイ）
-                  └── Hono API ビルド → api.chordbook.app
+        └──▶ deploy-frontend ジョブ（GitHub Actions）
+              ├── pnpm exec next-on-pages
+              └── wrangler pages deploy → Cloudflare Pages
 ```
 
-GitHub リポジトリを Cloudflare Pages / Workers に連携すると、`main` ブランチへのプッシュで自動デプロイが実行されます。
+ワークフロー定義: `.github/workflows/deploy-staging.yml`。初回セットアップ手順は [ステージング環境セットアップ](./staging-setup.md) を参照。
+
+`main` ブランチへの push / PR では `.github/workflows/ci.yml` が lint・build・test（E2E は PR 時）を実行します。
 
 ---
 

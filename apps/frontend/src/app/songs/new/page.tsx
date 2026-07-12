@@ -1,10 +1,20 @@
 'use client'
 
+export const runtime = 'edge'
+
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { songApi } from '@/lib/songApi'
-import { KEYS, TIME_SIGNATURES } from '@/lib/utils'
+import { KEY_SELECT_OPTIONS } from '@/lib/music'
+import { TIME_SIGNATURES } from '@/lib/utils'
+import type { SongVisibility } from '@/types/song'
+
+const VISIBILITY_OPTIONS: { value: SongVisibility; label: string }[] = [
+  { value: 'private', label: '非公開' },
+  { value: 'url-only', label: 'URL共有' },
+  { value: 'public', label: '公開' },
+]
 
 export default function NewSongPage() {
   const router = useRouter()
@@ -13,17 +23,21 @@ export default function NewSongPage() {
   const [key, setKey] = useState('C')
   const [bpm, setBpm] = useState<number | ''>(120)
   const [timeSignature, setTimeSignature] = useState('4/4')
+  const [visibility, setVisibility] = useState<SongVisibility>('private')
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     if (!title.trim()) return
-    const song = await songApi.create({
-      title,
-      artist,
-      key,
-      bpm: bpm === '' ? undefined : Number(bpm),
-      timeSignature,
-    })
+    const song = await songApi.create(
+      {
+        title,
+        artist,
+        key,
+        bpm: bpm === '' ? undefined : Number(bpm),
+        timeSignature,
+      },
+      visibility
+    )
     router.push(`/editor/${song.id}`)
   }
 
@@ -69,7 +83,7 @@ export default function NewSongPage() {
                   onChange={(event) => setKey(event.target.value)}
                   className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400"
                 >
-                  {KEYS.map((item) => (
+                  {KEY_SELECT_OPTIONS.map((item) => (
                     <option key={item} value={item}>
                       {item}
                     </option>
@@ -104,6 +118,31 @@ export default function NewSongPage() {
                 </select>
               </label>
             </div>
+
+            <fieldset className="text-sm text-slate-600">
+              <legend>公開範囲</legend>
+              <div className="mt-2 flex flex-wrap gap-3">
+                {VISIBILITY_OPTIONS.map((option) => (
+                  <label
+                    key={option.value}
+                    className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 transition has-[:checked]:border-slate-400"
+                  >
+                    <input
+                      type="radio"
+                      name="visibility"
+                      value={option.value}
+                      checked={visibility === option.value}
+                      onChange={() => setVisibility(option.value)}
+                      className="accent-[#5c6bc0]"
+                    />
+                    {option.label}
+                  </label>
+                ))}
+              </div>
+              <p className="mt-2 text-xs text-slate-400">
+                公開範囲はエディタの「共有」からいつでも変更できます。
+              </p>
+            </fieldset>
 
             <button
               type="submit"

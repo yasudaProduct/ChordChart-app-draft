@@ -1,5 +1,7 @@
 import { createMiddleware } from 'hono/factory'
 import { createRemoteJWKSet, jwtVerify } from 'jose'
+import { db } from '../db'
+import { users } from '../db/schema'
 
 export type AuthVariables = {
   userId: string | undefined
@@ -35,9 +37,24 @@ const extractToken = (authHeader: string | undefined): string | null => {
 }
 
 /**
+ * Just-in-Timeプロビジョニング。
+ * Clerk Webhook (user.created) がローカル未達・レースコンディション・配信失敗等で
+ * まだ Users に反映されていない場合でも、JWT検証済みユーザーによる書き込み系操作が
+ * 外部キー制約違反 (FK violation) で失敗しないよう、ここで存在を保証する。
+ * 既にレコードがある場合は Webhook 側の情報を優先し、上書きしない。
+ */
+const ensureUserExists = async (userId: string, email: string | undefined) => {
+  await db
+    .insert(users)
+    .values({ id: userId, email: email ?? '' })
+    .onConflictDoNothing({ target: users.id })
+}
+
+/**
  * 認証必須のミドルウェア
  * Authorization: Bearer {token} からJWTを検証し、userId/email をコンテキストに格納する。
  * トークンが無い・不正な場合は 401 Unauthorized を返す。
+ * 検証成功時は Users テーブルへの存在保証（JITプロビジョニング）も行う。
  */
 export const authMiddleware = () => {
   return createMiddleware(async (c, next) => {
@@ -47,13 +64,24 @@ export const authMiddleware = () => {
       return c.json({ error: 'Unauthorized' }, 401)
     }
 
+    let userId: string | undefined
+    let email: string | undefined
     try {
       const payload = await verifyToken(token)
-      c.set('userId', payload.sub)
-      c.set('email', payload.email as string | undefined)
+      userId = payload.sub
+      email = payload.email as string | undefined
     } catch {
       return c.json({ error: 'Unauthorized' }, 401)
     }
+
+    if (!userId) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+
+    await ensureUserExists(userId, email)
+
+    c.set('userId', userId)
+    c.set('email', email)
 
     await next()
   })

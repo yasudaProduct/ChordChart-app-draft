@@ -2,33 +2,17 @@ export type SectionType = 'lyrics-chord' | 'chord-only'
 
 export type SongVisibility = 'private' | 'url-only' | 'specific-users' | 'public'
 
-export interface ChordPosition {
-  id?: string
-  chord: string
-  position: number
-}
+// 行・コードのランタイム型（ChordBlock / SectionLine / SectionContent）は
+// パース・シリアライズ処理と一体のため `@/lib/sectionContent` に定義している。
 
-export interface LyricsChordLine {
-  id?: string
-  lyrics: string
-  chords: ChordPosition[]
-}
-
-export interface BarLine {
-  id?: string
-  bars: string[]
-}
-
-export type SectionLine = LyricsChordLine | BarLine
-
-export interface Section {
+export type Section = {
   id: string
   name: string
   type: SectionType
   content: string
 }
 
-export interface SongMeta {
+export type SongMeta = {
   title: string
   artist?: string
   key?: string
@@ -36,7 +20,7 @@ export interface SongMeta {
   timeSignature: string
 }
 
-export interface Song extends SongMeta {
+export type Song = SongMeta & {
   id: string
   sections: Section[]
   visibility: SongVisibility
@@ -44,7 +28,7 @@ export interface Song extends SongMeta {
   updatedAt: string
 }
 
-export interface SongListItem {
+export type SongListItem = {
   id: string
   title: string
   artist?: string

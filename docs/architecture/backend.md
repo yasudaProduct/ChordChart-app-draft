@@ -40,11 +40,13 @@ Hono (TypeScript) を使用したバックエンドの設計を説明します�
 
 ```
 apps/backend/src/
-├── index.ts              # エントリポイント（サーバー起動）
+├── index.ts              # Node.js 用エントリポイント（ローカル開発）
+├── worker.ts             # Cloudflare Workers 用エントリポイント
 ├── app.ts                # Hono アプリ定義（CORS, logger, エラーハンドラ）
 ├── routes/
 │   ├── health.ts         # GET /api/health
 │   ├── songs.ts          # Song CRUD + 検索（Zodバリデーション）
+│   ├── me.ts             # GET /api/me/*（マイページ）
 │   └── webhooks.ts       # Clerk Webhook（ユーザー同期）
 ├── middleware/
 │   └── auth.ts           # Clerk JWT 認証（jose）
@@ -96,11 +98,22 @@ export const authMiddleware = () => async (c, next) => {
   const { payload } = await jwtVerify(token, getJWKS(), {
     issuer: process.env.CLERK_ISSUER,
   });
-  c.set("userId", payload.sub);
+  const userId = payload.sub;
+  if (!userId) return c.json({ error: "Unauthorized" }, 401);
+
+  // Webhook 未達・レースコンディション等で Users に未反映でも、
+  // 書き込み系操作が外部キー制約違反にならないよう存在を保証する。
+  await db
+    .insert(users)
+    .values({ id: userId, email: (payload.email as string | undefined) ?? "" })
+    .onConflictDoNothing({ target: users.id });
+
+  c.set("userId", userId);
+  c.set("email", payload.email as string | undefined);
   await next();
 };
 
-// 認証オプション（匿名アクセス許可）
+// 認証オプション（匿名アクセス許可、JITプロビジョニングは行わない）
 export const optionalAuthMiddleware = () => async (c, next) => {
   // トークンがあれば検証、なければスルー
 };
@@ -139,14 +152,17 @@ Drizzle ORM によるスキーマ定義とデータベース接続。
 // db/schema.ts
 export const songs = pgTable("Songs", {
   id: uuid("Id").primaryKey().defaultRandom(),
-  userId: text("UserId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: text("UserId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   title: varchar("Title", { length: 200 }).notNull(),
   artist: varchar("Artist", { length: 200 }),
   key: varchar("Key", { length: 10 }),
   bpm: integer("Bpm"),
   timeSignature: varchar("TimeSignature", { length: 10 }).default("4/4"),
-  content: text("Content").default("[]"),
-  visibility: integer("Visibility").default(0),
+  content: text("Content").notNull().default('{"sections":[]}'),
+  visibility: visibilityEnum("Visibility").notNull().default("private"),
+  isDemo: boolean("IsDemo").notNull().default(false),
   createdAt: timestamp("CreatedAt").defaultNow(),
   updatedAt: timestamp("UpdatedAt").defaultNow(),
 });
@@ -202,14 +218,28 @@ Clerk が発行した JWT を JWKS（JSON Web Key Set）で検証します。
 4. バックエンド → jose.jwtVerify() で検証
    - issuer: {CLERK_ISSUER}
 5. 検証成功 → payload.sub を userId として利用
+6. authMiddleware() のみ: Users テーブルへの存在保証（JITプロビジョニング、後述）
 ```
 
 ### 2種類のミドルウェア
 
-| ミドルウェア | 用途 | 使用エンドポイント |
-|---|---|---|
-| `authMiddleware()` | 認証必須（401を返す） | POST, PUT, DELETE |
-| `optionalAuthMiddleware()` | 認証オプション（匿名許可） | GET（一覧・詳細・検索） |
+| ミドルウェア               | 用途                                                      | 使用エンドポイント      |
+| -------------------------- | --------------------------------------------------------- | ----------------------- |
+| `authMiddleware()`         | 認証必須（401を返す）。JITプロビジョニングも行う          | POST, PUT, DELETE       |
+| `optionalAuthMiddleware()` | 認証オプション（匿名許可）。JITプロビジョニングは行わない | GET（一覧・詳細・検索） |
+
+### ユーザー同期（Webhook + JITプロビジョニング）
+
+Clerk 上のユーザーと `Users` テーブルは、2つの経路で同期される。
+
+| 経路                                        | タイミング                                       | 役割                                                                         |
+| ------------------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------- |
+| Clerk Webhook（`POST /api/webhooks/clerk`） | `user.created` / `user.updated` / `user.deleted` | プロフィール情報（email, displayName, avatarUrl）の正としての同期            |
+| JITプロビジョニング（`authMiddleware()`）   | 認証必須エンドポイントへの初回アクセス時         | Webhook未達・レースコンディション等で `Users` に未反映な場合のフォールバック |
+
+Webhook がローカル未達（`localhost` に届かない）、配信失敗、サインアップ直後のレースコンディション等で `Users` へのINSERTが間に合っていない場合でも、`authMiddleware()` が JWT の `sub` / `email` から最小限のレコードを `onConflictDoNothing` で upsert するため、`Songs` 等の外部キー制約違反（旧: `POST /api/songs` が 500 になる不具合）は発生しない。既存レコードがある場合は Webhook 側の情報を優先し、上書きしない。
+
+> `optionalAuthMiddleware()` は書き込み系エンドポイントを保護しないため、JITプロビジョニングは行わない。将来、匿名許可エンドポイントで書き込みを行う場合は同様の対応を検討すること。
 
 ## 主要な設計判断
 

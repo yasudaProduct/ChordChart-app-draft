@@ -7,7 +7,7 @@ import { Visibility } from '../types'
 // DTO 型定義
 // ============================================================
 
-type SongListItemDto = {
+export type SongListItemDto = {
   id: string
   title: string
   artist: string | null
@@ -15,7 +15,7 @@ type SongListItemDto = {
   updatedAt: Date
 }
 
-type SongDto = {
+export type SongDto = {
   id: string
   title: string
   artist: string | null
@@ -40,7 +40,7 @@ const toSongListItemDto = (song: typeof songs.$inferSelect): SongListItemDto => 
   updatedAt: song.updatedAt,
 })
 
-const toSongDto = (song: typeof songs.$inferSelect): SongDto => {
+export const toSongDto = (song: typeof songs.$inferSelect): SongDto => {
   let content: unknown
   try {
     content = JSON.parse(song.content)
@@ -115,16 +115,15 @@ const searchSongs = async (query: string): Promise<SongListItemDto[]> => {
 
 /**
  * IDで曲を取得する。
- * - 認証済み: 自分の曲 OR 公開 OR URL限定公開
+ * - 認証済み: 自分の曲 OR 公開
  * - 匿名: 公開曲のみ
+ *
+ * URL限定公開（url_only）は共有トークン経由（shareService.resolveShareToken）でのみ
+ * 閲覧できる。ID を知っているだけの第三者からは見えない。
  */
 const getSongById = async (id: string, userId?: string): Promise<SongDto | null> => {
   const visibilityCondition = userId
-    ? or(
-        eq(songs.userId, userId),
-        eq(songs.visibility, Visibility.Public),
-        eq(songs.visibility, Visibility.UrlOnly)
-      )
+    ? or(eq(songs.userId, userId), eq(songs.visibility, Visibility.Public))
     : eq(songs.visibility, Visibility.Public)
 
   const results = await db
@@ -141,7 +140,7 @@ const getSongById = async (id: string, userId?: string): Promise<SongDto | null>
 }
 
 /**
- * 新しい曲を作成する。
+ * 新しい曲を作成する。visibility 未指定時は非公開。
  */
 const createSong = async (
   userId: string,
@@ -151,6 +150,7 @@ const createSong = async (
     key?: string | null
     bpm?: number | null
     timeSignature?: string
+    visibility?: Visibility
   }
 ): Promise<SongDto> => {
   const now = new Date()
@@ -165,7 +165,7 @@ const createSong = async (
       bpm: data.bpm ?? null,
       timeSignature: data.timeSignature ?? '4/4',
       content: '{"sections":[]}',
-      visibility: Visibility.Private,
+      visibility: data.visibility ?? Visibility.Private,
       createdAt: now,
       updatedAt: now,
     })
@@ -187,6 +187,7 @@ const updateSong = async (
     bpm?: number | null
     timeSignature?: string
     content?: string
+    visibility?: Visibility
   }
 ): Promise<SongDto | null> => {
   const now = new Date()
@@ -200,8 +201,30 @@ const updateSong = async (
       bpm: data.bpm ?? null,
       timeSignature: data.timeSignature ?? '4/4',
       ...(data.content !== undefined ? { content: data.content } : {}),
+      ...(data.visibility !== undefined ? { visibility: data.visibility } : {}),
       updatedAt: now,
     })
+    .where(and(eq(songs.id, id), eq(songs.userId, userId)))
+    .returning()
+
+  if (results.length === 0) {
+    return null
+  }
+
+  return toSongDto(results[0])
+}
+
+/**
+ * 曲の公開範囲のみを変更する。所有者のみ変更可能。
+ */
+const updateSongVisibility = async (
+  id: string,
+  userId: string,
+  visibility: Visibility
+): Promise<SongDto | null> => {
+  const results = await db
+    .update(songs)
+    .set({ visibility, updatedAt: new Date() })
     .where(and(eq(songs.id, id), eq(songs.userId, userId)))
     .returning()
 
@@ -224,6 +247,71 @@ const deleteSong = async (id: string, userId: string): Promise<boolean> => {
   return results.length > 0
 }
 
+// ============================================================
+// マイページ用
+// ============================================================
+
+type MySongSummaryDto = {
+  total: number
+  private: number
+  urlOnly: number
+  specificUsers: number
+  public: number
+}
+
+/**
+ * 自分の曲一覧を取得する（デモ除外、更新日の降順）。
+ * limit を指定すると最近 N 件のみ返す。
+ */
+const listMySongs = async (userId: string, limit?: number): Promise<SongListItemDto[]> => {
+  const baseQuery = db
+    .select()
+    .from(songs)
+    .where(and(eq(songs.userId, userId), eq(songs.isDemo, false)))
+    .orderBy(desc(songs.updatedAt))
+
+  const results = limit !== undefined ? await baseQuery.limit(limit) : await baseQuery
+
+  return results.map(toSongListItemDto)
+}
+
+/**
+ * 自分の曲数を可視性別に集計する（デモ除外）。
+ */
+const getMySongSummary = async (userId: string): Promise<MySongSummaryDto> => {
+  const results = await db
+    .select()
+    .from(songs)
+    .where(and(eq(songs.userId, userId), eq(songs.isDemo, false)))
+
+  const summary: MySongSummaryDto = {
+    total: results.length,
+    private: 0,
+    urlOnly: 0,
+    specificUsers: 0,
+    public: 0,
+  }
+
+  for (const song of results) {
+    switch (song.visibility) {
+      case Visibility.Public:
+        summary.public += 1
+        break
+      case Visibility.UrlOnly:
+        summary.urlOnly += 1
+        break
+      case Visibility.SpecificUsers:
+        summary.specificUsers += 1
+        break
+      default:
+        summary.private += 1
+        break
+    }
+  }
+
+  return summary
+}
+
 export const songService = {
   listSongs,
   listDemoSongs,
@@ -231,5 +319,8 @@ export const songService = {
   getSongById,
   createSong,
   updateSong,
+  updateSongVisibility,
   deleteSong,
+  listMySongs,
+  getMySongSummary,
 }

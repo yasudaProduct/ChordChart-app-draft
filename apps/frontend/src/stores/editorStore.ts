@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Section, Song } from '@/types/song'
+import type { Section, Song, SongVisibility } from '@/types/song'
 import {
   parseSectionContent,
   serializeSectionContent,
@@ -27,6 +27,8 @@ interface EditorState {
   // アクション
   setSong: (song: Song) => void
   updateSong: (updater: (song: Song) => Song) => void
+  /** 公開範囲のみ反映する（PATCH で保存済みのため isDirty は変更しない） */
+  setSongVisibility: (visibility: SongVisibility) => void
   updateSection: (sectionId: string, updater: (section: Section) => Section) => void
   updateSectionLines: (sectionId: string, updater: (lines: SectionLine[]) => SectionLine[]) => void
   setDirty: (dirty: boolean) => void
@@ -55,6 +57,11 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     set((state) => ({
       song: state.song ? updater(state.song) : null,
       isDirty: true,
+    })),
+
+  setSongVisibility: (visibility) =>
+    set((state) => ({
+      song: state.song ? { ...state.song, visibility } : null,
     })),
 
   updateSection: (sectionId, updater) => {

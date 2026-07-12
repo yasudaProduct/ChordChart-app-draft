@@ -12,7 +12,7 @@ ChordBook - コード譜を作成・管理・共有できるWebアプリケー�
 
 ## 技術スタック
 
-- **フロントエンド:** Next.js 14 (App Router) + React 18 + TypeScript + Tailwind CSS + Zustand
+- **フロントエンド:** Next.js 14 (App Router) + React 18 + TypeScript + Tailwind CSS + Zustand + tonal (音楽理論)
 - **バックエンド:** Hono + Drizzle ORM + Zod + jose (JWT検証)
 - **データベース:** PostgreSQL (Neon)
 - **認証:** Clerk
@@ -43,9 +43,13 @@ pnpm test         # 全アプリのテスト実行
 ```bash
 pnpm dev          # 開発サーバー起動 (localhost:3000)
 pnpm build        # 本番ビルド
+pnpm test         # ユニットテスト実行 (vitest, lib/ の純粋関数)
+pnpm test:watch   # ユニットテストのウォッチ実行
 pnpm lint         # ESLint実行
 pnpm lint:fix     # ESLint自動修正
 pnpm format       # Prettierフォーマット適用
+pnpm build:cf     # Cloudflare Pages 向けビルド (next-on-pages)
+pnpm deploy:staging # ステージングへデプロイ
 ```
 
 ### バックエンド (apps/backend)
@@ -56,12 +60,16 @@ pnpm dev          # 開発サーバー起動 (tsx watch, localhost:8080)
 pnpm build        # 本番ビルド (tsup)
 pnpm start        # 本番起動 (node dist/index.js)
 pnpm test         # テスト実行 (vitest)
+pnpm test:watch   # テストのウォッチ実行
 pnpm lint         # ESLint実行
 pnpm lint:fix     # ESLint自動修正
 pnpm format       # Prettierフォーマット適用
 pnpm db:generate  # Drizzleマイグレーション生成
 pnpm db:migrate   # マイグレーション適用（CI/ステージング）
 pnpm db:push      # DBスキーマをプッシュ（ローカル開発向け）
+pnpm db:seed      # 開発・テスト用データ投入（破壊的・全リセット）
+pnpm db:seed:demo # デモ曲のみ冪等投入（非破壊・CI/ステージング）
+pnpm deploy:staging # Cloudflare Workers へデプロイ
 ```
 
 ## アーキテクチャ
@@ -83,7 +91,10 @@ chord-chart/
 ```
 apps/frontend/src/
 ├── app/          # Next.js App Router (ページ・レイアウト)
+├── components/   # UI・機能コンポーネント
+├── hooks/        # カスタムフック
 ├── lib/          # API通信、ユーティリティ
+│   └── music/    # 音楽理論ロジック (移調・キー検出・コード補完, tonal ベース)
 ├── stores/       # Zustand ストア (authStore, editorStore)
 └── types/        # TypeScript型定義
 ```
@@ -92,11 +103,14 @@ apps/frontend/src/
 
 ```
 apps/backend/src/
-├── index.ts              # エントリポイント
+├── index.ts              # Node.js 用エントリポイント（ローカル開発）
+├── worker.ts             # Cloudflare Workers 用エントリポイント
 ├── app.ts                # Honoアプリ定義（CORS, logger, エラーハンドラ）
 ├── routes/
 │   ├── health.ts         # GET /api/health
-│   ├── songs.ts          # Song CRUD + 検索（Zodバリデーション）
+│   ├── songs.ts          # Song CRUD + 検索 + 公開範囲変更 + 共有リンク管理
+│   ├── shares.ts         # GET /api/shares/:token（共有トークン解決・認証不要）
+│   ├── me.ts             # GET /api/me/*（マイページ）
 │   └── webhooks.ts       # Clerk Webhook（ユーザー同期）
 ├── middleware/
 │   └── auth.ts           # Clerk JWT認証（jose）
@@ -104,7 +118,8 @@ apps/backend/src/
 │   ├── schema.ts         # Drizzle ORMスキーマ（4テーブル）
 │   └── index.ts          # DBクライアント初期化
 ├── services/
-│   └── song.service.ts   # ビジネスロジック
+│   ├── song.service.ts   # 楽曲のビジネスロジック
+│   └── share.service.ts  # 共有リンクのビジネスロジック
 └── types/
     └── index.ts          # Visibility定数・型定義
 ```

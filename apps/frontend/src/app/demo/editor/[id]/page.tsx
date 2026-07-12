@@ -23,6 +23,12 @@ export default function DemoEditorPage() {
   }, [])
 
   return (
-    <EditorContent songId={params.id} fetchSong={fetchSong} saveFn={saveSong} backHref="/demo" />
+    <EditorContent
+      songId={params.id}
+      fetchSong={fetchSong}
+      saveFn={saveSong}
+      backHref="/demo"
+      shareEnabled={false}
+    />
   )
 }

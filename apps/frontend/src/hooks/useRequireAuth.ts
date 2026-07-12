@@ -1,18 +1,18 @@
 'use client'
 
 import { useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/stores/authStore'
+import { useAuthModalStore } from '@/stores/authModalStore'
 
 export const useRequireAuth = () => {
-  const router = useRouter()
   const user = useAuthStore((s) => s.user)
+  const openAuthModal = useAuthModalStore((s) => s.open)
   const isAuthenticated = !!user
 
   const redirectToLogin = useCallback(() => {
     const currentPath = window.location.pathname + window.location.search
-    router.push(`/login?redirect=${encodeURIComponent(currentPath)}`)
-  }, [router])
+    openAuthModal('login', currentPath)
+  }, [openAuthModal])
 
   const requireAuth = useCallback(
     (action: () => void) => {

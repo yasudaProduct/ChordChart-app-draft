@@ -215,12 +215,12 @@ GitHub リポジトリ → **Settings** → **Secrets and variables** → **Acti
 develop ブランチへのプッシュ
         │
         ├──▶ deploy-backend ジョブ
-        │     ├── pnpm db:migrate → Neon（スキーマ適用）
-        │     └── wrangler deploy → Cloudflare Workers
+        │     ├── pnpm db:migrate   → Neon（スキーマ適用）
+        │     ├── pnpm db:seed:demo → Neon（デモ曲を冪等投入・非破壊）
+        │     └── wrangler deploy   → Cloudflare Workers
         │
         └──▶ deploy-frontend ジョブ
-              ├── next build
-              ├── @cloudflare/next-on-pages
+              ├── pnpm exec next-on-pages
               └── wrangler pages deploy → Cloudflare Pages
 ```
 

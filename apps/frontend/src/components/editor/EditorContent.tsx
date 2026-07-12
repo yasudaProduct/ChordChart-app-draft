@@ -1,20 +1,23 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import useSWR from 'swr'
 import { cn } from '@/lib/utils'
+import { collectChordSymbols, semitonesBetweenKeys } from '@/lib/music'
 import { useEditorStore } from '@/stores/editorStore'
 import { useEditorActions } from '@/hooks/useEditorActions'
 import { useChordDrag } from '@/hooks/useChordDrag'
 import { useSectionDrag } from '@/hooks/useSectionDrag'
 import { EditorHeader } from '@/components/editor/EditorHeader'
+import { KeyChangeDialog } from '@/components/editor/KeyChangeDialog'
 import { MetadataPanel } from '@/components/editor/MetadataPanel'
 import { SectionEditor } from '@/components/editor/SectionEditor'
 import { SectionAddButtons } from '@/components/editor/SectionAddButtons'
+import { SharePanel } from '@/components/editor/SharePanel'
 import { Toast } from '@/components/ui/Toast'
-import type { ChordBlock } from '@/lib/sectionContent'
+import { findPreviousChord, type ChordBlock } from '@/lib/sectionContent'
 import type { Song } from '@/types/song'
 
 const PreviewPanel = dynamic(
@@ -32,10 +35,24 @@ type EditorContentProps = {
   fetchSong: (id: string) => Promise<Song>
   saveFn?: (id: string, song: Song) => Promise<Song>
   backHref: string
+  /** 共有機能の有効/無効（デモモードではサーバー保存が無いため無効化する） */
+  shareEnabled?: boolean
 }
 
-export const EditorContent = ({ songId, fetchSong, saveFn, backHref }: EditorContentProps) => {
+export const EditorContent = ({
+  songId,
+  fetchSong,
+  saveFn,
+  backHref,
+  shareEnabled = true,
+}: EditorContentProps) => {
   const router = useRouter()
+  const [isShareOpen, setShareOpen] = useState(false)
+  const [pendingKeyChange, setPendingKeyChange] = useState<{
+    from: string
+    to: string
+    semitones: number
+  } | null>(null)
 
   const song = useEditorStore((s) => s.song)
   const isPreviewVisible = useEditorStore((s) => s.isPreviewVisible)
@@ -49,8 +66,8 @@ export const EditorContent = ({ songId, fetchSong, saveFn, backHref }: EditorCon
 
   const {
     handleMetaChange,
+    applyTranspose,
     handleSave,
-    handleShare,
     addSection,
     duplicateSection,
     moveSection,
@@ -61,6 +78,37 @@ export const EditorContent = ({ songId, fetchSong, saveFn, backHref }: EditorCon
     handleChordConfirm,
     handleChordDelete,
   } = useEditorActions(saveFn)
+
+  // キー変更: 既存コードがあり移調距離が確定できる場合は「コードも移調するか」を確認する
+  const handleKeyChange = useCallback(
+    (nextKey: string) => {
+      const current = useEditorStore.getState().song
+      if (!current) return
+      const currentKey = current.key ?? ''
+      if (nextKey === currentKey) return
+
+      const semitones = currentKey && nextKey ? semitonesBetweenKeys(currentKey, nextKey) : null
+      const hasChords = collectChordSymbols(current).length > 0
+
+      if (semitones !== null && semitones !== 0 && hasChords) {
+        setPendingKeyChange({ from: currentKey, to: nextKey, semitones })
+      } else {
+        handleMetaChange('key', nextKey)
+      }
+    },
+    [handleMetaChange]
+  )
+
+  // 挿入・編集位置の直前のコード（次のコード予測に使う）
+  const previousChord = useMemo(() => {
+    if (!dialog || !song) return null
+    return findPreviousChord(song.sections, {
+      sectionId: dialog.sectionId,
+      lineId: dialog.lineId,
+      offset: dialog.offset,
+      chordId: dialog.chordId,
+    })
+  }, [dialog, song])
 
   const { startChordDrag } = useChordDrag()
 
@@ -117,20 +165,28 @@ export const EditorContent = ({ songId, fetchSong, saveFn, backHref }: EditorCon
         isSaving={isSaving}
         isPreview={isPreviewVisible}
         onSave={handleSave}
-        onShare={handleShare}
-        onPrint={() => window.print()}
+        onShare={shareEnabled ? () => setShareOpen(true) : undefined}
+        onPrint={() => {
+          // 印刷対象はプレビュー。非表示なら表示してから印刷する
+          if (!useEditorStore.getState().isPreviewVisible) {
+            togglePreview()
+            setTimeout(() => window.print(), 100)
+            return
+          }
+          window.print()
+        }}
         onTogglePreview={togglePreview}
         onBack={() => router.push(backHref)}
       />
 
-      <div className={cn('flex min-h-screen pt-16', isPreviewVisible && 'bg-white')}>
+      <div className={cn('flex min-h-screen pt-16 print:pt-0', isPreviewVisible && 'bg-white')}>
         <div
           className={cn(
-            'flex-1 px-6 py-8 transition',
+            'flex-1 px-6 py-8 transition print:hidden',
             isPreviewVisible ? 'w-1/2 max-w-none pr-4' : 'mx-auto max-w-[820px]'
           )}
         >
-          <MetadataPanel song={song} onChange={handleMetaChange} />
+          <MetadataPanel song={song} onChange={handleMetaChange} onKeyChange={handleKeyChange} />
 
           <div className="mt-6 space-y-4">
             {song.sections.map((section, index) => (
@@ -173,12 +229,32 @@ export const EditorContent = ({ songId, fetchSong, saveFn, backHref }: EditorCon
       {dialog && (
         <ChordDialog
           state={dialog}
+          songKey={song.key}
+          previousChord={previousChord}
           onValueChange={(value) => setDialog({ ...dialog, value })}
           onConfirm={handleChordConfirm}
           onDelete={handleChordDelete}
           onClose={() => setDialog(null)}
         />
       )}
+
+      {pendingKeyChange && (
+        <KeyChangeDialog
+          fromKey={pendingKeyChange.from}
+          toKey={pendingKeyChange.to}
+          onTranspose={() => {
+            applyTranspose(pendingKeyChange.semitones, pendingKeyChange.to)
+            setPendingKeyChange(null)
+          }}
+          onKeyOnly={() => {
+            handleMetaChange('key', pendingKeyChange.to)
+            setPendingKeyChange(null)
+          }}
+          onCancel={() => setPendingKeyChange(null)}
+        />
+      )}
+
+      {isShareOpen && <SharePanel song={song} onClose={() => setShareOpen(false)} />}
 
       <Toast message={shareMessage} visible={!!shareMessage} />
     </main>

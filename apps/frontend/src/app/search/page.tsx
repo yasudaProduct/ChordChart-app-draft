@@ -1,5 +1,7 @@
 'use client'
 
+export const runtime = 'edge'
+
 import { useRef, useState } from 'react'
 import Link from 'next/link'
 import { SiteHeader } from '@/components/layout/SiteHeader'
