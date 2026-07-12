@@ -212,6 +212,8 @@ concept.md の構想 Phase と対応させつつ、**実装ギャップ起点で
 > 音楽理論ロジックは `tonal` を導入し `apps/frontend/src/lib/music/` に実装。
 >
 > **進捗メモ（2026-07-12）**: `/songs` の一覧仕様を再度変更。2026-07-05 時点では「自分の全曲」を表示するマイライブラリ（`/api/me/songs`・ログイン必須）にしていたが、visibility=public な全ユーザーの公開曲一覧（`GET /api/songs`・ログイン不要）に戻した。これに伴い一覧カードの編集・削除ボタンは廃止（詳細リンクのみ）。編集・削除は詳細ページ（`/songs/[id]`）に移動し、`SongDto.isOwner`（`toSongDto` が viewerId と `song.userId` を比較して算出）で所有者本人にのみ表示するよう制御。将来的な「誰でも編集可能」への拡張は E20 を参照。
+>
+> **進捗メモ（2026-07-12・レビュー対応）**: 上記変更のレビューで3点を修正。①`middleware.ts` の `isProtectedRoute` に `/songs` が残っており未ログインユーザーに公開一覧が実際には届かない不具合を修正（matcher から `/songs` を除外）。②`/songs` が公開一覧化したことで、非公開・URL限定曲を含む自分の全曲（6件目以降）を開く導線が消えていたため、`/profile/songs`（`useMySongs` フック・`GET /api/me/songs` を limit 未指定で呼ぶ）を新設し、プロフィール画面の「すべての楽曲を見る」リンク先をここに変更。③`/editor/:id` はログイン済み非所有者でも公開曲IDを指定すれば編集画面自体は開けてしまっていたため、`EditorContent` に `requireOwnership` prop を追加し `song.isOwner === false` の場合は編集画面へのアクセスを拒否するよう修正（保存はバックエンドの所有者チェックでも元々拒否されるが、フロントでも早期に拒否してUXの混乱を防ぐ）。
 
 ### M0: 本番前必須
 

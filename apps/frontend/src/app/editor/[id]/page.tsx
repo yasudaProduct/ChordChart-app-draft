@@ -9,5 +9,7 @@ import { EditorContent } from '@/components/editor/EditorContent'
 export default function EditorPage() {
   const params = useParams<{ id: string }>()
 
-  return <EditorContent songId={params.id} fetchSong={songApi.get} backHref="/songs" />
+  return (
+    <EditorContent songId={params.id} fetchSong={songApi.get} backHref="/songs" requireOwnership />
+  )
 }

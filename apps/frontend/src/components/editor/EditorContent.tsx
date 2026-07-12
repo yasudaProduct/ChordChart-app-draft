@@ -37,6 +37,8 @@ type EditorContentProps = {
   backHref: string
   /** 共有機能の有効/無効（デモモードではサーバー保存が無いため無効化する） */
   shareEnabled?: boolean
+  /** 所有者以外のアクセスを拒否するか。*/
+  requireOwnership?: boolean
 }
 
 export const EditorContent = ({
@@ -45,6 +47,7 @@ export const EditorContent = ({
   saveFn,
   backHref,
   shareEnabled = true,
+  requireOwnership = false,
 }: EditorContentProps) => {
   const router = useRouter()
   const [isShareOpen, setShareOpen] = useState(false)
@@ -120,6 +123,7 @@ export const EditorContent = ({
   })
 
   const isLoading = song === null && isFetching
+  const isForbidden = requireOwnership && song !== null && song?.isOwner === false
 
   useEffect(() => {
     return () => {
@@ -148,11 +152,26 @@ export const EditorContent = ({
     })
   }
 
-  if (!song) {
+  if (!song || isForbidden) {
     return (
       <main className="min-h-screen">
-        <div className="mx-auto max-w-4xl px-6 py-16 text-sm text-slate-500">
-          {isLoading ? '読み込み中...' : '楽曲が見つかりませんでした。'}
+        <div className="mx-auto max-w-4xl px-6 py-16 text-center text-sm text-slate-500">
+          {isLoading ? (
+            '読み込み中...'
+          ) : isForbidden ? (
+            <>
+              <p>この楽曲を編集する権限がありません。</p>
+              <button
+                type="button"
+                onClick={() => router.push(backHref)}
+                className="mt-4 rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-400"
+              >
+                一覧へ戻る
+              </button>
+            </>
+          ) : (
+            '楽曲が見つかりませんでした。'
+          )}
         </div>
       </main>
     )
