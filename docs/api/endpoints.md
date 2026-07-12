@@ -4,13 +4,13 @@ ChordBook バックエンド API のエンドポイント一覧です。
 
 ## 基本情報
 
-| 項目                      | 値                                                        |
-| ------------------------- | --------------------------------------------------------- |
-| ベースURL（開発）         | http://localhost:8080/api                                 |
-| ベースURL（ステージング） | https://chordbook-api-staging.\<account\>.workers.dev/api |
-| 形式                      | REST API                                                  |
-| データ形式                | JSON                                                      |
-| 認証                      | Clerk JWT                                                 |
+| 項目                      | 値                                                      |
+| ------------------------- | ------------------------------------------------------- |
+| ベースURL（開発）         | http://localhost:8080/api                               |
+| ベースURL（ステージング） | https://chordbook-api-staging.<account>.workers.dev/api |
+| 形式                      | REST API                                                |
+| データ形式                | JSON                                                    |
+| 認証                      | Clerk JWT                                               |
 
 ## エンドポイント一覧
 
