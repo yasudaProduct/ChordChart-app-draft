@@ -1,5 +1,4 @@
 import useSWR from 'swr'
-import { meApi } from '@/lib/meApi'
 import { shareApi } from '@/lib/shareApi'
 import { songApi } from '@/lib/songApi'
 import { useAuthStore } from '@/stores/authStore'
@@ -10,24 +9,14 @@ export const useDemoSongList = () => {
   return { songs: data ?? [], error, isLoading, mutate }
 }
 
-// mode に応じてマイライブラリ／デモ一覧のどちらか一方だけを取得する。
-// マイライブラリは公開範囲に関わらず自分の全曲を表示する（/api/me/songs）。
-// （Rules of Hooks を満たすため両方のフックを常に呼び、片方を null キーで無効化する）
+// mode に応じて公開曲一覧／デモ一覧のどちらか一方だけを取得する。
+// 公開曲一覧は投稿者に関わらず visibility=public な全曲を表示する（自分の曲に限定しない）。
 export const useSongListForMode = (mode: 'default' | 'demo') => {
-  const isAuthReady = !useAuthStore((s) => s.isLoading)
-  const user = useAuthStore((s) => s.user)
   const isDemo = mode === 'demo'
-
-  const mine = useSWR(!isDemo && isAuthReady && user ? 'me/songs' : null, () => meApi.listMySongs())
-  const demo = useSWR(isDemo ? 'demo/songs' : null, () => songApi.listDemo())
-
-  const active = isDemo ? demo : mine
-  return {
-    songs: active.data ?? [],
-    error: active.error,
-    isLoading: isDemo ? active.isLoading : !isAuthReady || active.isLoading,
-    mutate: active.mutate,
-  }
+  const { data, error, isLoading, mutate } = useSWR(isDemo ? 'demo/songs' : 'songs', () =>
+    isDemo ? songApi.listDemo() : songApi.list()
+  )
+  return { songs: data ?? [], error, isLoading, mutate }
 }
 
 export const useSong = (id: string | undefined) => {

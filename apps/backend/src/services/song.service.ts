@@ -24,6 +24,7 @@ export type SongDto = {
   timeSignature: string
   content: unknown
   visibility: string
+  isOwner: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -40,7 +41,7 @@ const toSongListItemDto = (song: typeof songs.$inferSelect): SongListItemDto => 
   updatedAt: song.updatedAt,
 })
 
-export const toSongDto = (song: typeof songs.$inferSelect): SongDto => {
+export const toSongDto = (song: typeof songs.$inferSelect, viewerId?: string): SongDto => {
   let content: unknown
   try {
     content = JSON.parse(song.content)
@@ -57,6 +58,7 @@ export const toSongDto = (song: typeof songs.$inferSelect): SongDto => {
     timeSignature: song.timeSignature,
     content,
     visibility: song.visibility,
+    isOwner: viewerId !== undefined && song.userId === viewerId,
     createdAt: song.createdAt,
     updatedAt: song.updatedAt,
   }
@@ -136,7 +138,7 @@ const getSongById = async (id: string, userId?: string): Promise<SongDto | null>
     return null
   }
 
-  return toSongDto(results[0])
+  return toSongDto(results[0], userId)
 }
 
 /**
@@ -171,7 +173,7 @@ const createSong = async (
     })
     .returning()
 
-  return toSongDto(results[0])
+  return toSongDto(results[0], userId)
 }
 
 /**
@@ -211,7 +213,7 @@ const updateSong = async (
     return null
   }
 
-  return toSongDto(results[0])
+  return toSongDto(results[0], userId)
 }
 
 /**
@@ -232,7 +234,7 @@ const updateSongVisibility = async (
     return null
   }
 
-  return toSongDto(results[0])
+  return toSongDto(results[0], userId)
 }
 
 /**

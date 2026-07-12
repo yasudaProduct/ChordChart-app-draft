@@ -140,6 +140,8 @@ ChordBook バックエンド API のエンドポイント一覧です。
 > URL限定公開（`url_only`）の曲は ID 直指定では取得できません（所有者を除く）。
 > 共有トークン経由の `GET /api/shares/:token` を使用してください。
 
+`isOwner` はリクエスト時の認証ユーザーが曲の作成者かどうかを表す（認証なしの場合は常に `false`）。フロントエンドはこの値で編集・削除ボタンの表示を制御する。
+
 **パスパラメータ**
 
 | 名前 | 型   | 説明   |
@@ -167,6 +169,7 @@ ChordBook バックエンド API のエンドポイント一覧です。
     ]
   },
   "visibility": "private",
+  "isOwner": true,
   "createdAt": "2024-01-10T08:00:00Z",
   "updatedAt": "2024-01-15T10:30:00Z"
 }
@@ -220,6 +223,7 @@ ChordBook バックエンド API のエンドポイント一覧です。
   "timeSignature": "4/4",
   "content": "{\"sections\":[]}",
   "visibility": "private",
+  "isOwner": true,
   "createdAt": "2024-01-15T10:30:00Z",
   "updatedAt": "2024-01-15T10:30:00Z"
 }
@@ -415,7 +419,7 @@ URL限定公開の曲を、推測不能なトークン付き URL で共有する
 | ----- | ------ | ------------ |
 | token | string | 共有トークン |
 
-**レスポンス**: 200 OK（`GET /api/songs/:id` と同じ曲オブジェクト）
+**レスポンス**: 200 OK（`GET /api/songs/:id` と同じ曲オブジェクト。`isOwner` は認証情報を扱わないため常に `false`）
 
 **エラーレスポンス**
 
