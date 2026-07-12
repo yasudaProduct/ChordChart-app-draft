@@ -24,6 +24,7 @@ export type Song = SongMeta & {
   id: string
   sections: Section[]
   visibility: SongVisibility
+  isOwner?: boolean
   createdAt: string
   updatedAt: string
 }

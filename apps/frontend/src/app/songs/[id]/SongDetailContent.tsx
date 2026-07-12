@@ -6,6 +6,7 @@ import { PerformanceMode } from '@/components/song/PerformanceMode'
 import { SongPreview } from '@/components/song/SongPreview'
 import { TransposeControl } from '@/components/song/TransposeControl'
 import { transposeSong } from '@/lib/music'
+import { songApi } from '@/lib/songApi'
 import { useSong } from '@/hooks/useSong'
 import { useRequireAuth } from '@/hooks/useRequireAuth'
 import type { Song } from '@/types/song'
@@ -57,12 +58,21 @@ export const SongDetailContent = ({
     return <div className="mx-auto max-w-4xl px-6 py-16 text-sm text-slate-500">読み込み中...</div>
   }
 
+  const canEdit = isDemo || !!song.isOwner
+  const canDelete = !isDemo && !!song.isOwner
+
   const handleEdit = () => {
     if (isDemo) {
       router.push(editHref)
     } else {
       requireAuth(() => router.push(editHref))
     }
+  }
+
+  const handleDelete = async () => {
+    if (!confirm('この楽曲を削除しますか？')) return
+    await songApi.remove(id)
+    router.push(backHref)
   }
 
   return (
@@ -83,13 +93,15 @@ export const SongDetailContent = ({
           >
             ▶ 演奏モード
           </button>
-          <button
-            type="button"
-            onClick={handleEdit}
-            className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
-          >
-            編集
-          </button>
+          {canEdit && (
+            <button
+              type="button"
+              onClick={handleEdit}
+              className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
+            >
+              編集
+            </button>
+          )}
           <button
             type="button"
             onClick={() => window.print()}
@@ -97,6 +109,15 @@ export const SongDetailContent = ({
           >
             印刷 / PDF
           </button>
+          {canDelete && (
+            <button
+              type="button"
+              onClick={handleDelete}
+              className="rounded-full border border-red-200 px-4 py-2 text-xs font-semibold text-red-600 transition hover:border-red-400 hover:bg-red-50"
+            >
+              削除
+            </button>
+          )}
           <button
             type="button"
             onClick={() => router.push(backHref)}

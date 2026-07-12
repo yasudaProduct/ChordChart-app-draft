@@ -3,14 +3,10 @@
 import { useMemo, useState } from 'react'
 import { SongCard } from '@/components/song/SongCard'
 import { SongSearchInput } from '@/components/song/SongSearchInput'
-import { useSongListForMode } from '@/hooks/useSong'
+import { useMySongs } from '@/hooks/useMe'
 
-type SongListContentProps = {
-  mode?: 'default' | 'demo'
-}
-
-export const SongListContent = ({ mode = 'default' }: SongListContentProps) => {
-  const { songs, error, isLoading } = useSongListForMode(mode)
+export const MySongsContent = () => {
+  const { songs, error, isLoading } = useMySongs()
   const [query, setQuery] = useState('')
 
   const filtered = useMemo(() => {
@@ -42,9 +38,7 @@ export const SongListContent = ({ mode = 'default' }: SongListContentProps) => {
             まだ楽曲がありません。
           </div>
         ) : (
-          filtered.map((song) => (
-            <SongCard key={song.id} song={song} mode={mode} showActions={mode === 'demo'} />
-          ))
+          filtered.map((song) => <SongCard key={song.id} song={song} />)
         )}
       </div>
     </>

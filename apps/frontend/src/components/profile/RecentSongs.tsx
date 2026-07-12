@@ -12,7 +12,7 @@ export const RecentSongs = () => {
       <div className="flex items-center justify-between">
         <h2 className="font-display text-lg font-semibold text-slate-900">最近編集した曲</h2>
         <Link
-          href="/songs"
+          href="/profile/songs"
           className="text-sm font-semibold text-primary transition hover:text-primary-hover"
         >
           すべての楽曲を見る

@@ -12,6 +12,7 @@ export type ApiSongDto = {
   timeSignature: string
   content: string | { sections?: Section[] }
   visibility: string | null
+  isOwner: boolean
   createdAt: string
   updatedAt: string
 }
@@ -64,6 +65,7 @@ export const toSong = (dto: ApiSongDto): Song => {
     timeSignature: dto.timeSignature ?? '4/4',
     sections,
     visibility: mapVisibility(dto.visibility),
+    isOwner: dto.isOwner,
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
   }
@@ -80,6 +82,12 @@ const toSongListItem = (dto: ApiSongListItemDto): SongListItem => ({
 const toContent = (sections: Section[]) => JSON.stringify({ sections })
 
 export const songApi = {
+  /** 公開範囲が public な全ユーザーの曲一覧を取得する（自分の曲に限定しない）。 */
+  async list(): Promise<SongListItem[]> {
+    const response = await api.get<ApiSongListItemDto[]>('/songs')
+    return response.map(toSongListItem)
+  },
+
   async listDemo(): Promise<SongListItem[]> {
     const response = await api.get<ApiSongListItemDto[]>('/songs/demo')
     return response.map(toSongListItem)
