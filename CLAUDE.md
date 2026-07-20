@@ -108,7 +108,7 @@ apps/backend/src/
 ├── app.ts                # Honoアプリ定義（CORS, logger, エラーハンドラ）
 ├── routes/
 │   ├── health.ts         # GET /api/health
-│   ├── songs.ts          # Song CRUD + 検索 + 公開範囲変更 + 共有リンク管理
+│   ├── songs.ts          # Song CRUD + 検索 + アーティスト名一覧 + 公開範囲変更 + 共有リンク管理
 │   ├── shares.ts         # GET /api/shares/:token（共有トークン解決・認証不要）
 │   ├── me.ts             # GET /api/me/*（マイページ）
 │   └── webhooks.ts       # Clerk Webhook（ユーザー同期）
@@ -120,6 +120,8 @@ apps/backend/src/
 ├── services/
 │   ├── song.service.ts   # 楽曲のビジネスロジック
 │   └── share.service.ts  # 共有リンクのビジネスロジック
+├── lib/
+│   └── artistName.ts     # アーティスト名の正規化・集計（純粋関数）
 └── types/
     └── index.ts          # Visibility定数・型定義
 ```

@@ -5,6 +5,7 @@ export const runtime = 'edge'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { SiteHeader } from '@/components/layout/SiteHeader'
+import { ArtistInput } from '@/components/song/ArtistInput'
 import { songApi } from '@/lib/songApi'
 import { KEY_SELECT_OPTIONS } from '@/lib/music'
 import { TIME_SIGNATURES } from '@/lib/utils'
@@ -64,16 +65,13 @@ export default function NewSongPage() {
               />
             </label>
 
-            <label className="text-sm text-slate-600">
-              アーティスト
-              <input
-                type="text"
-                value={artist}
-                onChange={(event) => setArtist(event.target.value)}
-                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400"
-                placeholder="任意"
-              />
-            </label>
+            <ArtistInput
+              value={artist}
+              onChange={setArtist}
+              placeholder="任意"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+              labelClassName="text-sm font-normal text-slate-600"
+            />
 
             <div className="grid gap-4 md:grid-cols-3">
               <label className="text-sm text-slate-600">

@@ -5,6 +5,7 @@ vi.mock('../../src/services/song.service', () => ({
   songService: {
     listSongs: vi.fn(),
     searchSongs: vi.fn(),
+    listPublicArtists: vi.fn(),
     getSongById: vi.fn(),
     createSong: vi.fn(),
     updateSong: vi.fn(),
@@ -133,6 +134,31 @@ describe('GET /api/songs/search', () => {
     expect(mockedSongService.searchSongs).toHaveBeenCalledWith('test')
     const body = await res.json()
     expect(body).toHaveLength(1)
+  })
+})
+
+// ============================================================
+// GET /api/songs/artists
+// ============================================================
+
+describe('GET /api/songs/artists', () => {
+  it('200 を返し、songService.listPublicArtists が呼ばれる', async () => {
+    mockedSongService.listPublicArtists.mockResolvedValueOnce(['YOASOBI', 'King Gnu'])
+
+    const res = await app.request('/api/songs/artists')
+
+    expect(res.status).toBe(200)
+    expect(mockedSongService.listPublicArtists).toHaveBeenCalledWith()
+    expect(await res.json()).toEqual(['YOASOBI', 'King Gnu'])
+  })
+
+  it('認証なしでも取得できる（公開曲のみが対象のため）', async () => {
+    mockedSongService.listPublicArtists.mockResolvedValueOnce([])
+
+    const res = await app.request('/api/songs/artists')
+
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual([])
   })
 })
 

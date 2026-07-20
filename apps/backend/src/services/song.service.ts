@@ -1,7 +1,11 @@
-import { eq, and, or, ilike, desc } from 'drizzle-orm'
+import { eq, and, or, ilike, desc, isNotNull } from 'drizzle-orm'
 import { db } from '../db'
 import { songs } from '../db/schema'
+import { aggregateArtistNames } from '../lib/artistName'
 import { Visibility } from '../types'
+
+/** アーティスト名サジェストで返す最大件数（一括取得してクライアント側で絞り込む前提）。 */
+const ARTIST_SUGGESTION_LIMIT = 500
 
 // ============================================================
 // DTO 型定義
@@ -113,6 +117,25 @@ const searchSongs = async (query: string): Promise<SongListItemDto[]> => {
     .orderBy(desc(songs.updatedAt))
 
   return results.map(toSongListItemDto)
+}
+
+/**
+ * 公開曲のアーティスト名一覧を取得する（入力サジェスト用）。
+ * 表記ゆれを正規化して重複排除し、登録数の多い順に最大 ARTIST_SUGGESTION_LIMIT 件返す。
+ */
+const listPublicArtists = async (): Promise<string[]> => {
+  const results = await db
+    .select({ artist: songs.artist })
+    .from(songs)
+    .where(
+      and(eq(songs.visibility, Visibility.Public), eq(songs.isDemo, false), isNotNull(songs.artist))
+    )
+    .orderBy(desc(songs.updatedAt))
+
+  return aggregateArtistNames(
+    results.map((row) => row.artist),
+    ARTIST_SUGGESTION_LIMIT
+  )
 }
 
 /**
@@ -318,6 +341,7 @@ export const songService = {
   listSongs,
   listDemoSongs,
   searchSongs,
+  listPublicArtists,
   getSongById,
   createSong,
   updateSong,

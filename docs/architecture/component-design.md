@@ -65,6 +65,7 @@ src/
 │   ├── ui/                       # 汎用UIプリミティブ（純粋・controlled）
 │   │   ├── Button.tsx
 │   │   ├── Input.tsx
+│   │   ├── Combobox.tsx
 │   │   ├── Select.tsx
 │   │   ├── Toggle.tsx
 │   │   ├── Dialog.tsx
@@ -76,7 +77,8 @@ src/
 │   ├── song/                     # 楽曲関連コンポーネント
 │   │   ├── SongPreview.tsx
 │   │   ├── SongCard.tsx
-│   │   └── SongSearchInput.tsx
+│   │   ├── SongSearchInput.tsx
+│   │   └── ArtistInput.tsx
 │   │
 │   ├── editor/                   # エディタ機能コンポーネント
 │   │   ├── EditorContent.tsx     # エディタ統括（DI で本番/デモ再利用）
@@ -140,6 +142,7 @@ src/
 | -------------- | ---------------------- | ---------------------------------------------------- |
 | `Button`       | ボタン描画             | `variant`, `size`, `disabled`, `onClick`, `children` |
 | `Input`        | テキスト入力           | `label`, `value`, `onChange`, `placeholder`, `type`  |
+| `Combobox`     | サジェスト付き入力     | `label`, `value`, `onChange`, `suggestions`          |
 | `Select`       | セレクトボックス       | `label`, `value`, `onChange`, `options`              |
 | `Toggle`       | ON/OFF 切替            | `checked`, `onChange`, `label`                       |
 | `Dialog`       | モーダルダイアログ     | `open`, `onClose`, `position`, `children`            |
@@ -162,6 +165,7 @@ src/
 | `SongPreview`     | 楽曲の読み取り専用プレビュー        | 楽曲詳細、共有ページ |
 | `SongCard`        | 一覧での楽曲カード表示              | 楽曲一覧、検索結果   |
 | `SongSearchInput` | 検索入力フィールド + ヒット件数表示 | 楽曲一覧、検索ページ |
+| `ArtistInput`     | アーティスト名入力 + サジェスト     | 新規作成、エディタ   |
 
 ### 3.4 エディタコンポーネント (`components/editor/`)
 

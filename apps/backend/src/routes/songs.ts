@@ -75,6 +75,12 @@ songRoutes.get('/demo', async (c) => {
   return c.json(results)
 })
 
+// GET /artists — 公開曲のアーティスト名一覧（入力サジェスト用・/:id より前に定義）
+songRoutes.get('/artists', async (c) => {
+  const artists = await songService.listPublicArtists()
+  return c.json(artists)
+})
+
 // GET / — 曲一覧
 songRoutes.get('/', async (c) => {
   const results = await songService.listSongs()
