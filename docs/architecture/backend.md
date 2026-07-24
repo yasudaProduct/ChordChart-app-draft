@@ -45,13 +45,15 @@ apps/backend/src/
 ├── app.ts                # Hono アプリ定義（CORS, logger, エラーハンドラ）
 ├── routes/
 │   ├── health.ts         # GET /api/health
-│   ├── songs.ts          # Song CRUD + 検索（Zodバリデーション）
+│   ├── songs.ts          # Song CRUD + 検索 + アーティスト名一覧（Zodバリデーション）
 │   ├── me.ts             # GET /api/me/*（マイページ）
 │   └── webhooks.ts       # Clerk Webhook（ユーザー同期）
 ├── middleware/
 │   └── auth.ts           # Clerk JWT 認証（jose）
 ├── services/
 │   └── song.service.ts   # ビジネスロジック
+├── lib/
+│   └── artistName.ts     # アーティスト名の正規化・集計（純粋関数）
 ├── db/
 │   ├── schema.ts         # Drizzle ORM スキーマ（4テーブル）
 │   └── index.ts          # DB クライアント初期化

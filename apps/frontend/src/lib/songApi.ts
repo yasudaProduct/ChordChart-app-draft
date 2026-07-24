@@ -88,6 +88,11 @@ export const songApi = {
     return response.map(toSongListItem)
   },
 
+  /** 公開曲のアーティスト名一覧を登録数の多い順に取得する（入力サジェスト用）。 */
+  async listArtists(): Promise<string[]> {
+    return api.get<string[]>('/songs/artists')
+  },
+
   async listDemo(): Promise<SongListItem[]> {
     const response = await api.get<ApiSongListItemDto[]>('/songs/demo')
     return response.map(toSongListItem)

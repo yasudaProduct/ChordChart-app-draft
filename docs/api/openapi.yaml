@@ -119,6 +119,26 @@ paths:
                 items:
                   $ref: "#/components/schemas/SongListItem"
 
+  /api/songs/artists:
+    get:
+      tags: [Songs]
+      summary: 公開曲のアーティスト名一覧取得
+      description: |
+        アーティスト名入力のサジェスト（オートコンプリート）用のエンドポイントです。
+        公開曲（`visibility = "public"`、`isDemo = false`）のアーティスト名を、
+        表記ゆれ（大文字小文字・全角半角・空白）を正規化して重複排除し、
+        登録数の多い順に最大 500 件返します。認証は不要です。
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                example: ["YOASOBI", "King Gnu", "あいみょん"]
+
   /api/songs/{id}:
     get:
       tags: [Songs]

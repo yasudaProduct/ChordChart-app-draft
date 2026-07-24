@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import { ArtistInput } from '@/components/song/ArtistInput'
 import { Input } from '@/components/ui/Input'
 import { KEY_SELECT_OPTIONS, collectChordSymbols, detectKey } from '@/lib/music'
 import type { Song, SongMeta } from '@/types/song'
@@ -40,12 +41,7 @@ export const MetadataPanel = ({ song, onChange, onKeyChange }: MetadataPanelProp
         placeholder="曲名を入力..."
       />
       <div className="mt-5 grid gap-4 md:grid-cols-4">
-        <Input
-          label="アーティスト"
-          type="text"
-          value={song.artist ?? ''}
-          onChange={(event) => onChange('artist', (event.target as HTMLInputElement).value)}
-        />
+        <ArtistInput value={song.artist ?? ''} onChange={(value) => onChange('artist', value)} />
         <div>
           <label className="text-xs font-medium text-slate-500">
             キー
