@@ -18,7 +18,7 @@ const createSongSchema = z.object({
   artist: z.string().nullable().optional(),
   key: z.string().nullable().optional(),
   bpm: z.number().int().nullable().optional(),
-  timeSignature: z.string().optional().default('4/4'),
+  timeSignature: z.string().nullable().optional(),
   visibility: visibilitySchema.optional(),
 })
 
@@ -27,7 +27,7 @@ const updateSongSchema = z.object({
   artist: z.string().nullable().optional(),
   key: z.string().nullable().optional(),
   bpm: z.number().int().nullable().optional(),
-  timeSignature: z.string().optional().default('4/4'),
+  timeSignature: z.string().nullable().optional(),
   content: z.string().optional(),
   visibility: visibilitySchema.optional(),
 })

@@ -25,7 +25,7 @@ export type SongDto = {
   artist: string | null
   key: string | null
   bpm: number | null
-  timeSignature: string
+  timeSignature: string | null
   content: unknown
   visibility: string
   isOwner: boolean
@@ -174,7 +174,7 @@ const createSong = async (
     artist?: string | null
     key?: string | null
     bpm?: number | null
-    timeSignature?: string
+    timeSignature?: string | null
     visibility?: Visibility
   }
 ): Promise<SongDto> => {
@@ -185,10 +185,11 @@ const createSong = async (
     .values({
       userId,
       title: data.title,
-      artist: data.artist ?? null,
-      key: data.key ?? null,
+      // 任意項目は空文字も未設定とみなして NULL に正規化する
+      artist: data.artist || null,
+      key: data.key || null,
       bpm: data.bpm ?? null,
-      timeSignature: data.timeSignature ?? '4/4',
+      timeSignature: data.timeSignature || null,
       content: '{"sections":[]}',
       visibility: data.visibility ?? Visibility.Private,
       createdAt: now,
@@ -210,7 +211,7 @@ const updateSong = async (
     artist?: string | null
     key?: string | null
     bpm?: number | null
-    timeSignature?: string
+    timeSignature?: string | null
     content?: string
     visibility?: Visibility
   }
@@ -221,10 +222,11 @@ const updateSong = async (
     .update(songs)
     .set({
       title: data.title,
-      artist: data.artist ?? null,
-      key: data.key ?? null,
+      // 任意項目は空文字も未設定とみなして NULL に正規化する
+      artist: data.artist || null,
+      key: data.key || null,
       bpm: data.bpm ?? null,
-      timeSignature: data.timeSignature ?? '4/4',
+      timeSignature: data.timeSignature || null,
       ...(data.content !== undefined ? { content: data.content } : {}),
       ...(data.visibility !== undefined ? { visibility: data.visibility } : {}),
       updatedAt: now,

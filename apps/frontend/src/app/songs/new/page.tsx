@@ -21,9 +21,10 @@ export default function NewSongPage() {
   const router = useRouter()
   const [title, setTitle] = useState('')
   const [artist, setArtist] = useState('')
-  const [key, setKey] = useState('C')
-  const [bpm, setBpm] = useState<number | ''>(120)
-  const [timeSignature, setTimeSignature] = useState('4/4')
+  // キー・BPM・拍子は任意項目。初期状態は未設定
+  const [key, setKey] = useState('')
+  const [bpm, setBpm] = useState<number | ''>('')
+  const [timeSignature, setTimeSignature] = useState('')
   const [visibility, setVisibility] = useState<SongVisibility>('private')
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -33,9 +34,9 @@ export default function NewSongPage() {
       {
         title,
         artist,
-        key,
+        key: key || undefined,
         bpm: bpm === '' ? undefined : Number(bpm),
-        timeSignature,
+        timeSignature: timeSignature || undefined,
       },
       visibility
     )
@@ -81,6 +82,7 @@ export default function NewSongPage() {
                   onChange={(event) => setKey(event.target.value)}
                   className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400"
                 >
+                  <option value="">未設定</option>
                   {KEY_SELECT_OPTIONS.map((item) => (
                     <option key={item} value={item}>
                       {item}
@@ -108,6 +110,7 @@ export default function NewSongPage() {
                   onChange={(event) => setTimeSignature(event.target.value)}
                   className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400"
                 >
+                  <option value="">未設定</option>
                   {TIME_SIGNATURES.map((item) => (
                     <option key={item} value={item}>
                       {item}

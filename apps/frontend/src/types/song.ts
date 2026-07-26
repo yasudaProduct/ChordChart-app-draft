@@ -12,12 +12,13 @@ export type Section = {
   content: string
 }
 
+/** キー・BPM・拍子はいずれも任意。未設定の場合は undefined（API 上は null）。 */
 export type SongMeta = {
   title: string
   artist?: string
   key?: string
   bpm?: number
-  timeSignature: string
+  timeSignature?: string
 }
 
 export type Song = SongMeta & {
