@@ -15,6 +15,13 @@
       "when": 1781353413525,
       "tag": "0001_colorful_ken_ellis",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785038487815,
+      "tag": "0002_cheerful_gertrude_yorkes",
+      "breakpoints": true
     }
   ]
 }
