@@ -20,9 +20,10 @@ export default async function SharePage({ params }: SharePageProps) {
   return (
     <main className="min-h-screen">
       <SiteHeader variant="public" />
-      <section className="mx-auto max-w-4xl px-6 py-10">
-        <div className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-[0_30px_80px_-50px_rgba(15,23,42,0.5)]">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+      <section className="mx-auto max-w-4xl px-6 py-10 print:p-0">
+        <div className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-[0_30px_80px_-50px_rgba(15,23,42,0.5)] print:border-none print:bg-white print:p-0 print:shadow-none">
+          {/* 案内バナーは印刷には不要（印刷対象は譜面のみ） */}
+          <div className="flex flex-wrap items-center justify-between gap-4 print:hidden">
             <div>
               <h1 className="font-display text-2xl font-semibold text-slate-900">共有コード譜</h1>
               <p className="text-sm text-slate-500">

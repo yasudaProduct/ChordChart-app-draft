@@ -12,6 +12,7 @@ type ArtistInputProps = {
   placeholder?: string
   className?: string
   labelClassName?: string
+  labelLineClassName?: string
 }
 
 /**
@@ -25,6 +26,7 @@ export const ArtistInput = ({
   placeholder,
   className,
   labelClassName,
+  labelLineClassName,
 }: ArtistInputProps) => {
   const candidates = useArtistSuggestions()
   const suggestions = useMemo(() => filterArtistSuggestions(candidates, value), [candidates, value])
@@ -38,6 +40,7 @@ export const ArtistInput = ({
       placeholder={placeholder}
       className={className}
       labelClassName={labelClassName}
+      labelLineClassName={labelLineClassName}
     />
   )
 }

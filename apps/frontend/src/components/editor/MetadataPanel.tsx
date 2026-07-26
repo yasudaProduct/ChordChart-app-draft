@@ -1,10 +1,11 @@
 'use client'
 
 import { useMemo } from 'react'
+import { DetectedKeyTooltip } from '@/components/editor/DetectedKeyTooltip'
 import { ArtistInput } from '@/components/song/ArtistInput'
 import { Input } from '@/components/ui/Input'
 import { KEY_SELECT_OPTIONS, collectChordSymbols, detectKey } from '@/lib/music'
-import { TIME_SIGNATURES, withCurrentOption } from '@/lib/utils'
+import { TIME_SIGNATURES, cn, withCurrentOption } from '@/lib/utils'
 import type { Song, SongMeta } from '@/types/song'
 
 type MetadataPanelProps = {
@@ -32,6 +33,12 @@ export const MetadataPanel = ({ song, onChange, onKeyChange }: MetadataPanelProp
   const showDetectedKey =
     detectedKey !== null && detectedKey.key !== currentKey && detectedKey.confidence >= 0.5
 
+  const fieldLabelClass = 'block text-xs font-medium text-slate-500'
+  /** ラベル1行の高さを他列と揃える（推定キーバッジは行内に載せない） */
+  const metaLabelLineClass = 'block h-4 leading-4'
+  const selectClass =
+    'w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-primary'
+
   return (
     <div className="rounded-2xl bg-white p-6 shadow-sm">
       <input
@@ -41,39 +48,42 @@ export const MetadataPanel = ({ song, onChange, onKeyChange }: MetadataPanelProp
         className="w-full border-none text-3xl font-bold text-slate-800 outline-none placeholder:text-slate-300"
         placeholder="曲名を入力..."
       />
-      <div className="mt-5 grid gap-4 md:grid-cols-4">
-        <ArtistInput value={song.artist ?? ''} onChange={(value) => onChange('artist', value)} />
-        <div>
-          <label className="text-xs font-medium text-slate-500">
-            キー
-            <div className="mt-2">
-              <select
-                value={currentKey}
-                onChange={(event) => onKeyChange(event.target.value)}
-                className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-primary"
-              >
-                <option value="">未設定</option>
-                {keyOptions.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </label>
-          {showDetectedKey && (
-            <button
-              type="button"
-              onClick={() => onChange('key', detectedKey.key)}
-              className="mt-1.5 inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 transition hover:bg-emerald-100"
-              title="コード進行からの推定キーを適用します（コードは移調しません）"
+      <div className="mt-5 grid items-start gap-4 md:grid-cols-4">
+        <ArtistInput
+          value={song.artist ?? ''}
+          onChange={(value) => onChange('artist', value)}
+          labelClassName={fieldLabelClass}
+          labelLineClassName={metaLabelLineClass}
+        />
+        <label className={cn(fieldLabelClass, 'min-w-0')}>
+          <span className="flex h-4 items-center gap-1.5 leading-4">
+            <span className="shrink-0">キー</span>
+            {showDetectedKey && (
+              <DetectedKeyTooltip
+                detectedKey={detectedKey.key}
+                onApply={() => onChange('key', detectedKey.key)}
+              />
+            )}
+          </span>
+          <div className="mt-2">
+            <select
+              value={currentKey}
+              onChange={(event) => onKeyChange(event.target.value)}
+              className={selectClass}
             >
-              推定キー: {detectedKey.key} — 適用
-            </button>
-          )}
-        </div>
+              <option value="">未設定</option>
+              {keyOptions.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </div>
+        </label>
         <Input
           label="BPM"
+          labelClassName={fieldLabelClass}
+          labelLineClassName={metaLabelLineClass}
           type="number"
           value={song.bpm ?? ''}
           onChange={(event) => {
@@ -83,13 +93,13 @@ export const MetadataPanel = ({ song, onChange, onKeyChange }: MetadataPanelProp
           min={40}
           max={240}
         />
-        <label className="text-xs font-medium text-slate-500">
-          拍子
+        <label className={fieldLabelClass}>
+          <span className={metaLabelLineClass}>拍子</span>
           <div className="mt-2">
             <select
               value={currentTimeSignature}
               onChange={(event) => onChange('timeSignature', event.target.value || undefined)}
-              className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-primary"
+              className={selectClass}
             >
               <option value="">未設定</option>
               {timeSignatureOptions.map((item) => (
