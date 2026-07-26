@@ -23,7 +23,8 @@ export const ChordRow = ({ chords, onClick, onChordPointerDown }: ChordRowProps)
           className="absolute rounded-md bg-indigo-500 px-2 py-1 text-xs font-semibold text-white shadow"
           style={{
             left: `${chord.offset * 100}%`,
-            transform: 'translateX(-50%)',
+            top: '50%',
+            transform: 'translate(-50%, -50%)',
           }}
         >
           {chord.chord}

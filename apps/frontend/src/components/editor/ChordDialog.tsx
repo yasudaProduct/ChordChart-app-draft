@@ -32,6 +32,9 @@ type ChordGroupProps = {
   onSelect: (chord: string) => void
 }
 
+/** 固定ヘッダー（h-16）に重ならないための上端マージン */
+const HEADER_CLEARANCE = 96
+
 const variantStyles = {
   default: 'border-slate-200 text-slate-600 hover:border-primary hover:text-primary',
   next: 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-400',
@@ -82,7 +85,7 @@ export const ChordDialog = ({
   )
 
   return (
-    <Dialog position={state.position} onClose={onClose}>
+    <Dialog position={state.position} topMargin={HEADER_CLEARANCE} onClose={onClose}>
       <input
         type="text"
         value={state.value}
