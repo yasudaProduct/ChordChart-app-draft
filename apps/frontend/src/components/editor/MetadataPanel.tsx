@@ -4,7 +4,11 @@ import { useMemo } from 'react'
 import { ArtistInput } from '@/components/song/ArtistInput'
 import { Input } from '@/components/ui/Input'
 import { KEY_SELECT_OPTIONS, collectChordSymbols, detectKey } from '@/lib/music'
+import { TIME_SIGNATURES } from '@/lib/utils'
 import type { Song, SongMeta } from '@/types/song'
+
+// TIME_SIGNATURES は as const のため、可変長 string[] として扱えるよう展開しておく
+const TIME_SIGNATURE_OPTIONS: string[] = [...TIME_SIGNATURES]
 
 type MetadataPanelProps = {
   song: Song
@@ -27,6 +31,14 @@ export const MetadataPanel = ({ song, onChange, onKeyChange }: MetadataPanelProp
     : currentKey
       ? [currentKey, ...KEY_SELECT_OPTIONS]
       : KEY_SELECT_OPTIONS
+
+  // 既存データの変拍子（5/4 など）が選択肢から消えないよう、一覧に無い現在値は先頭に差し込む
+  const currentTimeSignature = song.timeSignature ?? ''
+  const timeSignatureOptions = TIME_SIGNATURE_OPTIONS.includes(currentTimeSignature)
+    ? TIME_SIGNATURE_OPTIONS
+    : currentTimeSignature
+      ? [currentTimeSignature, ...TIME_SIGNATURE_OPTIONS]
+      : TIME_SIGNATURE_OPTIONS
 
   const showDetectedKey =
     detectedKey !== null && detectedKey.key !== currentKey && detectedKey.confidence >= 0.5
@@ -82,12 +94,23 @@ export const MetadataPanel = ({ song, onChange, onKeyChange }: MetadataPanelProp
           min={40}
           max={240}
         />
-        <Input
-          label="拍子"
-          type="text"
-          value={song.timeSignature}
-          onChange={(event) => onChange('timeSignature', (event.target as HTMLInputElement).value)}
-        />
+        <label className="text-xs font-medium text-slate-500">
+          拍子
+          <div className="mt-2">
+            <select
+              value={currentTimeSignature}
+              onChange={(event) => onChange('timeSignature', event.target.value || undefined)}
+              className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-primary"
+            >
+              <option value="">未設定</option>
+              {timeSignatureOptions.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </div>
+        </label>
       </div>
     </div>
   )
