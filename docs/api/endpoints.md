@@ -186,6 +186,15 @@ ChordBook バックエンド API のエンドポイント一覧です。
         "name": "イントロ",
         "type": "chord-only",
         "content": "{\"lines\":[{\"id\":\"line-1\",\"lyrics\":\"\",\"chords\":[{\"id\":\"chord-1\",\"chord\":\"C\",\"offset\":0.2},{\"id\":\"chord-2\",\"chord\":\"G\",\"offset\":0.4}]}]}"
+      },
+      {
+        "id": "section-2",
+        "name": "大サビ",
+        "type": "chord-only",
+        "key": "Am",
+        "bpm": 90,
+        "timeSignature": "6/8",
+        "content": "{\"lines\":[{\"id\":\"line-2\",\"lyrics\":\"\",\"chords\":[{\"id\":\"chord-3\",\"chord\":\"Am\",\"offset\":0.2}]}]}"
       }
     ]
   },
@@ -273,19 +282,21 @@ ChordBook バックエンド API のエンドポイント一覧です。
   "key": "Am",
   "bpm": 110,
   "timeSignature": "3/4",
-  "content": "[{\"id\":\"section-1\",\"name\":\"Aメロ\",\"type\":\"lyrics-chord\",\"lines\":[]}]"
+  "content": "{\"sections\":[{\"id\":\"section-1\",\"name\":\"Aメロ\",\"type\":\"lyrics-chord\",\"content\":\"{\\\"lines\\\":[]}\"}]}"
 }
 ```
 
-| フィールド    | 型             | 必須 | 説明                              |
-| ------------- | -------------- | ---- | --------------------------------- |
-| title         | string         | Yes  | 曲名（1文字以上）                 |
-| artist        | string \| null | No   | アーティスト名                    |
-| key           | string \| null | No   | キー                              |
-| bpm           | number \| null | No   | テンポ（整数）                    |
-| timeSignature | string \| null | No   | 拍子（未指定・null は未設定）     |
-| content       | string         | No   | コード譜データ（JSON文字列）      |
-| visibility    | string         | No   | `private` / `url_only` / `public` |
+| フィールド    | 型             | 必須 | 説明                                                                |
+| ------------- | -------------- | ---- | ------------------------------------------------------------------- |
+| title         | string         | Yes  | 曲名（1文字以上）                                                   |
+| artist        | string \| null | No   | アーティスト名                                                      |
+| key           | string \| null | No   | キー（楽曲全体。セクションが未設定のときの既定値）                  |
+| bpm           | number \| null | No   | テンポ（整数。楽曲全体）                                            |
+| timeSignature | string \| null | No   | 拍子（未指定・null は未設定。楽曲全体）                             |
+| content       | string         | No   | コード譜データ（JSON文字列）。セクション単位のキー・BPM・拍子を含む |
+| visibility    | string         | No   | `private` / `url_only` / `public`                                   |
+
+`content` の中身は検証されず、そのまま保存・返却される。構造は [Content カラムの JSON スキーマ](../database/tables.md#content-カラムの-json-スキーマ) を参照。セクションに `key` / `bpm` / `timeSignature` を持たせると、そのセクション以降に適用される（carry-forward）。
 
 **レスポンス**: 200 OK
 

@@ -80,6 +80,64 @@ describe('transposeSong', () => {
   })
 })
 
+describe('transposeSong — セクション単位のキー', () => {
+  /** 2セクションの曲。それぞれ同じコード進行を持たせて綴りの違いを比較しやすくする。 */
+  const buildTwoSectionSong = (songKey: string, sectionKeys: Array<string | undefined>): Song => ({
+    ...buildSong(songKey, [['E']]),
+    sections: sectionKeys.map((key, index) => ({
+      id: `section-${index}`,
+      name: `セクション${index}`,
+      type: 'chord-only' as const,
+      key,
+      content: serializeSectionContent([
+        {
+          id: `line-${index}`,
+          lyrics: '',
+          chords: [{ id: `chord-${index}`, chord: 'E', offset: 0.5 }],
+        },
+      ]),
+    })),
+  })
+
+  it('明示されたセクションキーも移調する', () => {
+    const song = buildTwoSectionSong('C', ['Am', undefined])
+    const transposed = transposeSong(song, 2)
+
+    expect(transposed.key).toBe('D')
+    expect(transposed.sections[0].key).toBe('Bm')
+  })
+
+  it('未設定のセクションキーは未設定のまま（継承が壊れない）', () => {
+    const song = buildTwoSectionSong('C', ['Am', undefined])
+    const transposed = transposeSong(song, 2)
+
+    expect(transposed.sections[1].key).toBeUndefined()
+  })
+
+  it('コードの綴りはセクションごとの移調後の有効キーに合わせる', () => {
+    // セクション0: 楽曲キー C を継承 → +2 で D（シャープ系）
+    // セクション1: Eb を明示     → +2 で F（フラット系）
+    const song = buildTwoSectionSong('C', [undefined, 'Eb'])
+    const transposed = transposeSong(song, 2)
+
+    const chordOf = (index: number) =>
+      parseSectionContent(transposed.sections[index].content).lines[0].chords[0].chord
+
+    expect(chordOf(0)).toBe('F#')
+    expect(chordOf(1)).toBe('Gb')
+  })
+
+  it('BPM・拍子は移調の影響を受けない', () => {
+    const song = buildTwoSectionSong('C', [undefined, undefined])
+    song.sections[0].bpm = 90
+    song.sections[0].timeSignature = '6/8'
+    const transposed = transposeSong(song, 2)
+
+    expect(transposed.sections[0].bpm).toBe(90)
+    expect(transposed.sections[0].timeSignature).toBe('6/8')
+  })
+})
+
 describe('collectChordSymbols', () => {
   it('全セクションのコードを出現順に取り出す', () => {
     const song = buildSong('C', [

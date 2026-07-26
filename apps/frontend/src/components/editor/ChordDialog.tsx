@@ -12,7 +12,10 @@ import type { ChordDialogState } from '@/stores/editorStore'
 
 type ChordDialogProps = {
   state: ChordDialogState
-  /** 曲のキー（ダイアトニック候補・予測の基準） */
+  /**
+   * 適用中のキー（ダイアトニック候補・予測の基準）。
+   * セクションに設定があればそれを優先した有効キーが渡る。
+   */
   songKey?: string
   /** 挿入位置の直前のコード（次のコード予測の基準） */
   previousChord?: string | null

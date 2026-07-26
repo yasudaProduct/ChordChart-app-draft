@@ -4,11 +4,8 @@ import { useMemo } from 'react'
 import { ArtistInput } from '@/components/song/ArtistInput'
 import { Input } from '@/components/ui/Input'
 import { KEY_SELECT_OPTIONS, collectChordSymbols, detectKey } from '@/lib/music'
-import { TIME_SIGNATURES } from '@/lib/utils'
+import { TIME_SIGNATURES, withCurrentOption } from '@/lib/utils'
 import type { Song, SongMeta } from '@/types/song'
-
-// TIME_SIGNATURES は as const のため、可変長 string[] として扱えるよう展開しておく
-const TIME_SIGNATURE_OPTIONS: string[] = [...TIME_SIGNATURES]
 
 type MetadataPanelProps = {
   song: Song
@@ -26,19 +23,11 @@ export const MetadataPanel = ({ song, onChange, onKeyChange }: MetadataPanelProp
   }, [song])
 
   const currentKey = song.key ?? ''
-  const keyOptions = KEY_SELECT_OPTIONS.includes(currentKey)
-    ? KEY_SELECT_OPTIONS
-    : currentKey
-      ? [currentKey, ...KEY_SELECT_OPTIONS]
-      : KEY_SELECT_OPTIONS
+  const keyOptions = withCurrentOption(KEY_SELECT_OPTIONS, currentKey)
 
   // 既存データの変拍子（5/4 など）が選択肢から消えないよう、一覧に無い現在値は先頭に差し込む
   const currentTimeSignature = song.timeSignature ?? ''
-  const timeSignatureOptions = TIME_SIGNATURE_OPTIONS.includes(currentTimeSignature)
-    ? TIME_SIGNATURE_OPTIONS
-    : currentTimeSignature
-      ? [currentTimeSignature, ...TIME_SIGNATURE_OPTIONS]
-      : TIME_SIGNATURE_OPTIONS
+  const timeSignatureOptions = withCurrentOption(TIME_SIGNATURES, currentTimeSignature)
 
   const showDetectedKey =
     detectedKey !== null && detectedKey.key !== currentKey && detectedKey.confidence >= 0.5
