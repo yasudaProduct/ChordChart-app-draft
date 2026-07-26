@@ -80,6 +80,14 @@ const mockSongDto = {
   updatedAt: new Date('2024-01-01'),
 }
 
+// キー・BPM・拍子はいずれも任意項目。未設定の曲は null で返る
+const mockSongDtoWithoutMeta = {
+  ...mockSongDto,
+  key: null,
+  bpm: null,
+  timeSignature: null,
+}
+
 const mockSongListItemDto = {
   id: '123e4567-e89b-12d3-a456-426614174000',
   title: 'Test Song',
@@ -241,6 +249,48 @@ describe('POST /api/songs', () => {
     expect(res.status).toBe(400)
     expect(mockedSongService.createSong).not.toHaveBeenCalled()
   })
+
+  it('キー・BPM・拍子が未指定: 201 を返し、拍子にデフォルト値を補わない', async () => {
+    mockedSongService.createSong.mockResolvedValueOnce(mockSongDtoWithoutMeta)
+
+    const res = await app.request('/api/songs', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer test-user-id',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ title: 'Test Song' }),
+    })
+
+    expect(res.status).toBe(201)
+    expect(mockedSongService.createSong).toHaveBeenCalledWith('test-user-id', {
+      title: 'Test Song',
+    })
+
+    const body = await res.json()
+    expect(body.key).toBeNull()
+    expect(body.bpm).toBeNull()
+    expect(body.timeSignature).toBeNull()
+  })
+
+  it('キー・BPM・拍子が null: 201 を返す', async () => {
+    mockedSongService.createSong.mockResolvedValueOnce(mockSongDtoWithoutMeta)
+
+    const res = await app.request('/api/songs', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer test-user-id',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ title: 'Test Song', key: null, bpm: null, timeSignature: null }),
+    })
+
+    expect(res.status).toBe(201)
+    expect(mockedSongService.createSong).toHaveBeenCalledWith(
+      'test-user-id',
+      expect.objectContaining({ key: null, bpm: null, timeSignature: null })
+    )
+  })
 })
 
 // ============================================================
@@ -297,6 +347,35 @@ describe('PUT /api/songs/:id', () => {
 
     expect(res.status).toBe(401)
     expect(mockedSongService.updateSong).not.toHaveBeenCalled()
+  })
+
+  it('キー・BPM・拍子を null に更新: 200 を返し、拍子にデフォルト値を補わない', async () => {
+    mockedSongService.updateSong.mockResolvedValueOnce(mockSongDtoWithoutMeta)
+
+    const res = await app.request(`/api/songs/${mockSongDto.id}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: 'Bearer test-user-id',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        title: 'Updated Song',
+        key: null,
+        bpm: null,
+        timeSignature: null,
+      }),
+    })
+
+    expect(res.status).toBe(200)
+    expect(mockedSongService.updateSong).toHaveBeenCalledWith(mockSongDto.id, 'test-user-id', {
+      title: 'Updated Song',
+      key: null,
+      bpm: null,
+      timeSignature: null,
+    })
+
+    const body = await res.json()
+    expect(body.timeSignature).toBeNull()
   })
 })
 
