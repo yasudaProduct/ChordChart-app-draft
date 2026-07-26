@@ -3,9 +3,17 @@ import { cn } from '@/lib/utils'
 type InputProps = {
   label?: string
   className?: string
+  labelClassName?: string
+  labelLineClassName?: string
 } & React.InputHTMLAttributes<HTMLInputElement>
 
-export const Input = ({ label, className, ...rest }: InputProps) => {
+export const Input = ({
+  label,
+  className,
+  labelClassName,
+  labelLineClassName,
+  ...rest
+}: InputProps) => {
   const input = (
     <input
       className={cn(
@@ -19,8 +27,8 @@ export const Input = ({ label, className, ...rest }: InputProps) => {
   if (!label) return input
 
   return (
-    <label className="text-xs font-medium text-slate-500">
-      {label}
+    <label className={cn('text-xs font-medium text-slate-500', labelClassName)}>
+      {labelLineClassName ? <span className={labelLineClassName}>{label}</span> : label}
       <div className="mt-2">{input}</div>
     </label>
   )
