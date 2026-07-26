@@ -10,9 +10,6 @@ import {
 } from '@/lib/music'
 import type { ChordDialogState } from '@/stores/editorStore'
 
-// キー未設定時のフォールバック候補（よく使う基本コード）
-const FALLBACK_LIBRARY = ['C', 'G', 'Am', 'F', 'Dm', 'Em', 'D', 'A', 'E', 'B7']
-
 type ChordDialogProps = {
   state: ChordDialogState
   /** 曲のキー（ダイアトニック候補・予測の基準） */
@@ -65,11 +62,9 @@ export const ChordDialog = ({
   onDelete,
   onClose,
 }: ChordDialogProps) => {
-  // キーに基づくダイアトニック候補（キー未設定時は基本コード）
-  const candidates = useMemo(() => {
-    const diatonic = getDiatonicSuggestions(songKey)
-    return diatonic.length > 0 ? diatonic : FALLBACK_LIBRARY
-  }, [songKey])
+  // キーに基づくダイアトニック候補。キー未設定時は候補を出さない
+  // （キーが未確定の段階では誤った提案になりうるため）
+  const candidates = useMemo(() => getDiatonicSuggestions(songKey), [songKey])
 
   // 直前のコードから次に続きやすいコード
   const nextChords = useMemo(
@@ -99,12 +94,18 @@ export const ChordDialog = ({
       />
 
       <div className="mt-4 space-y-4 text-xs text-slate-500">
-        <ChordGroup
-          title={songKey ? `コード候補（Key: ${songKey}）` : 'コード候補'}
-          chords={candidates}
-          variant="default"
-          onSelect={onValueChange}
-        />
+        {candidates.length > 0 ? (
+          <ChordGroup
+            title={`コード候補（Key: ${songKey}）`}
+            chords={candidates}
+            variant="default"
+            onSelect={onValueChange}
+          />
+        ) : (
+          <p className="rounded-md bg-slate-50 px-3 py-2 text-[11px] leading-relaxed text-slate-500">
+            キーを設定するとコード候補が表示されます。
+          </p>
+        )}
         {nextChords.length > 0 && previousChord && (
           <ChordGroup
             title={`次のコード予測（${previousChord} の後）`}

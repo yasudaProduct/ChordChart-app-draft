@@ -6,6 +6,7 @@ import { PerformanceMode } from '@/components/song/PerformanceMode'
 import { SongPreview } from '@/components/song/SongPreview'
 import { TransposeControl } from '@/components/song/TransposeControl'
 import { transposeSong } from '@/lib/music'
+import { songMetaLine } from '@/lib/songMeta'
 import { songApi } from '@/lib/songApi'
 import { useSong } from '@/hooks/useSong'
 import { useRequireAuth } from '@/hooks/useRequireAuth'
@@ -80,10 +81,7 @@ export const SongDetailContent = ({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold text-slate-900">{song.title}</h1>
-          <p className="text-sm text-slate-500">
-            {song.artist || 'アーティスト未設定'} · Key {displaySong.key || '-'} · BPM{' '}
-            {song.bpm ?? '-'} · {song.timeSignature}
-          </p>
+          <p className="text-sm text-slate-500">{songMetaLine(displaySong)}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 print:hidden">
           <button

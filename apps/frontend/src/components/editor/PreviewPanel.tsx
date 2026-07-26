@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react'
 import { parseSectionContent } from '@/lib/sectionContent'
+import { songMetaEntries } from '@/lib/songMeta'
 import type { Song } from '@/types/song'
 
 type PreviewPanelProps = {
@@ -20,9 +21,11 @@ export const PreviewPanel = ({ song }: PreviewPanelProps) => {
         <h2 className="text-2xl font-bold text-slate-900">{song.title}</h2>
         <div className="mt-2 flex flex-wrap gap-4 text-sm text-slate-500 print:text-slate-700">
           <span>{song.artist || 'アーティスト未設定'}</span>
-          <span>Key: {song.key || '-'}</span>
-          <span>BPM: {song.bpm ?? '-'}</span>
-          <span>{song.timeSignature}</span>
+          {songMetaEntries(song).map((entry) => (
+            <span key={entry.id}>
+              {entry.label ? `${entry.label}: ${entry.value}` : entry.value}
+            </span>
+          ))}
         </div>
       </div>
 

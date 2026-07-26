@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { TransposeControl } from '@/components/song/TransposeControl'
 import { transposeSong } from '@/lib/music'
 import { parseSectionContent } from '@/lib/sectionContent'
+import { songMetaLine } from '@/lib/songMeta'
 import type { Song } from '@/types/song'
 
 type PerformanceModeProps = {
@@ -147,10 +148,7 @@ export const PerformanceMode = ({ song, initialTranspose = 0, onClose }: Perform
       <header className="flex items-center justify-between gap-4 border-b border-slate-800 px-6 py-3">
         <div className="min-w-0">
           <h2 className="truncate text-lg font-semibold">{displaySong.title}</h2>
-          <p className="truncate text-xs text-slate-400">
-            {displaySong.artist || 'アーティスト未設定'} · Key {displaySong.key || '-'} · BPM{' '}
-            {displaySong.bpm ?? '-'} · {displaySong.timeSignature}
-          </p>
+          <p className="truncate text-xs text-slate-400">{songMetaLine(displaySong)}</p>
         </div>
         <button
           type="button"
