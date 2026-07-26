@@ -28,7 +28,7 @@ ChordBook のデータベース設計を説明します。
 │    │ Artist        : VARCHAR      NULL                              │
 │    │ Key           : VARCHAR      NULL                              │
 │    │ Bpm           : INT          NULL                              │
-│    │ TimeSignature : VARCHAR      NOT NULL  DEFAULT '4/4'           │
+│    │ TimeSignature : VARCHAR      NULL                              │
 │    │ Content       : TEXT         NOT NULL  DEFAULT '{"sections":[]}' │
 │    │ Visibility    : visibility   NOT NULL  DEFAULT 'private'         │
 │    │ IsDemo        : BOOLEAN      NOT NULL  DEFAULT false           │
@@ -87,7 +87,7 @@ ChordBook のデータベース設計を説明します。
 | Artist        | VARCHAR(200) | YES  | NULL              | アーティスト名                |
 | Key           | VARCHAR(10)  | YES  | NULL              | キー（C, Am, etc.）           |
 | Bpm           | INT          | YES  | NULL              | テンポ                        |
-| TimeSignature | VARCHAR(10)  | NO   | '4/4'             | 拍子                          |
+| TimeSignature | VARCHAR(10)  | YES  | NULL              | 拍子                          |
 | Content       | TEXT         | NO   | '{"sections":[]}' | コード譜データ（JSON 文字列） |
 | Visibility    | visibility   | NO   | 'private'         | 公開設定（ENUM、後述）        |
 | IsDemo        | BOOLEAN      | NO   | false             | デモ用曲フラグ                |

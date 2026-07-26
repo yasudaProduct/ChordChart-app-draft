@@ -56,7 +56,7 @@ CREATE TABLE Users (
 | Artist        | VARCHAR(200)      | YES  | NULL              | -              | アーティスト名  |
 | Key           | VARCHAR(10)       | YES  | NULL              | -              | キー（C, Am等） |
 | Bpm           | INT               | YES  | NULL              | CHECK(Bpm > 0) | テンポ          |
-| TimeSignature | VARCHAR(10)       | NO   | '4/4'             | -              | 拍子            |
+| TimeSignature | VARCHAR(10)       | YES  | NULL              | -              | 拍子            |
 | Content       | TEXT              | NO   | '{"sections":[]}' | -              | コード譜データ  |
 | Visibility    | visibility (ENUM) | NO   | 'private'         | -              | 公開設定        |
 | IsDemo        | BOOLEAN           | NO   | false             | -              | デモ用曲フラグ  |
@@ -96,7 +96,7 @@ CREATE TABLE Songs (
     Artist VARCHAR(200),
     Key VARCHAR(10),
     Bpm INT,
-    TimeSignature VARCHAR(10) NOT NULL DEFAULT '4/4',
+    TimeSignature VARCHAR(10),
     Content TEXT NOT NULL DEFAULT '{"sections":[]}',
     Visibility visibility NOT NULL DEFAULT 'private',
     IsDemo BOOLEAN NOT NULL DEFAULT false,

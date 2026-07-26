@@ -204,13 +204,14 @@ export interface Section {
   lines: LyricsChordLine[] | BarLine[];
 }
 
+// キー・BPM・拍子はいずれも任意項目（未設定は undefined）
 export interface Song {
   id: string;
   title: string;
-  artist: string;
-  key: string;
-  bpm: number;
-  timeSignature: string;
+  artist?: string;
+  key?: string;
+  bpm?: number;
+  timeSignature?: string;
   sections: Section[];
   createdAt: string;
   updatedAt: string;

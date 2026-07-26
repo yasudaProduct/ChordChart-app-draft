@@ -229,7 +229,7 @@ ChordBook バックエンド API のエンドポイント一覧です。
 | artist        | string \| null | No   | アーティスト名                                                           |
 | key           | string \| null | No   | キー（C, Am, etc.）                                                      |
 | bpm           | number \| null | No   | テンポ（整数）                                                           |
-| timeSignature | string         | No   | 拍子（デフォルト: "4/4"）                                                |
+| timeSignature | string \| null | No   | 拍子（未指定・null は未設定。デフォルト値は補われない）                  |
 | visibility    | string         | No   | `private` / `url_only` / `public`（デフォルト: `private`。他の値は 400） |
 
 **レスポンス**: 201 Created
@@ -283,7 +283,7 @@ ChordBook バックエンド API のエンドポイント一覧です。
 | artist        | string \| null | No   | アーティスト名                    |
 | key           | string \| null | No   | キー                              |
 | bpm           | number \| null | No   | テンポ（整数）                    |
-| timeSignature | string         | No   | 拍子                              |
+| timeSignature | string \| null | No   | 拍子（未指定・null は未設定）     |
 | content       | string         | No   | コード譜データ（JSON文字列）      |
 | visibility    | string         | No   | `private` / `url_only` / `public` |
 

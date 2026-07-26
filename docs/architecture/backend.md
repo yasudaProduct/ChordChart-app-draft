@@ -74,7 +74,7 @@ const createSongSchema = z.object({
   artist: z.string().nullable().optional(),
   key: z.string().nullable().optional(),
   bpm: z.number().int().nullable().optional(),
-  timeSignature: z.string().optional().default("4/4"),
+  timeSignature: z.string().nullable().optional(),
 });
 
 songs.post("/", authMiddleware(), zValidator("json", createSongSchema, ...), async (c) => {
@@ -161,7 +161,7 @@ export const songs = pgTable("Songs", {
   artist: varchar("Artist", { length: 200 }),
   key: varchar("Key", { length: 10 }),
   bpm: integer("Bpm"),
-  timeSignature: varchar("TimeSignature", { length: 10 }).default("4/4"),
+  timeSignature: varchar("TimeSignature", { length: 10 }),
   content: text("Content").notNull().default('{"sections":[]}'),
   visibility: visibilityEnum("Visibility").notNull().default("private"),
   isDemo: boolean("IsDemo").notNull().default(false),
