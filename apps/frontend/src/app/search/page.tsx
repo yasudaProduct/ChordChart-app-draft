@@ -38,7 +38,7 @@ export default function SearchPage() {
             type="text"
             value={query}
             onChange={(event) => handleQueryChange(event.target.value)}
-            placeholder="曲名・アーティスト・キーで検索"
+            placeholder="曲名・アーティストで検索"
             className="w-full rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm outline-none transition focus:border-slate-400"
           />
         </div>
@@ -46,7 +46,7 @@ export default function SearchPage() {
         <div className="mt-8 grid gap-4">
           {!debouncedQuery.trim() ? (
             <div className="rounded-2xl border border-dashed border-slate-200 bg-white/60 p-8 text-center text-sm text-slate-500">
-              曲名・アーティスト・キーを入力して検索してください。
+              曲名・アーティストを入力して検索してください。
             </div>
           ) : isLoading ? (
             <div className="rounded-2xl border border-dashed border-slate-200 bg-white/60 p-8 text-center text-sm text-slate-500">

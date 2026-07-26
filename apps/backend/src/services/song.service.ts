@@ -99,7 +99,7 @@ const listDemoSongs = async (): Promise<SongListItemDto[]> => {
 }
 
 /**
- * 公開曲をタイトル・アーティスト・キーで検索する。
+ * 公開曲をタイトル・アーティストで検索する。
  */
 const searchSongs = async (query: string): Promise<SongListItemDto[]> => {
   const pattern = `%${query}%`
@@ -111,7 +111,7 @@ const searchSongs = async (query: string): Promise<SongListItemDto[]> => {
       and(
         eq(songs.visibility, Visibility.Public),
         eq(songs.isDemo, false),
-        or(ilike(songs.title, pattern), ilike(songs.artist, pattern), ilike(songs.key, pattern))
+        or(ilike(songs.title, pattern), ilike(songs.artist, pattern))
       )
     )
     .orderBy(desc(songs.updatedAt))

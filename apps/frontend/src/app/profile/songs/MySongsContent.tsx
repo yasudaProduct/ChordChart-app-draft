@@ -15,8 +15,7 @@ export const MySongsContent = () => {
     return songs.filter(
       (song) =>
         song.title.toLowerCase().includes(lower) ||
-        (song.artist ?? '').toLowerCase().includes(lower) ||
-        (song.key ?? '').toLowerCase().includes(lower)
+        (song.artist ?? '').toLowerCase().includes(lower)
     )
   }, [songs, query])
 
