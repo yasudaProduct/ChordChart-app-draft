@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import useSWR from 'swr'
 import { cn } from '@/lib/utils'
 import { collectChordSymbols, semitonesBetweenKeys } from '@/lib/music'
+import { resolveSectionMetaById, resolveSectionMetas } from '@/lib/sectionMeta'
 import { useEditorStore } from '@/stores/editorStore'
 import { useEditorActions } from '@/hooks/useEditorActions'
 import { useChordDrag } from '@/hooks/useChordDrag'
@@ -101,6 +102,15 @@ export const EditorContent = ({
     },
     [handleMetaChange]
   )
+
+  // セクションごとのキー・BPM・拍子の解決結果（未設定は直前セクション → 楽曲全体を継承）
+  const sectionMetas = useMemo(() => (song ? resolveSectionMetas(song) : []), [song])
+
+  // コード候補は編集中セクションの有効キーで算出する（転調セクションでも正しい候補が出る）
+  const dialogKey = useMemo(() => {
+    if (!dialog || !song) return song?.key
+    return resolveSectionMetaById(song, dialog.sectionId)?.effective.key ?? song.key
+  }, [dialog, song])
 
   // 挿入・編集位置の直前のコード（次のコード予測に使う）
   const previousChord = useMemo(() => {
@@ -215,11 +225,17 @@ export const EditorContent = ({
                 index={index}
                 totalSections={song.sections.length}
                 isDragging={draggingSectionId === section.id}
+                inheritedMeta={sectionMetas[index]?.inherited ?? {}}
                 onNameChange={(name) =>
                   useEditorStore.getState().updateSection(section.id, (s) => ({ ...s, name }))
                 }
                 onTypeChange={(type) =>
                   useEditorStore.getState().updateSection(section.id, (s) => ({ ...s, type }))
+                }
+                onMetaChange={(field, value) =>
+                  useEditorStore
+                    .getState()
+                    .updateSection(section.id, (s) => ({ ...s, [field]: value }))
                 }
                 onDuplicate={() => duplicateSection(section.id)}
                 onMove={(direction) => moveSection(section.id, direction)}
@@ -248,7 +264,7 @@ export const EditorContent = ({
       {dialog && (
         <ChordDialog
           state={dialog}
-          songKey={song.key}
+          songKey={dialogKey}
           previousChord={previousChord}
           onValueChange={(value) => setDialog({ ...dialog, value })}
           onConfirm={handleChordConfirm}

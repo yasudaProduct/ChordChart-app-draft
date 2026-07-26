@@ -1,5 +1,6 @@
 'use client'
 
+import { sectionMetaLabel } from '@/lib/sectionMeta'
 import { cn } from '@/lib/utils'
 import type { Section, SectionType } from '@/types/song'
 
@@ -7,6 +8,9 @@ type SectionHeaderProps = {
   section: Section
   index: number
   totalSections: number
+  /** キー・BPM・拍子の設定行を開いているか */
+  isMetaOpen: boolean
+  onToggleMeta: () => void
   onNameChange: (name: string) => void
   onTypeChange: (type: SectionType) => void
   onDuplicate: () => void
@@ -21,6 +25,8 @@ export const SectionHeader = ({
   section,
   index,
   totalSections,
+  isMetaOpen,
+  onToggleMeta,
   onNameChange,
   onTypeChange,
   onDuplicate,
@@ -30,6 +36,9 @@ export const SectionHeader = ({
   onDragStart,
   onDragEnd,
 }: SectionHeaderProps) => {
+  // このセクションに明示設定された値だけをバッジにする（継承値は出さない）
+  const metaLabel = sectionMetaLabel(section)
+
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-4 py-3">
       <div className="flex flex-wrap items-center gap-3">
@@ -64,6 +73,22 @@ export const SectionHeader = ({
             </button>
           ))}
         </div>
+        {/* 設定行の開閉トグルと、設定済みの値のバッジを兼ねる */}
+        <button
+          type="button"
+          onClick={onToggleMeta}
+          aria-expanded={isMetaOpen}
+          aria-label="セクションのキー・BPM・拍子を設定"
+          title="キー・BPM・拍子"
+          className={cn(
+            'rounded-md px-2 py-1 text-xs transition',
+            metaLabel
+              ? 'bg-indigo-50 font-medium text-primary hover:bg-indigo-100'
+              : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'
+          )}
+        >
+          ♪{metaLabel && ` ${metaLabel}`}
+        </button>
       </div>
       <div className="flex items-center gap-2 text-xs text-slate-500">
         <button

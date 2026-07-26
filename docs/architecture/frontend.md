@@ -195,28 +195,62 @@ await api.put(`/songs/${id}`, updatedSong);
 ### song.ts（楽曲関連）
 
 ```typescript
-export type SectionType = "lyrics-chord" | "bar";
+export type SectionType = "lyrics-chord" | "chord-only";
 
-export interface Section {
-  id: string;
-  name: string;
-  type: SectionType;
-  lines: LyricsChordLine[] | BarLine[];
-}
-
-// キー・BPM・拍子はいずれも任意項目（未設定は undefined）
-export interface Song {
-  id: string;
-  title: string;
-  artist?: string;
+// キー・BPM・拍子はいずれも任意項目（未設定は undefined）。
+// 楽曲全体とセクションで同じ形を使う。
+export type MusicMeta = {
   key?: string;
   bpm?: number;
   timeSignature?: string;
+};
+
+// content は { "lines": [...] } 形式の JSON 文字列。
+// 行・コードのランタイム型は @/lib/sectionContent に定義している。
+export type Section = MusicMeta & {
+  id: string;
+  name: string;
+  type: SectionType;
+  content: string;
+};
+
+export type SongMeta = MusicMeta & {
+  title: string;
+  artist?: string;
+};
+
+export type Song = SongMeta & {
+  id: string;
   sections: Section[];
+  visibility: SongVisibility;
+  isOwner?: boolean;
   createdAt: string;
   updatedAt: string;
-}
+};
 ```
+
+> `Section` は `key` を持つため、このオブジェクトを JSX の props にスプレッドしない（React の予約 prop `key` と衝突する）。
+
+### セクション単位のキー・BPM・拍子（`lib/sectionMeta.ts`）
+
+セクションの値が未設定なら **直前のセクション → 楽曲全体** の順に継承する（carry-forward）。フィールドごとに独立して引き継ぐ。
+
+```typescript
+resolveSectionMetas(source): ResolvedSectionMeta[]; // 全セクションを1パスで解決
+resolveSectionMetaById(source, sectionId): ResolvedSectionMeta | null;
+sectionMetaLabel(meta): string; // 「Key Am · BPM 90 · 6/8」形式（空なら空文字）
+```
+
+`ResolvedSectionMeta` は4つの見え方を返す。用途に応じて使い分ける。
+
+| フィールド  | 意味                                     | 使う場所                             |
+| ----------- | ---------------------------------------- | ------------------------------------ |
+| `effective` | 実際に使う値                             | 転調・コード候補・自動スクロール速度 |
+| `explicit`  | そのセクション自身の明示値               | エディタの入力欄                     |
+| `inherited` | 明示設定を消したら適用される値           | エディタの「未設定（継承: C）」表示  |
+| `changed`   | 直前のセクションの有効値から変化した項目 | 閲覧画面のセクション見出しのバッジ   |
+
+閲覧系が `changed` を使うのは、転調・変拍子した箇所にだけ書く紙の譜面と同じ読み味にするため。
 
 ## スタイリング
 

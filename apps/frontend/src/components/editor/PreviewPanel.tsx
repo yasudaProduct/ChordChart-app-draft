@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react'
 import { parseSectionContent } from '@/lib/sectionContent'
+import { resolveSectionMetas, sectionMetaLabel } from '@/lib/sectionMeta'
 import { songMetaEntries } from '@/lib/songMeta'
 import type { Song } from '@/types/song'
 
@@ -10,10 +11,16 @@ type PreviewPanelProps = {
 }
 
 export const PreviewPanel = ({ song }: PreviewPanelProps) => {
-  const parsedSections = useMemo(
-    () => song.sections.map((s) => ({ ...s, parsed: parseSectionContent(s.content) })),
-    [song.sections]
-  )
+  // 楽曲レベルのキー等も継承の基準になるため、依存は song 全体にする
+  const parsedSections = useMemo(() => {
+    const metas = resolveSectionMetas(song)
+    return song.sections.map((s, index) => ({
+      ...s,
+      parsed: parseSectionContent(s.content),
+      // 直前のセクションから変化した項目だけを出す（転調・変拍子した箇所にだけ書く譜面と同じ）
+      metaLabel: sectionMetaLabel(metas[index].changed),
+    }))
+  }, [song])
 
   return (
     <aside className="w-1/2 border-l border-slate-200 bg-white px-8 py-10 print:w-full print:border-none print:px-0 print:py-0">
@@ -36,6 +43,11 @@ export const PreviewPanel = ({ song }: PreviewPanelProps) => {
             <div key={`${section.id}-preview`} className="print-avoid-break">
               <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-400 print:text-slate-600">
                 {section.name}
+                {section.metaLabel && (
+                  <span className="ml-2 font-medium normal-case tracking-normal text-primary print:text-slate-700">
+                    {section.metaLabel}
+                  </span>
+                )}
               </p>
               <div className="mt-3 space-y-4">
                 {content.lines.map((line) => (
