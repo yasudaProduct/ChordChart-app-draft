@@ -1,16 +1,38 @@
-name = "chordbook-api-staging"
+# Cloudflare Workers 設定
+#
+# 環境は [env.staging] / [env.production] に分離している。
+# デプロイは必ず --env を付けること（付け忘れると top-level の "chordbook-api" が新規作成される）。
+#   pnpm deploy:staging     # = wrangler deploy --env staging
+#   pnpm deploy:production  # = wrangler deploy --env production
+#
+# vars / secrets は環境に継承されない（Cloudflare の仕様）ため、各環境で明示的に定義する。
+name = "chordbook-api"
 main = "src/worker.ts"
 # nodejs_compat 利用時に vars / secrets を process.env に載せるため 2025-04-01 以降
 compatibility_date = "2025-04-15"
 compatibility_flags = ["nodejs_compat"]
 
-[vars]
+# ---------------- ステージング ----------------
+[env.staging]
+name = "chordbook-api-staging"
+
+[env.staging.vars]
 # CORS 許可はフロント（Pages）のオリジン（https を含む）。API ホスト名は入れない。
 ALLOWED_ORIGINS = "https://chordbook-frontend-staging.pages.dev,http://localhost:3000"
 # Cloudflare Workers では neon-http を使用（postgres.js の request 間 I/O 共有を回避）
 DATABASE_DRIVER = "neon-http"
 
-# 以下はシークレット（wrangler secret put または GitHub Actions secrets で設定する）
+# ---------------- 本番 ----------------
+[env.production]
+name = "chordbook-api-production"
+
+[env.production.vars]
+# カスタムドメイン（chord-books.com）の割り当てが完了したら chordbook-frontend.pages.dev は削除してよい。
+ALLOWED_ORIGINS = "https://chord-books.com,https://chordbook-frontend.pages.dev"
+DATABASE_DRIVER = "neon-http"
+
+# 以下はシークレット。GitHub Actions（Environment secrets）または
+# wrangler secret put <NAME> --env <staging|production> で設定する。
 # DATABASE_URL
 # CLERK_ISSUER
 # CLERK_WEBHOOK_SECRET

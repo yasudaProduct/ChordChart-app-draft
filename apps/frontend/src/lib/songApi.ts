@@ -9,9 +9,10 @@ export type ApiSongDto = {
   artist: string | null
   key: string | null
   bpm: number | null
-  timeSignature: string
+  timeSignature: string | null
   content: string | { sections?: Section[] }
   visibility: string | null
+  isOwner: boolean
   createdAt: string
   updatedAt: string
 }
@@ -61,9 +62,10 @@ export const toSong = (dto: ApiSongDto): Song => {
     artist: dto.artist ?? '',
     key: dto.key ?? '',
     bpm: dto.bpm ?? undefined,
-    timeSignature: dto.timeSignature ?? '4/4',
+    timeSignature: dto.timeSignature ?? undefined,
     sections,
     visibility: mapVisibility(dto.visibility),
+    isOwner: dto.isOwner,
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
   }
@@ -80,6 +82,17 @@ const toSongListItem = (dto: ApiSongListItemDto): SongListItem => ({
 const toContent = (sections: Section[]) => JSON.stringify({ sections })
 
 export const songApi = {
+  /** 公開範囲が public な全ユーザーの曲一覧を取得する（自分の曲に限定しない）。 */
+  async list(): Promise<SongListItem[]> {
+    const response = await api.get<ApiSongListItemDto[]>('/songs')
+    return response.map(toSongListItem)
+  },
+
+  /** 公開曲のアーティスト名一覧を登録数の多い順に取得する（入力サジェスト用）。 */
+  async listArtists(): Promise<string[]> {
+    return api.get<string[]>('/songs/artists')
+  },
+
   async listDemo(): Promise<SongListItem[]> {
     const response = await api.get<ApiSongListItemDto[]>('/songs/demo')
     return response.map(toSongListItem)
@@ -96,10 +109,11 @@ export const songApi = {
     }
     const dto = await api.post<ApiSongDto>('/songs', {
       title: meta.title,
-      artist: meta.artist ?? null,
-      key: meta.key ?? null,
+      // 未設定（空文字・undefined）はすべて null で送る
+      artist: meta.artist || null,
+      key: meta.key || null,
       bpm: meta.bpm ?? null,
-      timeSignature: meta.timeSignature || '4/4',
+      timeSignature: meta.timeSignature || null,
       ...(visibility ? { visibility: toApiVisibility(visibility) } : {}),
     })
     return toSong(dto)
@@ -111,10 +125,11 @@ export const songApi = {
     }
     const dto = await api.put<ApiSongDto>(`/songs/${id}`, {
       title: updates.title ?? '',
-      artist: updates.artist ?? null,
-      key: updates.key ?? null,
+      // 未設定（空文字・undefined）はすべて null で送る
+      artist: updates.artist || null,
+      key: updates.key || null,
       bpm: updates.bpm ?? null,
-      timeSignature: updates.timeSignature ?? '4/4',
+      timeSignature: updates.timeSignature || null,
       content: toContent(updates.sections ?? []),
       visibility: toApiVisibility(updates.visibility ?? 'private'),
     })

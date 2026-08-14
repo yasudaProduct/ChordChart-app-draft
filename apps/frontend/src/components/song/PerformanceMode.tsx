@@ -1,9 +1,11 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { TransposeControl } from '@/components/song/TransposeControl'
 import { transposeSong } from '@/lib/music'
 import { parseSectionContent } from '@/lib/sectionContent'
+import { resolveSectionMetas, sectionMetaLabel } from '@/lib/sectionMeta'
+import { songMetaLine } from '@/lib/songMeta'
 import type { Song } from '@/types/song'
 
 type PerformanceModeProps = {
@@ -20,8 +22,27 @@ const MIN_FONT = 0.8
 const MAX_FONT = 1.6
 const FONT_STEP = 0.1
 
+/** スクロール速度の算出に使う BPM の下限・上限（異常値でスクロールが暴走しないように） */
+const MIN_BPM = 20
+const MAX_BPM = 300
+
+/** 読み取り位置（画面上端から 30% の位置）を「いま演奏しているセクション」とみなす。 */
+const READING_LINE_RATIO = 0.3
+
 /** BPM から自動スクロールの基準速度（px/秒）を算出する。 */
-const basePixelsPerSecond = (bpm: number | undefined) => ((bpm ?? 100) / 60) * 8
+const basePixelsPerSecond = (bpm: number | undefined) =>
+  (Math.min(Math.max(bpm ?? 100, MIN_BPM), MAX_BPM) / 60) * 8
+
+/**
+ * 読み取り位置に対応するセクションの index を返す。
+ * offsets は昇順なので、前回の index から線形に走査すれば実質 O(1) で済む。
+ */
+const findActiveIndex = (offsets: number[], readingLine: number, previousIndex: number): number => {
+  let index = Math.min(Math.max(previousIndex, 0), Math.max(offsets.length - 1, 0))
+  while (index > 0 && offsets[index] > readingLine) index--
+  while (index + 1 < offsets.length && offsets[index + 1] <= readingLine) index++
+  return index
+}
 
 export const PerformanceMode = ({ song, initialTranspose = 0, onClose }: PerformanceModeProps) => {
   const [transpose, setTranspose] = useState(initialTranspose)
@@ -30,24 +51,54 @@ export const PerformanceMode = ({ song, initialTranspose = 0, onClose }: Perform
   const [fontScale, setFontScale] = useState(1)
 
   const scrollRef = useRef<HTMLDivElement>(null)
+  const sectionRefs = useRef<Array<HTMLElement | null>>([])
+  /** スクロールコンテナ上端からの各セクションの位置（昇順） */
+  const offsetsRef = useRef<number[]>([])
+  const activeIndexRef = useRef(0)
+  /** 演奏中のセクション（速度表示用）。index が実際に変わったときだけ更新する */
+  const [activeIndex, setActiveIndex] = useState(0)
 
   const displaySong = useMemo(
     () => (transpose === 0 ? song : transposeSong(song, transpose)),
     [song, transpose]
   )
 
-  const parsedSections = useMemo(
-    () =>
-      displaySong.sections.map((section) => ({
-        ...section,
-        parsed: parseSectionContent(section.content),
-      })),
-    [displaySong.sections]
-  )
+  // 楽曲レベルのキー等も継承の基準になるため、依存は displaySong 全体にする
+  const parsedSections = useMemo(() => {
+    const metas = resolveSectionMetas(displaySong)
+    return displaySong.sections.map((section, index) => ({
+      ...section,
+      parsed: parseSectionContent(section.content),
+      // 直前のセクションから変化した項目だけを出す
+      metaLabel: sectionMetaLabel(metas[index].changed),
+      effectiveBpm: metas[index].effective.bpm,
+    }))
+  }, [displaySong])
+
+  // rAF ループから毎フレーム参照するので ref に写す（ループを張り替えないため）
+  const bpmsRef = useRef<Array<number | undefined>>([])
+  useEffect(() => {
+    bpmsRef.current = parsedSections.map((section) => section.effectiveBpm)
+  }, [parsedSections])
+
+  const activeBpm = parsedSections[activeIndex]?.effectiveBpm ?? song.bpm
 
   const togglePlaying = useCallback(() => setPlaying((prev) => !prev), [])
 
-  // 自動スクロール（BPM 連動 × 速度倍率）
+  // セクションの位置を計測しておく（毎フレーム測るとレイアウトが走るため）。
+  // offsetTop は offsetParent がルートの fixed 要素になりヘッダー分ずれるので rect 差分を使う。
+  useLayoutEffect(() => {
+    const container = scrollRef.current
+    if (!container || !isPlaying) return
+    const containerTop = container.getBoundingClientRect().top
+    // セクションが減ったときに古い ref が残らないよう、現在の件数ぶんだけ測る
+    sectionRefs.current.length = parsedSections.length
+    offsetsRef.current = sectionRefs.current.map((element) =>
+      element ? element.getBoundingClientRect().top - containerTop + container.scrollTop : 0
+    )
+  }, [parsedSections, fontScale, isPlaying])
+
+  // 自動スクロール（演奏中セクションの BPM 連動 × 速度倍率）
   useEffect(() => {
     if (!isPlaying) return
     let rafId = 0
@@ -58,7 +109,14 @@ export const PerformanceMode = ({ song, initialTranspose = 0, onClose }: Perform
       if (!container) return
       if (lastTime !== null) {
         const deltaSeconds = (time - lastTime) / 1000
-        container.scrollTop += basePixelsPerSecond(song.bpm) * speed * deltaSeconds
+        const readingLine = container.scrollTop + container.clientHeight * READING_LINE_RATIO
+        const index = findActiveIndex(offsetsRef.current, readingLine, activeIndexRef.current)
+        if (index !== activeIndexRef.current) {
+          activeIndexRef.current = index
+          setActiveIndex(index)
+        }
+        const bpm = bpmsRef.current[index] ?? song.bpm
+        container.scrollTop += basePixelsPerSecond(bpm) * speed * deltaSeconds
         // 最下部に到達したら停止
         if (container.scrollTop + container.clientHeight >= container.scrollHeight - 1) {
           setPlaying(false)
@@ -147,10 +205,7 @@ export const PerformanceMode = ({ song, initialTranspose = 0, onClose }: Perform
       <header className="flex items-center justify-between gap-4 border-b border-slate-800 px-6 py-3">
         <div className="min-w-0">
           <h2 className="truncate text-lg font-semibold">{displaySong.title}</h2>
-          <p className="truncate text-xs text-slate-400">
-            {displaySong.artist || 'アーティスト未設定'} · Key {displaySong.key || '-'} · BPM{' '}
-            {displaySong.bpm ?? '-'} · {displaySong.timeSignature}
-          </p>
+          <p className="truncate text-xs text-slate-400">{songMetaLine(displaySong)}</p>
         </div>
         <button
           type="button"
@@ -167,10 +222,21 @@ export const PerformanceMode = ({ song, initialTranspose = 0, onClose }: Perform
           className="mx-auto w-full max-w-3xl px-6 py-10 pb-[60vh]"
           style={{ fontSize: `${Math.round(fontScale * 100)}%` }}
         >
-          {parsedSections.map((section) => (
-            <section key={section.id} className="mb-[2em]">
+          {parsedSections.map((section, index) => (
+            <section
+              key={section.id}
+              ref={(element) => {
+                sectionRefs.current[index] = element
+              }}
+              className="mb-[2em]"
+            >
               <p className="text-[0.75em] font-semibold uppercase tracking-[0.25em] text-slate-500">
                 {section.name}
+                {section.metaLabel && (
+                  <span className="ml-2 font-medium normal-case tracking-normal text-indigo-300">
+                    {section.metaLabel}
+                  </span>
+                )}
               </p>
               <div className="mt-[0.75em] space-y-[1.25em]">
                 {section.parsed.lines.map((line) => (
@@ -213,6 +279,12 @@ export const PerformanceMode = ({ song, initialTranspose = 0, onClose }: Perform
           >
             {isPlaying ? '⏸ 停止' : '▶ 再生'}
           </button>
+
+          <div className="flex items-center gap-2 text-xs text-slate-300">
+            {/* 演奏中セクションの BPM。速度が切り替わった理由が分かるように出す */}
+            <span className="text-slate-500">BPM</span>
+            <span className="min-w-8 text-center font-mono">{activeBpm ?? '—'}</span>
+          </div>
 
           <div className="flex items-center gap-2 text-xs text-slate-300">
             <span className="text-slate-500">速度</span>

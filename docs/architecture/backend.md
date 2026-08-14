@@ -45,13 +45,15 @@ apps/backend/src/
 ├── app.ts                # Hono アプリ定義（CORS, logger, エラーハンドラ）
 ├── routes/
 │   ├── health.ts         # GET /api/health
-│   ├── songs.ts          # Song CRUD + 検索（Zodバリデーション）
+│   ├── songs.ts          # Song CRUD + 検索 + アーティスト名一覧（Zodバリデーション）
 │   ├── me.ts             # GET /api/me/*（マイページ）
 │   └── webhooks.ts       # Clerk Webhook（ユーザー同期）
 ├── middleware/
 │   └── auth.ts           # Clerk JWT 認証（jose）
 ├── services/
 │   └── song.service.ts   # ビジネスロジック
+├── lib/
+│   └── artistName.ts     # アーティスト名の正規化・集計（純粋関数）
 ├── db/
 │   ├── schema.ts         # Drizzle ORM スキーマ（4テーブル）
 │   └── index.ts          # DB クライアント初期化
@@ -72,7 +74,7 @@ const createSongSchema = z.object({
   artist: z.string().nullable().optional(),
   key: z.string().nullable().optional(),
   bpm: z.number().int().nullable().optional(),
-  timeSignature: z.string().optional().default("4/4"),
+  timeSignature: z.string().nullable().optional(),
 });
 
 songs.post("/", authMiddleware(), zValidator("json", createSongSchema, ...), async (c) => {
@@ -159,7 +161,7 @@ export const songs = pgTable("Songs", {
   artist: varchar("Artist", { length: 200 }),
   key: varchar("Key", { length: 10 }),
   bpm: integer("Bpm"),
-  timeSignature: varchar("TimeSignature", { length: 10 }).default("4/4"),
+  timeSignature: varchar("TimeSignature", { length: 10 }),
   content: text("Content").notNull().default('{"sections":[]}'),
   visibility: visibilityEnum("Visibility").notNull().default("private"),
   isDemo: boolean("IsDemo").notNull().default(false),

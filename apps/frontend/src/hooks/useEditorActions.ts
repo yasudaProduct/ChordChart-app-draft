@@ -214,19 +214,13 @@ export const useEditorActions = (saveFn?: SaveFn) => {
     [song]
   )
 
+  /**
+   * コード入力ダイアログを開く。
+   * position は基準点のまま保持する。ビューポートに収める位置調整は、
+   * 実サイズを測れる Dialog 側が担う（候補の増減で高さが変わるため）。
+   */
   const openDialog = useCallback(
     (next: ChordDialogState) => {
-      if (typeof window !== 'undefined') {
-        const width = 320
-        const height = 260
-        const x = Math.min(
-          window.innerWidth - width - 16,
-          Math.max(16, next.position.x - width / 2)
-        )
-        const y = Math.min(window.innerHeight - height - 16, Math.max(96, next.position.y + 16))
-        setDialog({ ...next, position: { x, y } })
-        return
-      }
       setDialog(next)
     },
     [setDialog]

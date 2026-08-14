@@ -25,12 +25,17 @@ CLERK_SECRET_KEY=sk_test_XXXXXXXX
 NEXT_PUBLIC_API_URL=http://localhost:8080/api
 ```
 
-#### Cloudflare Pages（本番）
+#### Cloudflare Pages（ステージング / 本番）
 
-Cloudflare ダッシュボードで設定:
+通常は GitHub Actions が自動で設定します。GitHub Environments（`staging` / `production`）に登録した値が、ビルド時の環境変数として使われ、デプロイ後に `wrangler pages secret put` でランタイム変数としても同期されます。
 
-1. Workers & Pages → 対象 Pages プロジェクト → Settings → Environment variables
-2. 各変数を追加（Production / Preview を選択可能）
+| GitHub Environment secret | Pages 側の変数名                    |
+| ------------------------- | ----------------------------------- |
+| `CLERK_PUBLISHABLE_KEY`   | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` |
+| `CLERK_SECRET_KEY`        | `CLERK_SECRET_KEY`                  |
+| `API_URL`                 | `NEXT_PUBLIC_API_URL`               |
+
+手動で確認・変更する場合は Cloudflare ダッシュボード → Workers & Pages → 対象 Pages プロジェクト → Settings → Environment variables。
 
 ---
 
@@ -68,24 +73,36 @@ ALLOWED_ORIGINS=http://localhost:3000
 PORT=8080
 ```
 
-#### Cloudflare Workers（本番）
+#### Cloudflare Workers（ステージング / 本番）
 
-公開してよい設定値は `apps/backend/wrangler.toml` の `[vars]` に記述し、秘匿情報は `wrangler secret` で登録します。
+公開してよい設定値は `apps/backend/wrangler.toml` の環境別 `vars` に記述し、秘匿情報は `wrangler secret` で登録します。**`vars` / `secrets` は環境に継承されない**ため、環境ごとに定義が必要です。
 
 ```toml
-# apps/backend/wrangler.toml の [vars]
-[vars]
+# apps/backend/wrangler.toml
+[env.staging]
+name = "chordbook-api-staging"
+
+[env.staging.vars]
 ALLOWED_ORIGINS = "https://chordbook-frontend-staging.pages.dev,http://localhost:3000"
 # Cloudflare Workers では neon-http を使用（postgres-js は不可）
 DATABASE_DRIVER = "neon-http"
+
+[env.production]
+name = "chordbook-api-production"
+
+[env.production.vars]
+ALLOWED_ORIGINS = "https://chord-books.com"
+DATABASE_DRIVER = "neon-http"
 ```
 
+シークレットは通常 GitHub Actions が Environment secrets から同期します。手動で登録する場合は `--env` で環境を指定します。
+
 ```bash
-# 秘匿情報は wrangler secret で登録（値はプロンプトで安全に入力）
+# 値はプロンプトで安全に入力
 cd apps/backend
-npx wrangler secret put DATABASE_URL
-npx wrangler secret put CLERK_ISSUER
-npx wrangler secret put CLERK_WEBHOOK_SECRET
+npx wrangler secret put DATABASE_URL --env production
+npx wrangler secret put CLERK_ISSUER --env production
+npx wrangler secret put CLERK_WEBHOOK_SECRET --env production
 ```
 
 > Workers ランタイムにはポートの概念がないため `PORT` は不要です（ローカル Node 実行時のみ使用）。
@@ -94,26 +111,43 @@ npx wrangler secret put CLERK_WEBHOOK_SECRET
 
 ## Clerk 設定
 
-Clerk ダッシュボードから以下の情報を取得:
+Clerk は **development と production で別インスタンス**です（ユーザーデータは共有されません）。ダッシュボード上部の環境切り替えで対象インスタンスを選んでから設定します。
 
 ### Configure → API Keys
 
-| 項目            | 用途                              |
-| --------------- | --------------------------------- |
-| Publishable Key | NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY |
-| Secret Key      | CLERK_SECRET_KEY                  |
+| 項目            | 用途                              | development                      | production                    |
+| --------------- | --------------------------------- | -------------------------------- | ----------------------------- |
+| Publishable Key | NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY | `pk_test_XXXX`                   | `pk_live_XXXX`                |
+| Secret Key      | CLERK_SECRET_KEY                  | `sk_test_XXXX`                   | `sk_live_XXXX`                |
+| Frontend API    | CLERK_ISSUER                      | `https://xxx.clerk.accounts.dev` | `https://clerk.chord-books.com` |
 
 ### Configure → Webhooks
 
-Webhook エンドポイントを登録し、以下のイベントを有効化:
+インスタンスごとに Webhook エンドポイントを登録し、`user.created` / `user.updated` / `user.deleted` を有効化します。
 
-- `user.created`
-- `user.updated`
-- `user.deleted`
-
-エンドポイント URL: `https://chordbook-api-staging.<account>.workers.dev/api/webhooks/clerk`
+| 環境         | エンドポイント URL                                                       |
+| ------------ | ------------------------------------------------------------------------ |
+| ステージング | `https://chordbook-api-staging.<account>.workers.dev/api/webhooks/clerk` |
+| 本番         | `https://api.chord-books.com/api/webhooks/clerk`                           |
 
 Webhook シークレットを `CLERK_WEBHOOK_SECRET` に設定。
+
+---
+
+## GitHub Environments のシークレット
+
+CI/CD が使う値は GitHub Environments（`staging` / `production`）に**同じ名前**で登録し、環境ごとに値を切り替えます。
+
+| シークレット名          | 対応する環境変数                    |
+| ----------------------- | ----------------------------------- |
+| `DATABASE_URL`          | `DATABASE_URL`                      |
+| `CLERK_ISSUER`          | `CLERK_ISSUER`                      |
+| `CLERK_WEBHOOK_SECRET`  | `CLERK_WEBHOOK_SECRET`              |
+| `CLERK_PUBLISHABLE_KEY` | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` |
+| `CLERK_SECRET_KEY`      | `CLERK_SECRET_KEY`                  |
+| `API_URL`               | `NEXT_PUBLIC_API_URL`               |
+
+リポジトリレベルには共通の `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` と、CI のビルド検証用キーを置きます。登録手順は [本番環境セットアップ](../infrastructure/production-setup.md) を参照。
 
 ---
 
@@ -139,7 +173,15 @@ Webhook シークレットを `CLERK_WEBHOOK_SECRET` に設定。
 
 ### 本番環境（Production）
 
-カスタムドメイン（`chordbook.app` / `api.chordbook.app`）と Neon `main` ブランチは本番リリース時に設定予定。現時点では上記ステージング環境を利用します。
+| サービス           | 設定値                             |
+| ------------------ | ---------------------------------- |
+| フロントエンド URL | https://chord-books.com              |
+| バックエンド URL   | https://api.chord-books.com          |
+| データベース       | Neon PostgreSQL（`main` ブランチ） |
+| 認証               | Clerk production インスタンス      |
+| CORS               | https://chord-books.com              |
+
+構築手順は [本番環境セットアップ](../infrastructure/production-setup.md) を参照。
 
 ---
 

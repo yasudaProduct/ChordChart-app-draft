@@ -1,0 +1,188 @@
+name: Deploy (reusable)
+
+# ステージング / 本番で共通のデプロイ手順。
+# 呼び出し元:
+#   - deploy-staging.yml    (develop への push)
+#   - deploy-production.yml (main への push / 手動実行)
+#
+# シークレットは GitHub Environments（staging / production）に同じ名前で登録し、
+# 環境ごとに値を切り替える。呼び出し元は secrets: inherit で引き渡すこと。
+#   DATABASE_URL / CLERK_ISSUER / CLERK_WEBHOOK_SECRET
+#   CLERK_PUBLISHABLE_KEY / CLERK_SECRET_KEY / API_URL
+# CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID はリポジトリレベルの共通シークレット。
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "GitHub Environment 名（staging / production）"
+        required: true
+        type: string
+      worker-env:
+        description: "wrangler.toml の環境名（[env.<name>]）"
+        required: true
+        type: string
+      pages-project:
+        description: "Cloudflare Pages のプロジェクト名"
+        required: true
+        type: string
+      pages-branch:
+        description: "Pages のデプロイ先ブランチ（プロジェクトの Production branch と一致させる）"
+        required: true
+        type: string
+
+jobs:
+  backend:
+    name: Backend → Cloudflare Workers
+    runs-on: ubuntu-latest
+    # production Environment に承認ルールを設定しているため、ここでデプロイ承認待ちになる
+    environment: ${{ inputs.environment }}
+    steps:
+      # Environment secrets の登録漏れを早期に検出する。
+      # 未登録のままだと同名のリポジトリシークレット（CI 用の開発キー）が使われてしまうため。
+      - name: Verify required secrets
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          CLERK_ISSUER: ${{ secrets.CLERK_ISSUER }}
+          CLERK_WEBHOOK_SECRET: ${{ secrets.CLERK_WEBHOOK_SECRET }}
+          API_URL: ${{ secrets.API_URL }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          fail=0
+          for name in DATABASE_URL CLERK_ISSUER CLERK_WEBHOOK_SECRET API_URL CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID; do
+            if [ -z "${!name}" ]; then
+              echo "::error::${{ inputs.environment }} 環境に $name が登録されていません"
+              fail=1
+            fi
+          done
+          exit $fail
+
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run database migration
+        run: pnpm db:migrate
+        working-directory: apps/backend
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Seed demo data
+        run: pnpm db:seed:demo
+        working-directory: apps/backend
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/backend
+          # deploy / secret put の両方に --env <worker-env> が付く
+          environment: ${{ inputs.worker-env }}
+          # env に渡した値を wrangler secret put で Worker へ同期する
+          secrets: |
+            DATABASE_URL
+            CLERK_ISSUER
+            CLERK_WEBHOOK_SECRET
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          CLERK_ISSUER: ${{ secrets.CLERK_ISSUER }}
+          CLERK_WEBHOOK_SECRET: ${{ secrets.CLERK_WEBHOOK_SECRET }}
+
+      - name: Health check
+        env:
+          API_URL: ${{ secrets.API_URL }}
+        run: |
+          set -euo pipefail
+          url="${API_URL}/health"
+          for i in 1 2 3 4 5; do
+            status=$(curl -s -o /dev/null -w '%{http_code}' "$url" || echo 000)
+            if [ "$status" = "200" ]; then
+              echo "OK: $url returned 200"
+              exit 0
+            fi
+            echo "attempt $i: $url returned $status — retrying in 10s"
+            sleep 10
+          done
+          echo "Health check failed: $url"
+          exit 1
+
+  frontend:
+    name: Frontend → Cloudflare Pages
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Verify required secrets
+        env:
+          CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          API_URL: ${{ secrets.API_URL }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          fail=0
+          for name in CLERK_PUBLISHABLE_KEY CLERK_SECRET_KEY API_URL CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID; do
+            if [ -z "${!name}" ]; then
+              echo "::error::${{ inputs.environment }} 環境に $name が登録されていません"
+              fail=1
+            fi
+          done
+          exit $fail
+
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build for Cloudflare Pages
+        run: pnpm exec next-on-pages
+        working-directory: apps/frontend
+        env:
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.API_URL }}
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/frontend
+          # コミット本文に不正 UTF-8 があると Pages API が 8000111 を返す。ASCII の代替メッセージを明示する。
+          command: >-
+            pages deploy .vercel/output/static
+            --project-name=${{ inputs.pages-project }}
+            --branch=${{ inputs.pages-branch }}
+            --commit-hash ${{ github.sha }}
+            --commit-message deploy-${{ inputs.environment }}-${{ github.sha }}
+
+      - name: Set Cloudflare Pages runtime secrets
+        run: |
+          printf '%s' "$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY" | pnpm exec wrangler pages secret put NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY --project-name=${{ inputs.pages-project }}
+          printf '%s' "$CLERK_SECRET_KEY" | pnpm exec wrangler pages secret put CLERK_SECRET_KEY --project-name=${{ inputs.pages-project }}
+          printf '%s' "$NEXT_PUBLIC_API_URL" | pnpm exec wrangler pages secret put NEXT_PUBLIC_API_URL --project-name=${{ inputs.pages-project }}
+        working-directory: apps/frontend
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.API_URL }}

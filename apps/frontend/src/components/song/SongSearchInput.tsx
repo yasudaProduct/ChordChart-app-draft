@@ -11,7 +11,7 @@ export const SongSearchInput = ({ query, onChange, resultCount }: SongSearchInpu
         type="text"
         value={query}
         onChange={(event) => onChange(event.target.value)}
-        placeholder="曲名・アーティスト・キーで検索"
+        placeholder="曲名・アーティストで検索"
         className="w-full rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm outline-none transition focus:border-slate-400 md:w-80"
       />
       <span className="text-xs text-slate-500">{resultCount} 件ヒット</span>

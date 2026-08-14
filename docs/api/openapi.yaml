@@ -119,6 +119,26 @@ paths:
                 items:
                   $ref: "#/components/schemas/SongListItem"
 
+  /api/songs/artists:
+    get:
+      tags: [Songs]
+      summary: 公開曲のアーティスト名一覧取得
+      description: |
+        アーティスト名入力のサジェスト（オートコンプリート）用のエンドポイントです。
+        公開曲（`visibility = "public"`、`isDemo = false`）のアーティスト名を、
+        表記ゆれ（大文字小文字・全角半角・空白）を正規化して重複排除し、
+        登録数の多い順に最大 500 件返します。認証は不要です。
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                example: ["YOASOBI", "King Gnu", "あいみょん"]
+
   /api/songs/{id}:
     get:
       tags: [Songs]
@@ -224,45 +244,55 @@ components:
         - 3: Public（全員に公開）
       enum: [0, 1, 2, 3]
 
-    ChordPosition:
+    ChordBlock:
       type: object
-      required: [chord, position]
+      required: [id, chord, offset]
       properties:
+        id:
+          type: string
+          example: chord-1
         chord:
           type: string
           example: C
-        position:
-          type: integer
-          format: int32
+        offset:
+          type: number
+          format: double
           minimum: 0
-          description: 歌詞文字列内の位置
-          example: 0
+          maximum: 1
+          description: 行内の相対位置（0〜1）
+          example: 0.2
 
-    LyricsChordLine:
+    SectionLine:
       type: object
-      required: [lyrics, chords]
+      required: [id, lyrics, chords]
       properties:
+        id:
+          type: string
+          example: line-1
         lyrics:
           type: string
+          description: コードのみのセクションでは空文字
           example: きょうも いちにち
         chords:
           type: array
           items:
-            $ref: "#/components/schemas/ChordPosition"
+            $ref: "#/components/schemas/ChordBlock"
 
-    BarLine:
+    SectionContent:
       type: object
-      required: [bars]
+      description: |
+        セクションの中身。`Section.content` には**この構造を JSON 文字列化したもの**が入る
+        （`Songs.Content` の中でさらに文字列としてネストする）。
+      required: [lines]
       properties:
-        bars:
+        lines:
           type: array
           items:
-            type: string
-          example: ["C", "G", "Am", "F"]
+            $ref: "#/components/schemas/SectionLine"
 
     Section:
       type: object
-      required: [id, name, type, lines]
+      required: [id, name, type, content]
       properties:
         id:
           type: string
@@ -273,20 +303,44 @@ components:
           example: イントロ
         type:
           type: string
-          enum: ["lyrics-chord", "bar"]
-          example: bar
-        lines:
-          type: array
-          items:
-            oneOf:
-              - $ref: "#/components/schemas/LyricsChordLine"
-              - $ref: "#/components/schemas/BarLine"
+          enum: ["lyrics-chord", "chord-only"]
+          example: chord-only
+        content:
+          type: string
+          description: SectionContent を JSON 文字列化したもの
+          example: '{"lines":[{"id":"line-1","lyrics":"","chords":[{"id":"chord-1","chord":"C","offset":0.2}]}]}'
+        key:
+          type: string
+          maxLength: 10
+          description: |
+            セクションのキー（任意）。未設定なら省略する（null は入れない）。
+            未設定時は直前のセクション → 楽曲全体の順に継承する（carry-forward）。
+          example: Am
+        bpm:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 999
+          description: セクションのテンポ（任意）。未設定時は key と同じ規則で継承する。
+          example: 90
+        timeSignature:
+          type: string
+          maxLength: 10
+          description: セクションの拍子（任意）。未設定時は key と同じ規則で継承する。
+          example: "6/8"
 
     SongContent:
-      type: array
-      description: コード譜データ（セクション配列）
-      items:
-        $ref: "#/components/schemas/Section"
+      type: object
+      description: |
+        コード譜データ。`Songs.Content` にはこの構造を JSON 文字列化したものが格納される。
+        API のレスポンスではパース済みのオブジェクトとして返り、
+        更新リクエストでは JSON 文字列として送る。
+      required: [sections]
+      properties:
+        sections:
+          type: array
+          items:
+            $ref: "#/components/schemas/Section"
 
     SongListItem:
       type: object
@@ -340,7 +394,6 @@ components:
       required:
         - id
         - title
-        - timeSignature
         - content
         - visibility
         - createdAt
@@ -367,6 +420,7 @@ components:
           minimum: 1
         timeSignature:
           type: string
+          nullable: true
           maxLength: 10
           example: "4/4"
         content:
@@ -402,12 +456,12 @@ components:
           minimum: 1
         timeSignature:
           type: string
+          nullable: true
           maxLength: 10
-          default: "4/4"
 
     UpdateSongRequest:
       type: object
-      required: [title, timeSignature, content]
+      required: [title, content]
       properties:
         title:
           type: string
@@ -427,6 +481,7 @@ components:
           minimum: 1
         timeSignature:
           type: string
+          nullable: true
           maxLength: 10
         content:
           $ref: "#/components/schemas/SongContent"

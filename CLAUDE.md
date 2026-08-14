@@ -49,7 +49,8 @@ pnpm lint         # ESLint実行
 pnpm lint:fix     # ESLint自動修正
 pnpm format       # Prettierフォーマット適用
 pnpm build:cf     # Cloudflare Pages 向けビルド (next-on-pages)
-pnpm deploy:staging # ステージングへデプロイ
+pnpm deploy:staging    # ステージングへデプロイ (chordbook-frontend-staging)
+pnpm deploy:production # 本番へデプロイ (chordbook-frontend)
 ```
 
 ### バックエンド (apps/backend)
@@ -69,7 +70,8 @@ pnpm db:migrate   # マイグレーション適用（CI/ステージング）
 pnpm db:push      # DBスキーマをプッシュ（ローカル開発向け）
 pnpm db:seed      # 開発・テスト用データ投入（破壊的・全リセット）
 pnpm db:seed:demo # デモ曲のみ冪等投入（非破壊・CI/ステージング）
-pnpm deploy:staging # Cloudflare Workers へデプロイ
+pnpm deploy:staging    # Cloudflare Workers へデプロイ (wrangler deploy --env staging)
+pnpm deploy:production # 本番へデプロイ (wrangler deploy --env production)
 ```
 
 ## アーキテクチャ
@@ -108,7 +110,7 @@ apps/backend/src/
 ├── app.ts                # Honoアプリ定義（CORS, logger, エラーハンドラ）
 ├── routes/
 │   ├── health.ts         # GET /api/health
-│   ├── songs.ts          # Song CRUD + 検索 + 公開範囲変更 + 共有リンク管理
+│   ├── songs.ts          # Song CRUD + 検索 + アーティスト名一覧 + 公開範囲変更 + 共有リンク管理
 │   ├── shares.ts         # GET /api/shares/:token（共有トークン解決・認証不要）
 │   ├── me.ts             # GET /api/me/*（マイページ）
 │   └── webhooks.ts       # Clerk Webhook（ユーザー同期）
@@ -120,6 +122,8 @@ apps/backend/src/
 ├── services/
 │   ├── song.service.ts   # 楽曲のビジネスロジック
 │   └── share.service.ts  # 共有リンクのビジネスロジック
+├── lib/
+│   └── artistName.ts     # アーティスト名の正規化・集計（純粋関数）
 └── types/
     └── index.ts          # Visibility定数・型定義
 ```
@@ -178,6 +182,19 @@ CLERK_SECRET_KEY                   # Clerkシークレットキー
 NEXT_PUBLIC_API_URL                # バックエンドAPI URL
 ```
 
+## デプロイ
+
+| ブランチ  | 環境         | 契機                                  |
+| --------- | ------------ | ------------------------------------- |
+| `develop` | ステージング | push で自動デプロイ                   |
+| `main`    | 本番         | push → 事前検証 → **承認** → デプロイ |
+
+- 作業ブランチは `develop` から分岐し、`develop` へ PR を出す。本番リリースは `develop` → `main` の PR。
+- ワークフローは共通の `.github/workflows/deploy.yml` を `deploy-staging.yml` / `deploy-production.yml` から呼び出す。
+- シークレットは GitHub Environments（`staging` / `production`）に同名で登録し、環境ごとに値を切り替える。
+- Workers は `wrangler deploy --env <staging|production>` で環境を指定する（`--env` 必須）。
+- Pages は `--project-name` でプロジェクトを切り替える（ST: `chordbook-frontend-staging` / 本番: `chordbook-frontend`）。
+
 ## 詳細ドキュメント
 
 `docs/` ディレクトリに包括的なドキュメントあり:
@@ -186,3 +203,5 @@ NEXT_PUBLIC_API_URL                # バックエンドAPI URL
 - `development/` - 環境構築、コーディング規約、Git運用
 - `api/` - REST API仕様
 - `database/` - ER図、テーブル定義
+- `infrastructure/` - インフラ構成、ステージング/本番の構築手順
+- `deployment/` - 環境変数、デプロイ手順、トラブルシューティング

@@ -14,6 +14,16 @@ export function generateId(): string {
 // Time signatures
 export const TIME_SIGNATURES = ['4/4', '3/4', '6/8', '2/4'] as const
 
+/**
+ * 選択肢に無い現在値を先頭に差し込んだ一覧を返す。
+ * 既存データの変拍子（5/4 など）や見慣れないキーが、選択肢に無いという理由で
+ * 消えてしまわないようにするためのもの。
+ */
+export function withCurrentOption(options: readonly string[], current: string): string[] {
+  if (!current || options.includes(current)) return [...options]
+  return [current, ...options]
+}
+
 // Common section names
 export const SECTION_PRESETS = [
   'イントロ',

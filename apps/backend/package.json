@@ -18,7 +18,8 @@
     "db:push": "drizzle-kit push",
     "db:seed": "tsx src/db/seed.ts",
     "db:seed:demo": "tsx src/db/seedDemo.ts",
-    "deploy:staging": "wrangler deploy"
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:production": "wrangler deploy --env production"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.0",

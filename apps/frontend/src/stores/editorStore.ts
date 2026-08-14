@@ -12,6 +12,7 @@ export type ChordDialogState = {
   chordId?: string
   offset: number
   value: string
+  /** ダイアログ表示の基準点（クリック位置）。実際の配置は Dialog 側で調整する。 */
   position: { x: number; y: number }
 }
 

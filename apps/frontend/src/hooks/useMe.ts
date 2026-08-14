@@ -20,3 +20,12 @@ export const useMyRecentSongs = (limit = 5) => {
   )
   return { songs: data ?? [], error, isLoading: !isAuthReady || isLoading, mutate }
 }
+
+export const useMySongs = () => {
+  const isAuthReady = !useAuthStore((s) => s.isLoading)
+  const user = useAuthStore((s) => s.user)
+  const { data, error, isLoading, mutate } = useSWR(isAuthReady && user ? 'me/songs' : null, () =>
+    meApi.listMySongs()
+  )
+  return { songs: data ?? [], error, isLoading: !isAuthReady || isLoading, mutate }
+}

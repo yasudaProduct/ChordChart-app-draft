@@ -10,12 +10,12 @@ import {
 } from '@/lib/music'
 import type { ChordDialogState } from '@/stores/editorStore'
 
-// キー未設定時のフォールバック候補（よく使う基本コード）
-const FALLBACK_LIBRARY = ['C', 'G', 'Am', 'F', 'Dm', 'Em', 'D', 'A', 'E', 'B7']
-
 type ChordDialogProps = {
   state: ChordDialogState
-  /** 曲のキー（ダイアトニック候補・予測の基準） */
+  /**
+   * 適用中のキー（ダイアトニック候補・予測の基準）。
+   * セクションに設定があればそれを優先した有効キーが渡る。
+   */
   songKey?: string
   /** 挿入位置の直前のコード（次のコード予測の基準） */
   previousChord?: string | null
@@ -31,6 +31,9 @@ type ChordGroupProps = {
   variant: 'default' | 'next' | 'substitute'
   onSelect: (chord: string) => void
 }
+
+/** 固定ヘッダー（h-16）に重ならないための上端マージン */
+const HEADER_CLEARANCE = 96
 
 const variantStyles = {
   default: 'border-slate-200 text-slate-600 hover:border-primary hover:text-primary',
@@ -65,11 +68,9 @@ export const ChordDialog = ({
   onDelete,
   onClose,
 }: ChordDialogProps) => {
-  // キーに基づくダイアトニック候補（キー未設定時は基本コード）
-  const candidates = useMemo(() => {
-    const diatonic = getDiatonicSuggestions(songKey)
-    return diatonic.length > 0 ? diatonic : FALLBACK_LIBRARY
-  }, [songKey])
+  // キーに基づくダイアトニック候補。キー未設定時は候補を出さない
+  // （キーが未確定の段階では誤った提案になりうるため）
+  const candidates = useMemo(() => getDiatonicSuggestions(songKey), [songKey])
 
   // 直前のコードから次に続きやすいコード
   const nextChords = useMemo(
@@ -84,7 +85,7 @@ export const ChordDialog = ({
   )
 
   return (
-    <Dialog position={state.position} onClose={onClose}>
+    <Dialog position={state.position} topMargin={HEADER_CLEARANCE} onClose={onClose}>
       <input
         type="text"
         value={state.value}
@@ -99,12 +100,18 @@ export const ChordDialog = ({
       />
 
       <div className="mt-4 space-y-4 text-xs text-slate-500">
-        <ChordGroup
-          title={songKey ? `コード候補（Key: ${songKey}）` : 'コード候補'}
-          chords={candidates}
-          variant="default"
-          onSelect={onValueChange}
-        />
+        {candidates.length > 0 ? (
+          <ChordGroup
+            title={`コード候補（Key: ${songKey}）`}
+            chords={candidates}
+            variant="default"
+            onSelect={onValueChange}
+          />
+        ) : (
+          <p className="rounded-md bg-slate-50 px-3 py-2 text-[11px] leading-relaxed text-slate-500">
+            キーを設定するとコード候補が表示されます。
+          </p>
+        )}
         {nextChords.length > 0 && previousChord && (
           <ChordGroup
             title={`次のコード予測（${previousChord} の後）`}

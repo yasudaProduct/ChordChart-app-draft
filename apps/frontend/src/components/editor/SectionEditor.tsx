@@ -1,9 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { parseSectionContent, type ChordBlock } from '@/lib/sectionContent'
-import type { Section, SectionType } from '@/types/song'
+import type { MusicMeta, Section, SectionType } from '@/types/song'
 import { SectionHeader } from './SectionHeader'
+import { SectionMetaPanel } from './SectionMetaPanel'
 import { LineEditor } from './LineEditor'
 
 type SectionEditorProps = {
@@ -11,8 +13,11 @@ type SectionEditorProps = {
   index: number
   totalSections: number
   isDragging: boolean
+  /** キー・BPM・拍子を未設定にした場合に継承される値 */
+  inheritedMeta: MusicMeta
   onNameChange: (name: string) => void
   onTypeChange: (type: SectionType) => void
+  onMetaChange: (field: keyof MusicMeta, value: string | number | undefined) => void
   onDuplicate: () => void
   onMove: (direction: -1 | 1) => void
   onDelete: () => void
@@ -34,8 +39,10 @@ export const SectionEditor = ({
   index,
   totalSections,
   isDragging,
+  inheritedMeta,
   onNameChange,
   onTypeChange,
+  onMetaChange,
   onDuplicate,
   onMove,
   onDelete,
@@ -48,6 +55,9 @@ export const SectionEditor = ({
   onDragEnd,
 }: SectionEditorProps) => {
   const content = parseSectionContent(section.content)
+  // 一時的なビュー状態なのでローカルに持つ。リストの key={section.id} により
+  // 並べ替えでは保持され、削除時に破棄される
+  const [isMetaOpen, setMetaOpen] = useState(false)
 
   return (
     <div
@@ -59,6 +69,8 @@ export const SectionEditor = ({
         section={section}
         index={index}
         totalSections={totalSections}
+        isMetaOpen={isMetaOpen}
+        onToggleMeta={() => setMetaOpen((prev) => !prev)}
         onNameChange={onNameChange}
         onTypeChange={onTypeChange}
         onDuplicate={onDuplicate}
@@ -68,6 +80,10 @@ export const SectionEditor = ({
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
       />
+
+      {isMetaOpen && (
+        <SectionMetaPanel meta={section} inherited={inheritedMeta} onChange={onMetaChange} />
+      )}
 
       <div className="space-y-5 px-4 py-5">
         {content.lines.map((line) => (

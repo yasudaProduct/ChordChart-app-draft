@@ -3,7 +3,6 @@
 import { useMemo, useState } from 'react'
 import { SongCard } from '@/components/song/SongCard'
 import { SongSearchInput } from '@/components/song/SongSearchInput'
-import { songApi } from '@/lib/songApi'
 import { useSongListForMode } from '@/hooks/useSong'
 
 type SongListContentProps = {
@@ -11,7 +10,7 @@ type SongListContentProps = {
 }
 
 export const SongListContent = ({ mode = 'default' }: SongListContentProps) => {
-  const { songs, error, isLoading, mutate } = useSongListForMode(mode)
+  const { songs, error, isLoading } = useSongListForMode(mode)
   const [query, setQuery] = useState('')
 
   const filtered = useMemo(() => {
@@ -20,19 +19,9 @@ export const SongListContent = ({ mode = 'default' }: SongListContentProps) => {
     return songs.filter(
       (song) =>
         song.title.toLowerCase().includes(lower) ||
-        (song.artist ?? '').toLowerCase().includes(lower) ||
-        (song.key ?? '').toLowerCase().includes(lower)
+        (song.artist ?? '').toLowerCase().includes(lower)
     )
   }, [songs, query])
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('この楽曲を削除しますか？')) return
-    await songApi.remove(id)
-    mutate(
-      songs.filter((song) => song.id !== id),
-      false
-    )
-  }
 
   return (
     <>
@@ -53,12 +42,7 @@ export const SongListContent = ({ mode = 'default' }: SongListContentProps) => {
           </div>
         ) : (
           filtered.map((song) => (
-            <SongCard
-              key={song.id}
-              song={song}
-              mode={mode}
-              onDelete={mode === 'default' ? handleDelete : undefined}
-            />
+            <SongCard key={song.id} song={song} mode={mode} showActions={mode === 'demo'} />
           ))
         )}
       </div>

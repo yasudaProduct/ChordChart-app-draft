@@ -2,10 +2,11 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { ChordSheet } from '@/components/song/ChordSheet'
 import { PerformanceMode } from '@/components/song/PerformanceMode'
-import { SongPreview } from '@/components/song/SongPreview'
 import { TransposeControl } from '@/components/song/TransposeControl'
 import { transposeSong } from '@/lib/music'
+import { songApi } from '@/lib/songApi'
 import { useSong } from '@/hooks/useSong'
 import { useRequireAuth } from '@/hooks/useRequireAuth'
 import type { Song } from '@/types/song'
@@ -57,6 +58,9 @@ export const SongDetailContent = ({
     return <div className="mx-auto max-w-4xl px-6 py-16 text-sm text-slate-500">読み込み中...</div>
   }
 
+  const canEdit = isDemo || !!song.isOwner
+  const canDelete = !isDemo && !!song.isOwner
+
   const handleEdit = () => {
     if (isDemo) {
       router.push(editHref)
@@ -65,24 +69,24 @@ export const SongDetailContent = ({
     }
   }
 
+  const handleDelete = async () => {
+    if (!confirm('この楽曲を削除しますか？')) return
+    await songApi.remove(id)
+    router.push(backHref)
+  }
+
   return (
-    <section className="mx-auto max-w-4xl px-6 py-10">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-semibold text-slate-900">{song.title}</h1>
-          <p className="text-sm text-slate-500">
-            {song.artist || 'アーティスト未設定'} · Key {displaySong.key || '-'} · BPM{' '}
-            {song.bpm ?? '-'} · {song.timeSignature}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 print:hidden">
-          <button
-            type="button"
-            onClick={() => setPerforming(true)}
-            className="rounded-full bg-indigo-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-indigo-400"
-          >
-            ▶ 演奏モード
-          </button>
+    <section className="mx-auto max-w-4xl px-6 py-10 print:p-0">
+      {/* 曲名・メタ情報は譜面（ChordSheet）側に出すため、ここは操作ボタンのみ */}
+      <div className="flex flex-wrap items-center justify-end gap-2 print:hidden">
+        <button
+          type="button"
+          onClick={() => setPerforming(true)}
+          className="rounded-full bg-indigo-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-indigo-400"
+        >
+          ▶ 演奏モード
+        </button>
+        {canEdit && (
           <button
             type="button"
             onClick={handleEdit}
@@ -90,29 +94,38 @@ export const SongDetailContent = ({
           >
             編集
           </button>
+        )}
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-400"
+        >
+          印刷 / PDF
+        </button>
+        {canDelete && (
           <button
             type="button"
-            onClick={() => window.print()}
-            className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-400"
+            onClick={handleDelete}
+            className="rounded-full border border-red-200 px-4 py-2 text-xs font-semibold text-red-600 transition hover:border-red-400 hover:bg-red-50"
           >
-            印刷 / PDF
+            削除
           </button>
-          <button
-            type="button"
-            onClick={() => router.push(backHref)}
-            className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-400"
-          >
-            一覧へ戻る
-          </button>
-        </div>
+        )}
+        <button
+          type="button"
+          onClick={() => router.push(backHref)}
+          className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-400"
+        >
+          一覧へ戻る
+        </button>
       </div>
 
       <div className="mt-4 print:hidden">
         <TransposeControl semitones={transpose} onChange={setTranspose} baseKey={song.key} />
       </div>
 
-      <div className="mt-6 rounded-3xl border border-white/60 bg-white/80 p-6 shadow-[0_30px_80px_-50px_rgba(15,23,42,0.5)] print:mt-2 print:border-none print:bg-white print:p-0 print:shadow-none">
-        <SongPreview song={displaySong} />
+      <div className="mt-6 rounded-3xl border border-white/60 bg-white/80 p-6 shadow-[0_30px_80px_-50px_rgba(15,23,42,0.5)] print:mt-0 print:border-none print:bg-white print:p-0 print:shadow-none">
+        <ChordSheet song={displaySong} />
       </div>
 
       {isPerforming && (

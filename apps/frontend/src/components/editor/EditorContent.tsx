@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import useSWR from 'swr'
 import { cn } from '@/lib/utils'
 import { collectChordSymbols, semitonesBetweenKeys } from '@/lib/music'
+import { resolveSectionMetaById, resolveSectionMetas } from '@/lib/sectionMeta'
 import { useEditorStore } from '@/stores/editorStore'
 import { useEditorActions } from '@/hooks/useEditorActions'
 import { useChordDrag } from '@/hooks/useChordDrag'
@@ -37,6 +38,8 @@ type EditorContentProps = {
   backHref: string
   /** 共有機能の有効/無効（デモモードではサーバー保存が無いため無効化する） */
   shareEnabled?: boolean
+  /** 所有者以外のアクセスを拒否するか。*/
+  requireOwnership?: boolean
 }
 
 export const EditorContent = ({
@@ -45,6 +48,7 @@ export const EditorContent = ({
   saveFn,
   backHref,
   shareEnabled = true,
+  requireOwnership = false,
 }: EditorContentProps) => {
   const router = useRouter()
   const [isShareOpen, setShareOpen] = useState(false)
@@ -99,6 +103,15 @@ export const EditorContent = ({
     [handleMetaChange]
   )
 
+  // セクションごとのキー・BPM・拍子の解決結果（未設定は直前セクション → 楽曲全体を継承）
+  const sectionMetas = useMemo(() => (song ? resolveSectionMetas(song) : []), [song])
+
+  // コード候補は編集中セクションの有効キーで算出する（転調セクションでも正しい候補が出る）
+  const dialogKey = useMemo(() => {
+    if (!dialog || !song) return song?.key
+    return resolveSectionMetaById(song, dialog.sectionId)?.effective.key ?? song.key
+  }, [dialog, song])
+
   // 挿入・編集位置の直前のコード（次のコード予測に使う）
   const previousChord = useMemo(() => {
     if (!dialog || !song) return null
@@ -120,6 +133,7 @@ export const EditorContent = ({
   })
 
   const isLoading = song === null && isFetching
+  const isForbidden = requireOwnership && song !== null && song?.isOwner === false
 
   useEffect(() => {
     return () => {
@@ -148,11 +162,26 @@ export const EditorContent = ({
     })
   }
 
-  if (!song) {
+  if (!song || isForbidden) {
     return (
       <main className="min-h-screen">
-        <div className="mx-auto max-w-4xl px-6 py-16 text-sm text-slate-500">
-          {isLoading ? '読み込み中...' : '楽曲が見つかりませんでした。'}
+        <div className="mx-auto max-w-4xl px-6 py-16 text-center text-sm text-slate-500">
+          {isLoading ? (
+            '読み込み中...'
+          ) : isForbidden ? (
+            <>
+              <p>この楽曲を編集する権限がありません。</p>
+              <button
+                type="button"
+                onClick={() => router.push(backHref)}
+                className="mt-4 rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-400"
+              >
+                一覧へ戻る
+              </button>
+            </>
+          ) : (
+            '楽曲が見つかりませんでした。'
+          )}
         </div>
       </main>
     )
@@ -196,11 +225,17 @@ export const EditorContent = ({
                 index={index}
                 totalSections={song.sections.length}
                 isDragging={draggingSectionId === section.id}
+                inheritedMeta={sectionMetas[index]?.inherited ?? {}}
                 onNameChange={(name) =>
                   useEditorStore.getState().updateSection(section.id, (s) => ({ ...s, name }))
                 }
                 onTypeChange={(type) =>
                   useEditorStore.getState().updateSection(section.id, (s) => ({ ...s, type }))
+                }
+                onMetaChange={(field, value) =>
+                  useEditorStore
+                    .getState()
+                    .updateSection(section.id, (s) => ({ ...s, [field]: value }))
                 }
                 onDuplicate={() => duplicateSection(section.id)}
                 onMove={(direction) => moveSection(section.id, direction)}
@@ -229,7 +264,7 @@ export const EditorContent = ({
       {dialog && (
         <ChordDialog
           state={dialog}
-          songKey={song.key}
+          songKey={dialogKey}
           previousChord={previousChord}
           onValueChange={(value) => setDialog({ ...dialog, value })}
           onConfirm={handleChordConfirm}

@@ -2,14 +2,14 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/Button'
 import { useRequireAuth } from '@/hooks/useRequireAuth'
 import type { SongListItem } from '@/types/song'
 
 type SongCardProps = {
   song: SongListItem
   mode?: 'default' | 'demo'
-  onDelete?: (id: string) => void
+  /** 編集ボタンを表示するか。公開曲一覧では詳細リンクのみ表示する（誰の曲か分からないため）。 */
+  showActions?: boolean
 }
 
 const formatDate = (value: string) => {
@@ -19,7 +19,7 @@ const formatDate = (value: string) => {
   ).padStart(2, '0')}`
 }
 
-export const SongCard = ({ song, mode = 'default', onDelete }: SongCardProps) => {
+export const SongCard = ({ song, mode = 'default', showActions = true }: SongCardProps) => {
   const router = useRouter()
   const { requireAuth } = useRequireAuth()
 
@@ -51,22 +51,14 @@ export const SongCard = ({ song, mode = 'default', onDelete }: SongCardProps) =>
         >
           詳細
         </Link>
-        <button
-          type="button"
-          onClick={handleEdit}
-          className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white transition hover:bg-slate-800"
-        >
-          編集
-        </button>
-        {!isDemo && onDelete && (
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={() => requireAuth(() => onDelete(song.id))}
-            className="rounded-full px-3 py-1 text-xs font-semibold"
+        {showActions && (
+          <button
+            type="button"
+            onClick={handleEdit}
+            className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white transition hover:bg-slate-800"
           >
-            削除
-          </Button>
+            編集
+          </button>
         )}
       </div>
     </div>

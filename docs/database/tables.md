@@ -56,7 +56,7 @@ CREATE TABLE Users (
 | Artist        | VARCHAR(200)      | YES  | NULL              | -              | アーティスト名  |
 | Key           | VARCHAR(10)       | YES  | NULL              | -              | キー（C, Am等） |
 | Bpm           | INT               | YES  | NULL              | CHECK(Bpm > 0) | テンポ          |
-| TimeSignature | VARCHAR(10)       | NO   | '4/4'             | -              | 拍子            |
+| TimeSignature | VARCHAR(10)       | YES  | NULL              | -              | 拍子            |
 | Content       | TEXT              | NO   | '{"sections":[]}' | -              | コード譜データ  |
 | Visibility    | visibility (ENUM) | NO   | 'private'         | -              | 公開設定        |
 | IsDemo        | BOOLEAN           | NO   | false             | -              | デモ用曲フラグ  |
@@ -96,7 +96,7 @@ CREATE TABLE Songs (
     Artist VARCHAR(200),
     Key VARCHAR(10),
     Bpm INT,
-    TimeSignature VARCHAR(10) NOT NULL DEFAULT '4/4',
+    TimeSignature VARCHAR(10),
     Content TEXT NOT NULL DEFAULT '{"sections":[]}',
     Visibility visibility NOT NULL DEFAULT 'private',
     IsDemo BOOLEAN NOT NULL DEFAULT false,
@@ -208,6 +208,15 @@ Songs.Content に格納される JSON の構造（現行形式）:
       "name": "Aメロ",
       "type": "lyrics-chord",
       "content": "{\"lines\":[{\"id\":\"line-2\",\"lyrics\":\"きょうも いちにち\",\"chords\":[{\"id\":\"chord-2\",\"chord\":\"C\",\"offset\":0.05}]}]}"
+    },
+    {
+      "id": "section-3",
+      "name": "大サビ",
+      "type": "lyrics-chord",
+      "key": "Am",
+      "bpm": 90,
+      "timeSignature": "6/8",
+      "content": "{\"lines\":[{\"id\":\"line-3\",\"lyrics\":\"さいごの ワンフレーズ\",\"chords\":[{\"id\":\"chord-3\",\"chord\":\"Am\",\"offset\":0.05}]}]}"
     }
   ]
 }
@@ -218,7 +227,32 @@ Songs.Content に格納される JSON の構造（現行形式）:
 - Section `type` は `lyrics-chord` または `chord-only`
 - コード位置は `offset`（0〜1）
 
-フロントエンドは旧形式（トップレベル配列 + `lines` 直下など）も読み取り時に変換します。
+### セクション単位のキー・BPM・拍子
+
+Section の `key` / `bpm` / `timeSignature` はいずれも任意で、**未設定のキーは JSON に含めない**（`null` は入れない）。
+
+有効値の決まり方は **carry-forward**（`apps/frontend/src/lib/sectionMeta.ts`）:
+
+1. そのセクションの明示値
+2. 無ければ、それより前で最後に明示設定されたセクションの値
+3. 無ければ、楽曲全体（`Songs.Key` / `Bpm` / `TimeSignature`）の値
+4. それも無ければ未設定
+
+フィールドごとに独立して引き継ぐ（BPM だけ設定したセクションでも、キーは以前の値を引き継ぐ）。
+
+読み込み時のサニタイズ（`apps/frontend/src/lib/parseSongContent.ts`）:
+
+| フィールド      | 受け入れる値                       | 落とす値                                      |
+| --------------- | ---------------------------------- | --------------------------------------------- |
+| `key`           | 空でない文字列（前後の空白は除去） | 空文字・空白のみ・非文字列                    |
+| `bpm`           | 1〜999 の数値（数値文字列も可）    | 非数値・0 以下・1000 以上（四捨五入して判定） |
+| `timeSignature` | 10 文字以下の空でない文字列        | 空文字・11 文字以上                           |
+
+不正値はクランプせず落とす（落とせば継承にフォールバックし、挙動が予測可能になるため）。拍子は `5/4` などの変拍子を保持するため選択肢との照合はしない。
+
+バックエンドは `Content` を不透明な文字列として扱う（`routes/songs.ts` の `content: z.string().optional()`）ため、**セクション単位のメタ情報を追加しても DB スキーマ変更・マイグレーションは不要**。
+
+フロントエンドは旧形式（トップレベル配列 + `lines` 直下など）も読み取り時に変換します。メタ情報を持たない既存データは全項目が未設定として読み込まれ、従来どおり楽曲全体の値が使われます。
 
 ---
 

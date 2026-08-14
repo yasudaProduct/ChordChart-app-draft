@@ -65,6 +65,7 @@ src/
 │   ├── ui/                       # 汎用UIプリミティブ（純粋・controlled）
 │   │   ├── Button.tsx
 │   │   ├── Input.tsx
+│   │   ├── Combobox.tsx
 │   │   ├── Select.tsx
 │   │   ├── Toggle.tsx
 │   │   ├── Dialog.tsx
@@ -74,9 +75,10 @@ src/
 │   │   └── SiteHeader.tsx
 │   │
 │   ├── song/                     # 楽曲関連コンポーネント
-│   │   ├── SongPreview.tsx
+│   │   ├── ChordSheet.tsx
 │   │   ├── SongCard.tsx
-│   │   └── SongSearchInput.tsx
+│   │   ├── SongSearchInput.tsx
+│   │   └── ArtistInput.tsx
 │   │
 │   ├── editor/                   # エディタ機能コンポーネント
 │   │   ├── EditorContent.tsx     # エディタ統括（DI で本番/デモ再利用）
@@ -84,6 +86,7 @@ src/
 │   │   ├── MetadataPanel.tsx
 │   │   ├── SectionEditor.tsx
 │   │   ├── SectionHeader.tsx
+│   │   ├── SectionMetaPanel.tsx
 │   │   ├── LineEditor.tsx
 │   │   ├── ChordRow.tsx
 │   │   ├── ChordDialog.tsx
@@ -140,6 +143,7 @@ src/
 | -------------- | ---------------------- | ---------------------------------------------------- |
 | `Button`       | ボタン描画             | `variant`, `size`, `disabled`, `onClick`, `children` |
 | `Input`        | テキスト入力           | `label`, `value`, `onChange`, `placeholder`, `type`  |
+| `Combobox`     | サジェスト付き入力     | `label`, `value`, `onChange`, `suggestions`          |
 | `Select`       | セレクトボックス       | `label`, `value`, `onChange`, `options`              |
 | `Toggle`       | ON/OFF 切替            | `checked`, `onChange`, `label`                       |
 | `Dialog`       | モーダルダイアログ     | `open`, `onClose`, `position`, `children`            |
@@ -157,27 +161,29 @@ src/
 
 楽曲の表示・一覧に関するコンポーネント。
 
-| コンポーネント    | 責務                                | 使用箇所             |
-| ----------------- | ----------------------------------- | -------------------- |
-| `SongPreview`     | 楽曲の読み取り専用プレビュー        | 楽曲詳細、共有ページ |
-| `SongCard`        | 一覧での楽曲カード表示              | 楽曲一覧、検索結果   |
-| `SongSearchInput` | 検索入力フィールド + ヒット件数表示 | 楽曲一覧、検索ページ |
+| コンポーネント    | 責務                                                          | 使用箇所                                 |
+| ----------------- | ------------------------------------------------------------- | ---------------------------------------- |
+| `ChordSheet`      | コード譜の共通表示（ヘッダー + セクション。印刷スタイル込み） | 楽曲詳細、共有ページ、エディタプレビュー |
+| `SongCard`        | 一覧での楽曲カード表示                                        | 楽曲一覧、検索結果                       |
+| `SongSearchInput` | 検索入力フィールド + ヒット件数表示                           | 楽曲一覧、検索ページ                     |
+| `ArtistInput`     | アーティスト名入力 + サジェスト                               | 新規作成、エディタ                       |
 
 ### 3.4 エディタコンポーネント (`components/editor/`)
 
 エディタページの各領域を個別コンポーネントに分割する。
 
-| コンポーネント      | 責務                                               | 行数目安 |
-| ------------------- | -------------------------------------------------- | -------- |
-| `EditorHeader`      | ツールバー（保存・共有・印刷・プレビュー切替）     | ~70行    |
-| `MetadataPanel`     | 曲名・アーティスト・キー・BPM・拍子の入力          | ~70行    |
-| `SectionEditor`     | 1つのセクション全体（ヘッダー + 行リスト）         | ~50行    |
-| `SectionHeader`     | セクション名・タイプ切替・操作ボタン群             | ~70行    |
-| `LineEditor`        | 1行分（コード配置エリア + 歌詞入力）               | ~40行    |
-| `ChordRow`          | コード配置エリア（クリックで追加、ドラッグで移動） | ~40行    |
-| `ChordDialog`       | コード入力ダイアログ（候補・予測・代理コード）     | ~100行   |
-| `PreviewPanel`      | 右側プレビューパネル                               | ~60行    |
-| `SectionAddButtons` | セクション追加プリセットボタン群                   | ~40行    |
+| コンポーネント      | 責務                                                  | 行数目安 |
+| ------------------- | ----------------------------------------------------- | -------- |
+| `EditorHeader`      | ツールバー（保存・共有・印刷・プレビュー切替）        | ~70行    |
+| `MetadataPanel`     | 曲名・アーティスト・キー・BPM・拍子の入力（曲全体）   | ~70行    |
+| `SectionEditor`     | 1つのセクション全体（ヘッダー + 設定行 + 行リスト）   | ~60行    |
+| `SectionHeader`     | セクション名・タイプ切替・♪ トグル・操作ボタン群      | ~90行    |
+| `SectionMetaPanel`  | セクション単位のキー・BPM・拍子の入力（継承値を表示） | ~80行    |
+| `LineEditor`        | 1行分（コード配置エリア + 歌詞入力）                  | ~40行    |
+| `ChordRow`          | コード配置エリア（クリックで追加、ドラッグで移動）    | ~40行    |
+| `ChordDialog`       | コード入力ダイアログ（候補・予測・代理コード）        | ~100行   |
+| `PreviewPanel`      | 右側プレビューパネル（`ChordSheet` の薄いラッパー）   | ~20行    |
+| `SectionAddButtons` | セクション追加プリセットボタン群                      | ~40行    |
 
 ## 4. エディタ分割の詳細設計
 

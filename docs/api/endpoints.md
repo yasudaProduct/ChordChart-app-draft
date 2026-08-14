@@ -19,6 +19,7 @@ ChordBook バックエンド API のエンドポイント一覧です。
 | GET      | /api/health          | 不要             | ヘルスチェック                 |
 | GET      | /api/songs           | 不要             | 公開曲一覧取得                 |
 | GET      | /api/songs/demo      | 不要             | デモ用曲一覧取得               |
+| GET      | /api/songs/artists   | 不要             | 公開曲のアーティスト名一覧     |
 | GET      | /api/songs/search    | オプション       | 公開曲検索                     |
 | GET      | /api/songs/:id       | オプション       | 曲詳細取得                     |
 | POST     | /api/songs           | 必須             | 曲作成                         |
@@ -100,6 +101,26 @@ ChordBook バックエンド API のエンドポイント一覧です。
 
 ---
 
+#### GET /api/songs/artists
+
+公開曲のアーティスト名一覧を取得します。アーティスト名入力のサジェスト（オートコンプリート）用のエンドポイントです。
+
+- 対象は公開曲（`visibility = "public"`）のみで、デモ用曲（`isDemo = true`）は含まれません
+- 表記ゆれ（大文字小文字・全角半角・空白）を正規化して重複排除し、グループ内で最も多く使われている表記を代表として返します
+- 登録数の多い順に、最大 500 件を返します
+
+クライアントは一覧を一括で取得してキャッシュし、入力中の絞り込みはクライアント側で行う想定です。
+
+**認証**: 不要
+
+**レスポンス**
+
+```json
+["YOASOBI", "King Gnu", "あいみょん"]
+```
+
+---
+
 #### GET /api/songs/search
 
 公開曲を検索します。
@@ -108,9 +129,9 @@ ChordBook バックエンド API のエンドポイント一覧です。
 
 **クエリパラメータ**
 
-| パラメータ | 型     | 必須 | 説明                                                     |
-| ---------- | ------ | ---- | -------------------------------------------------------- |
-| q          | string | Yes  | 検索キーワード（タイトル・アーティスト・キーで部分一致） |
+| パラメータ | 型     | 必須 | 説明                                               |
+| ---------- | ------ | ---- | -------------------------------------------------- |
+| q          | string | Yes  | 検索キーワード（タイトル・アーティストで部分一致） |
 
 **レスポンス**
 
@@ -140,6 +161,8 @@ ChordBook バックエンド API のエンドポイント一覧です。
 > URL限定公開（`url_only`）の曲は ID 直指定では取得できません（所有者を除く）。
 > 共有トークン経由の `GET /api/shares/:token` を使用してください。
 
+`isOwner` はリクエスト時の認証ユーザーが曲の作成者かどうかを表す（認証なしの場合は常に `false`）。フロントエンドはこの値で編集・削除ボタンの表示を制御する。
+
 **パスパラメータ**
 
 | 名前 | 型   | 説明   |
@@ -163,10 +186,20 @@ ChordBook バックエンド API のエンドポイント一覧です。
         "name": "イントロ",
         "type": "chord-only",
         "content": "{\"lines\":[{\"id\":\"line-1\",\"lyrics\":\"\",\"chords\":[{\"id\":\"chord-1\",\"chord\":\"C\",\"offset\":0.2},{\"id\":\"chord-2\",\"chord\":\"G\",\"offset\":0.4}]}]}"
+      },
+      {
+        "id": "section-2",
+        "name": "大サビ",
+        "type": "chord-only",
+        "key": "Am",
+        "bpm": 90,
+        "timeSignature": "6/8",
+        "content": "{\"lines\":[{\"id\":\"line-2\",\"lyrics\":\"\",\"chords\":[{\"id\":\"chord-3\",\"chord\":\"Am\",\"offset\":0.2}]}]}"
       }
     ]
   },
   "visibility": "private",
+  "isOwner": true,
   "createdAt": "2024-01-10T08:00:00Z",
   "updatedAt": "2024-01-15T10:30:00Z"
 }
@@ -205,7 +238,7 @@ ChordBook バックエンド API のエンドポイント一覧です。
 | artist        | string \| null | No   | アーティスト名                                                           |
 | key           | string \| null | No   | キー（C, Am, etc.）                                                      |
 | bpm           | number \| null | No   | テンポ（整数）                                                           |
-| timeSignature | string         | No   | 拍子（デフォルト: "4/4"）                                                |
+| timeSignature | string \| null | No   | 拍子（未指定・null は未設定。デフォルト値は補われない）                  |
 | visibility    | string         | No   | `private` / `url_only` / `public`（デフォルト: `private`。他の値は 400） |
 
 **レスポンス**: 201 Created
@@ -220,6 +253,7 @@ ChordBook バックエンド API のエンドポイント一覧です。
   "timeSignature": "4/4",
   "content": "{\"sections\":[]}",
   "visibility": "private",
+  "isOwner": true,
   "createdAt": "2024-01-15T10:30:00Z",
   "updatedAt": "2024-01-15T10:30:00Z"
 }
@@ -248,19 +282,21 @@ ChordBook バックエンド API のエンドポイント一覧です。
   "key": "Am",
   "bpm": 110,
   "timeSignature": "3/4",
-  "content": "[{\"id\":\"section-1\",\"name\":\"Aメロ\",\"type\":\"lyrics-chord\",\"lines\":[]}]"
+  "content": "{\"sections\":[{\"id\":\"section-1\",\"name\":\"Aメロ\",\"type\":\"lyrics-chord\",\"content\":\"{\\\"lines\\\":[]}\"}]}"
 }
 ```
 
-| フィールド    | 型             | 必須 | 説明                              |
-| ------------- | -------------- | ---- | --------------------------------- |
-| title         | string         | Yes  | 曲名（1文字以上）                 |
-| artist        | string \| null | No   | アーティスト名                    |
-| key           | string \| null | No   | キー                              |
-| bpm           | number \| null | No   | テンポ（整数）                    |
-| timeSignature | string         | No   | 拍子                              |
-| content       | string         | No   | コード譜データ（JSON文字列）      |
-| visibility    | string         | No   | `private` / `url_only` / `public` |
+| フィールド    | 型             | 必須 | 説明                                                                |
+| ------------- | -------------- | ---- | ------------------------------------------------------------------- |
+| title         | string         | Yes  | 曲名（1文字以上）                                                   |
+| artist        | string \| null | No   | アーティスト名                                                      |
+| key           | string \| null | No   | キー（楽曲全体。セクションが未設定のときの既定値）                  |
+| bpm           | number \| null | No   | テンポ（整数。楽曲全体）                                            |
+| timeSignature | string \| null | No   | 拍子（未指定・null は未設定。楽曲全体）                             |
+| content       | string         | No   | コード譜データ（JSON文字列）。セクション単位のキー・BPM・拍子を含む |
+| visibility    | string         | No   | `private` / `url_only` / `public`                                   |
+
+`content` の中身は検証されず、そのまま保存・返却される。構造は [Content カラムの JSON スキーマ](../database/tables.md#content-カラムの-json-スキーマ) を参照。セクションに `key` / `bpm` / `timeSignature` を持たせると、そのセクション以降に適用される（carry-forward）。
 
 **レスポンス**: 200 OK
 
@@ -415,7 +451,7 @@ URL限定公開の曲を、推測不能なトークン付き URL で共有する
 | ----- | ------ | ------------ |
 | token | string | 共有トークン |
 
-**レスポンス**: 200 OK（`GET /api/songs/:id` と同じ曲オブジェクト）
+**レスポンス**: 200 OK（`GET /api/songs/:id` と同じ曲オブジェクト。`isOwner` は認証情報を扱わないため常に `false`）
 
 **エラーレスポンス**
 

@@ -18,7 +18,7 @@ const createSongSchema = z.object({
   artist: z.string().nullable().optional(),
   key: z.string().nullable().optional(),
   bpm: z.number().int().nullable().optional(),
-  timeSignature: z.string().optional().default('4/4'),
+  timeSignature: z.string().nullable().optional(),
   visibility: visibilitySchema.optional(),
 })
 
@@ -27,7 +27,7 @@ const updateSongSchema = z.object({
   artist: z.string().nullable().optional(),
   key: z.string().nullable().optional(),
   bpm: z.number().int().nullable().optional(),
-  timeSignature: z.string().optional().default('4/4'),
+  timeSignature: z.string().nullable().optional(),
   content: z.string().optional(),
   visibility: visibilitySchema.optional(),
 })
@@ -73,6 +73,12 @@ songRoutes.get('/search', optionalAuthMiddleware(), async (c) => {
 songRoutes.get('/demo', async (c) => {
   const results = await songService.listDemoSongs()
   return c.json(results)
+})
+
+// GET /artists — 公開曲のアーティスト名一覧（入力サジェスト用・/:id より前に定義）
+songRoutes.get('/artists', async (c) => {
+  const artists = await songService.listPublicArtists()
+  return c.json(artists)
 })
 
 // GET / — 曲一覧

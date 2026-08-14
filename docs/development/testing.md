@@ -114,9 +114,12 @@ apps/frontend/
 └── src/lib/
     ├── music/
     │   ├── chords.ts
-    │   ├── chords.test.ts     # コロケーション
+    │   ├── chords.test.ts        # コロケーション
     │   └── ...
-    └── sectionContent.test.ts
+    ├── sectionContent.test.ts
+    ├── sectionMeta.test.ts       # セクション単位メタの carry-forward 継承
+    ├── parseSongContent.test.ts  # 保存データの読み込み・後方互換
+    └── utils.test.ts
 ```
 
 ```bash

@@ -1,7 +1,11 @@
-import { eq, and, or, ilike, desc } from 'drizzle-orm'
+import { eq, and, or, ilike, desc, isNotNull } from 'drizzle-orm'
 import { db } from '../db'
 import { songs } from '../db/schema'
+import { aggregateArtistNames } from '../lib/artistName'
 import { Visibility } from '../types'
+
+/** アーティスト名サジェストで返す最大件数（一括取得してクライアント側で絞り込む前提）。 */
+const ARTIST_SUGGESTION_LIMIT = 500
 
 // ============================================================
 // DTO 型定義
@@ -21,9 +25,10 @@ export type SongDto = {
   artist: string | null
   key: string | null
   bpm: number | null
-  timeSignature: string
+  timeSignature: string | null
   content: unknown
   visibility: string
+  isOwner: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -40,7 +45,7 @@ const toSongListItemDto = (song: typeof songs.$inferSelect): SongListItemDto => 
   updatedAt: song.updatedAt,
 })
 
-export const toSongDto = (song: typeof songs.$inferSelect): SongDto => {
+export const toSongDto = (song: typeof songs.$inferSelect, viewerId?: string): SongDto => {
   let content: unknown
   try {
     content = JSON.parse(song.content)
@@ -57,6 +62,7 @@ export const toSongDto = (song: typeof songs.$inferSelect): SongDto => {
     timeSignature: song.timeSignature,
     content,
     visibility: song.visibility,
+    isOwner: viewerId !== undefined && song.userId === viewerId,
     createdAt: song.createdAt,
     updatedAt: song.updatedAt,
   }
@@ -93,7 +99,7 @@ const listDemoSongs = async (): Promise<SongListItemDto[]> => {
 }
 
 /**
- * 公開曲をタイトル・アーティスト・キーで検索する。
+ * 公開曲をタイトル・アーティストで検索する。
  */
 const searchSongs = async (query: string): Promise<SongListItemDto[]> => {
   const pattern = `%${query}%`
@@ -105,12 +111,31 @@ const searchSongs = async (query: string): Promise<SongListItemDto[]> => {
       and(
         eq(songs.visibility, Visibility.Public),
         eq(songs.isDemo, false),
-        or(ilike(songs.title, pattern), ilike(songs.artist, pattern), ilike(songs.key, pattern))
+        or(ilike(songs.title, pattern), ilike(songs.artist, pattern))
       )
     )
     .orderBy(desc(songs.updatedAt))
 
   return results.map(toSongListItemDto)
+}
+
+/**
+ * 公開曲のアーティスト名一覧を取得する（入力サジェスト用）。
+ * 表記ゆれを正規化して重複排除し、登録数の多い順に最大 ARTIST_SUGGESTION_LIMIT 件返す。
+ */
+const listPublicArtists = async (): Promise<string[]> => {
+  const results = await db
+    .select({ artist: songs.artist })
+    .from(songs)
+    .where(
+      and(eq(songs.visibility, Visibility.Public), eq(songs.isDemo, false), isNotNull(songs.artist))
+    )
+    .orderBy(desc(songs.updatedAt))
+
+  return aggregateArtistNames(
+    results.map((row) => row.artist),
+    ARTIST_SUGGESTION_LIMIT
+  )
 }
 
 /**
@@ -136,7 +161,7 @@ const getSongById = async (id: string, userId?: string): Promise<SongDto | null>
     return null
   }
 
-  return toSongDto(results[0])
+  return toSongDto(results[0], userId)
 }
 
 /**
@@ -149,7 +174,7 @@ const createSong = async (
     artist?: string | null
     key?: string | null
     bpm?: number | null
-    timeSignature?: string
+    timeSignature?: string | null
     visibility?: Visibility
   }
 ): Promise<SongDto> => {
@@ -160,10 +185,11 @@ const createSong = async (
     .values({
       userId,
       title: data.title,
-      artist: data.artist ?? null,
-      key: data.key ?? null,
+      // 任意項目は空文字も未設定とみなして NULL に正規化する
+      artist: data.artist || null,
+      key: data.key || null,
       bpm: data.bpm ?? null,
-      timeSignature: data.timeSignature ?? '4/4',
+      timeSignature: data.timeSignature || null,
       content: '{"sections":[]}',
       visibility: data.visibility ?? Visibility.Private,
       createdAt: now,
@@ -171,7 +197,7 @@ const createSong = async (
     })
     .returning()
 
-  return toSongDto(results[0])
+  return toSongDto(results[0], userId)
 }
 
 /**
@@ -185,7 +211,7 @@ const updateSong = async (
     artist?: string | null
     key?: string | null
     bpm?: number | null
-    timeSignature?: string
+    timeSignature?: string | null
     content?: string
     visibility?: Visibility
   }
@@ -196,10 +222,11 @@ const updateSong = async (
     .update(songs)
     .set({
       title: data.title,
-      artist: data.artist ?? null,
-      key: data.key ?? null,
+      // 任意項目は空文字も未設定とみなして NULL に正規化する
+      artist: data.artist || null,
+      key: data.key || null,
       bpm: data.bpm ?? null,
-      timeSignature: data.timeSignature ?? '4/4',
+      timeSignature: data.timeSignature || null,
       ...(data.content !== undefined ? { content: data.content } : {}),
       ...(data.visibility !== undefined ? { visibility: data.visibility } : {}),
       updatedAt: now,
@@ -211,7 +238,7 @@ const updateSong = async (
     return null
   }
 
-  return toSongDto(results[0])
+  return toSongDto(results[0], userId)
 }
 
 /**
@@ -232,7 +259,7 @@ const updateSongVisibility = async (
     return null
   }
 
-  return toSongDto(results[0])
+  return toSongDto(results[0], userId)
 }
 
 /**
@@ -316,6 +343,7 @@ export const songService = {
   listSongs,
   listDemoSongs,
   searchSongs,
+  listPublicArtists,
   getSongById,
   createSong,
   updateSong,
