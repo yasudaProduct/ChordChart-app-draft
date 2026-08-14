@@ -4,28 +4,29 @@ ChordBook プロジェクトの Git ブランチ戦略とワークフローで�
 
 ## ブランチ戦略
 
-GitHub Flow をベースにしたシンプルな運用を採用。
+`develop` をステージング、`main` を本番とする 2 段構成。作業ブランチは `develop` から切る。
 
 ```
-main ─────────────────────────────────────────────────────────────▶
-       │                      │                      │
-       │                      │                      │
-       ▼                      ▼                      ▼
-  feature/add-share     fix/song-update       feature/export-pdf
-       │                      │                      │
-       └──────── PR ──────────┴──────── PR ──────────┘
+main ─────────────────────────────────────────────▶ 本番（承認後にデプロイ）
+  ▲                                       ▲
+  │ PR（リリース）                          │ PR（hotfix）
+  │                                       │
+develop ──────────────────────────────────┴───────▶ ステージング（push で自動デプロイ）
+  ▲                       ▲
+  │ PR                    │ PR
+feature/add-share      fix/song-update
 ```
 
 ## ブランチ種類
 
-| ブランチ    | 用途                         | 命名規則         |
-| ----------- | ---------------------------- | ---------------- |
-| main        | 本番環境（将来のリリース用） | -                |
-| develop     | ステージング自動デプロイ     | -                |
-| feature/\*  | 新機能開発                   | `feature/機能名` |
-| fix/\*      | バグ修正                     | `fix/修正内容`   |
-| docs/\*     | ドキュメント更新             | `docs/内容`      |
-| refactor/\* | リファクタリング             | `refactor/内容`  |
+| ブランチ    | 用途                                    | 命名規則         |
+| ----------- | --------------------------------------- | ---------------- |
+| main        | 本番環境（push で承認付き自動デプロイ） | -                |
+| develop     | ステージング環境（push で自動デプロイ） | -                |
+| feature/\*  | 新機能開発（`develop` から分岐）        | `feature/機能名` |
+| fix/\*      | バグ修正（`develop` から分岐）          | `fix/修正内容`   |
+| docs/\*     | ドキュメント更新                        | `docs/内容`      |
+| refactor/\* | リファクタリング                        | `refactor/内容`  |
 
 ## ブランチ命名例
 
@@ -53,9 +54,9 @@ refactor/api-client
 ### 1. ブランチ作成
 
 ```bash
-# main から最新を取得
-git checkout main
-git pull origin main
+# develop から最新を取得
+git checkout develop
+git pull origin develop
 
 # 作業ブランチを作成
 git checkout -b feature/add-song-share
@@ -183,11 +184,28 @@ GitHub Actions で自動チェック（`.github/workflows/ci.yml`）:
 | backend  | pnpm lint, pnpm build, pnpm test                  |
 | e2e      | Playwright（PR 時のみ。結果を PR コメントに投稿） |
 
-ステージングへの自動デプロイは `develop` ブランチへのプッシュで `.github/workflows/deploy-staging.yml` が実行されます。詳細は [インフラ構成概要](../infrastructure/overview.md) を参照。
+自動デプロイ:
+
+| ブランチ  | 環境         | ワークフロー                              | 承認                       |
+| --------- | ------------ | ----------------------------------------- | -------------------------- |
+| `develop` | ステージング | `.github/workflows/deploy-staging.yml`    | なし                       |
+| `main`    | 本番         | `.github/workflows/deploy-production.yml` | 必要（Required reviewers） |
+
+いずれも共通の `.github/workflows/deploy.yml` を呼び出します。詳細は [本番環境セットアップ](../infrastructure/production-setup.md) を参照。
+
+## 本番リリース手順
+
+1. `develop` の内容がステージングで動作確認済みであることを確認する
+2. `develop` → `main` の Pull Request を作成する（`gh pr create --base main --head develop`）
+3. マージすると **Deploy Production** が起動し、事前検証（lint / test / build）が走る
+4. Actions 画面の **Review deployments** から `production` を承認する
+5. デプロイ完了後、本番 URL で動作確認する
+
+> 破壊的なスキーマ変更（カラム削除・型変更など）を含む場合は、承認する前に Neon でバックアップブランチを作成してください。詳細は [本番環境セットアップ](../infrastructure/production-setup.md) の「ロールバック」を参照。
 
 ## 緊急対応（Hotfix）
 
-本番で緊急対応が必要な場合:
+本番で緊急対応が必要な場合は `main` から直接ブランチを作成します。
 
 ```bash
 # main から直接ブランチ作成
@@ -199,16 +217,26 @@ git checkout -b fix/critical-auth-bug
 git commit -m "fix: 認証トークンの検証エラーを修正"
 git push -u origin fix/critical-auth-bug
 
-# PR 作成→レビュー→マージ
+# main への PR を作成 → マージ → 承認して本番デプロイ
+gh pr create --base main
+```
+
+マージ後、同じ修正を `develop` にも取り込みます（忘れると次のリリースで先祖返りする）。
+
+```bash
+git checkout develop
+git pull origin develop
+git merge origin/main
+git push origin develop
 ```
 
 ## よくある操作
 
-### 作業中に main の変更を取り込む
+### 作業中に develop の変更を取り込む
 
 ```bash
-git fetch origin main
-git rebase origin/main
+git fetch origin develop
+git rebase origin/develop
 
 # コンフリクトがあれば解決
 git add .

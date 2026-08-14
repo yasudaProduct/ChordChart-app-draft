@@ -16,7 +16,8 @@
     "e2e:ui": "playwright test --ui",
     "e2e:headed": "playwright test --headed",
     "build:cf": "next-on-pages",
-    "deploy:staging": "wrangler pages deploy .vercel/output/static --project-name=chordbook-frontend-staging"
+    "deploy:staging": "wrangler pages deploy .vercel/output/static --project-name=chordbook-frontend-staging --branch=develop",
+    "deploy:production": "wrangler pages deploy .vercel/output/static --project-name=chordbook-frontend --branch=main"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.39.3",

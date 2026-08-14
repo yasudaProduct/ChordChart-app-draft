@@ -1,0 +1,55 @@
+name: Deploy Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# マイグレーション中の割り込みを避けるため、進行中のデプロイはキャンセルせずに待たせる
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  # 本番へ出す前に lint / test / build を通す。
+  # ここは承認ゲートの手前なので、承認画面を開いた時点で検証結果が出揃っている。
+  verify:
+    name: 事前検証（lint / test / build）
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        run: pnpm test
+
+      # ビルドが通ることの確認のみが目的。本番用の値は deploy ジョブで注入される。
+      - name: Build
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+
+  # production Environment の Required reviewers により、ここで承認待ちになる
+  deploy:
+    name: Production
+    needs: verify
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: production
+      worker-env: production
+      pages-project: chordbook-frontend
+      pages-branch: main
+    secrets: inherit

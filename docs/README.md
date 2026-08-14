@@ -36,6 +36,7 @@
 
 - [インフラ構成概要](./infrastructure/overview.md) - Cloudflare / Neon / Clerk の構成まとめ
 - [ステージング環境セットアップ](./infrastructure/staging-setup.md) - 動作確認環境の初回構築手順
+- [本番環境セットアップ](./infrastructure/production-setup.md) - 本番環境の初回構築手順と承認付きデプロイフロー
 
 ### デプロイ・運用
 
@@ -61,12 +62,13 @@
 
 ## クイックリンク
 
-| 用途                   | リンク                                             |
-| ---------------------- | -------------------------------------------------- |
-| プロジェクトを理解する | [コンセプト](./project/concept.md)                 |
-| 画面仕様を見る         | [画面一覧](./ui/screens.md)                        |
-| 開発を始める           | [環境構築](./development/getting-started.md)       |
-| APIを使う              | [エンドポイント](./api/endpoints.md)               |
-| DB設計を見る           | [ER図](./database/er-diagram.md)                   |
-| デプロイする           | [環境変数](./deployment/environments.md)           |
-| 今後の計画を見る       | [機能拡充ロードマップ](./plans/feature-roadmap.md) |
+| 用途                   | リンク                                                       |
+| ---------------------- | ------------------------------------------------------------ |
+| プロジェクトを理解する | [コンセプト](./project/concept.md)                           |
+| 画面仕様を見る         | [画面一覧](./ui/screens.md)                                  |
+| 開発を始める           | [環境構築](./development/getting-started.md)                 |
+| APIを使う              | [エンドポイント](./api/endpoints.md)                         |
+| DB設計を見る           | [ER図](./database/er-diagram.md)                             |
+| デプロイする           | [環境変数](./deployment/environments.md)                     |
+| 本番環境を構築する     | [本番環境セットアップ](./infrastructure/production-setup.md) |
+| 今後の計画を見る       | [機能拡充ロードマップ](./plans/feature-roadmap.md)           |

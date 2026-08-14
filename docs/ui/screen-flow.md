@@ -168,7 +168,7 @@ flowchart TB
 
     subgraph Modal[共有設定モーダル]
         Setting[公開設定<br/>・非公開<br/>・URL共有<br/>・公開]
-        Link[共有リンク生成<br/>https://chordbook.app/share/xyz123]
+        Link[共有リンク生成<br/>https://chord-books.com/share/xyz123]
         Expiry[有効期限設定]
     end
 ```

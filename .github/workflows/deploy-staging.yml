@@ -3,89 +3,20 @@ name: Deploy Staging
 on:
   push:
     branches: [develop]
+  workflow_dispatch:
+
+# マイグレーション中の割り込みを避けるため、進行中のデプロイはキャンセルせずに待たせる
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
 
 jobs:
-  deploy-backend:
-    name: Backend → Cloudflare Workers
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run database migration
-        run: pnpm db:migrate
-        working-directory: apps/backend
-        env:
-          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
-
-      - name: Seed demo data
-        run: pnpm db:seed:demo
-        working-directory: apps/backend
-        env:
-          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
-
-      - name: Deploy to Cloudflare Workers
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: apps/backend
-        env:
-          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
-          CLERK_ISSUER: ${{ secrets.STAGING_CLERK_ISSUER }}
-          CLERK_WEBHOOK_SECRET: ${{ secrets.STAGING_CLERK_WEBHOOK_SECRET }}
-
-  deploy-frontend:
-    name: Frontend → Cloudflare Pages
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build for Cloudflare Pages
-        run: pnpm exec next-on-pages
-        working-directory: apps/frontend
-        env:
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.STAGING_CLERK_PUBLISHABLE_KEY }}
-          CLERK_SECRET_KEY: ${{ secrets.STAGING_CLERK_SECRET_KEY }}
-          NEXT_PUBLIC_API_URL: ${{ secrets.STAGING_API_URL }}
-
-      - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: apps/frontend
-          # コミット本文に不正 UTF-8 があると Pages API が 8000111 を返す。ASCII の代替メッセージを明示する。
-          command: pages deploy .vercel/output/static --project-name=chordbook-frontend-staging --branch=develop --commit-hash ${{ github.sha }} --commit-message deploy-staging-${{ github.sha }}
-
-      - name: Set Cloudflare Pages runtime secrets
-        run: |
-          printf '%s' "$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY" | pnpm exec wrangler pages secret put NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY --project-name=chordbook-frontend-staging
-          printf '%s' "$CLERK_SECRET_KEY" | pnpm exec wrangler pages secret put CLERK_SECRET_KEY --project-name=chordbook-frontend-staging
-          printf '%s' "$NEXT_PUBLIC_API_URL" | pnpm exec wrangler pages secret put NEXT_PUBLIC_API_URL --project-name=chordbook-frontend-staging
-        working-directory: apps/frontend
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.STAGING_CLERK_PUBLISHABLE_KEY }}
-          CLERK_SECRET_KEY: ${{ secrets.STAGING_CLERK_SECRET_KEY }}
-          NEXT_PUBLIC_API_URL: ${{ secrets.STAGING_API_URL }}
+  deploy:
+    name: Staging
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: staging
+      worker-env: staging
+      pages-project: chordbook-frontend-staging
+      pages-branch: develop
+    secrets: inherit

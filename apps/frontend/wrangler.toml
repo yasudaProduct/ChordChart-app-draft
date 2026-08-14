@@ -1,3 +1,11 @@
+# Cloudflare Pages 設定
+#
+# Pages は Workers と違い [env.*] でプロジェクトを分けられないため、環境の切り替えは
+# デプロイ時の --project-name フラグで行う（フラグはこの name より優先される）。
+#   pnpm deploy:staging     # → chordbook-frontend-staging（この name のとおり）
+#   pnpm deploy:production  # → chordbook-frontend（--project-name で上書き）
+#
+# 既定値は事故が軽い staging 側にしてある。本番へは必ず --project-name を明示すること。
 name = "chordbook-frontend-staging"
 pages_build_output_dir = ".vercel/output/static"
 compatibility_date = "2025-01-01"

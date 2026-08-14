@@ -6,7 +6,7 @@ import { sampleSongContents } from './seedContent'
  */
 export const DEMO_USER = {
   id: 'demo-user',
-  email: 'demo@chordbook.app',
+  email: 'demo@chord-books.com',
   displayName: 'ChordBook Demo',
 } as const
 
