@@ -160,6 +160,23 @@ jobs:
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
           NEXT_PUBLIC_API_URL: ${{ secrets.API_URL }}
 
+      # wrangler pages secret put は「次回以降のデプロイ」にしか反映されず、
+      # 直前にデプロイ済みのバージョンには遡って適用されない
+      # （https://github.com/cloudflare/wrangler-action/issues/304）。
+      # 必ずこのデプロイより前にシークレットを確定させておく。
+      - name: Set Cloudflare Pages runtime secrets
+        run: |
+          printf '%s' "$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY" | pnpm exec wrangler pages secret put NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY --project-name=${{ inputs.pages-project }}
+          printf '%s' "$CLERK_SECRET_KEY" | pnpm exec wrangler pages secret put CLERK_SECRET_KEY --project-name=${{ inputs.pages-project }}
+          printf '%s' "$NEXT_PUBLIC_API_URL" | pnpm exec wrangler pages secret put NEXT_PUBLIC_API_URL --project-name=${{ inputs.pages-project }}
+        working-directory: apps/frontend
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.API_URL }}
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v4
         with:
@@ -173,16 +190,3 @@ jobs:
             --branch=${{ inputs.pages-branch }}
             --commit-hash ${{ github.sha }}
             --commit-message deploy-${{ inputs.environment }}-${{ github.sha }}
-
-      - name: Set Cloudflare Pages runtime secrets
-        run: |
-          printf '%s' "$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY" | pnpm exec wrangler pages secret put NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY --project-name=${{ inputs.pages-project }}
-          printf '%s' "$CLERK_SECRET_KEY" | pnpm exec wrangler pages secret put CLERK_SECRET_KEY --project-name=${{ inputs.pages-project }}
-          printf '%s' "$NEXT_PUBLIC_API_URL" | pnpm exec wrangler pages secret put NEXT_PUBLIC_API_URL --project-name=${{ inputs.pages-project }}
-        working-directory: apps/frontend
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
-          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
-          NEXT_PUBLIC_API_URL: ${{ secrets.API_URL }}
