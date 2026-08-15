@@ -6,34 +6,37 @@ Hono (TypeScript) を使用したバックエンドの設計を説明します�
 
 シンプルなレイヤードアーキテクチャを採用しています。
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         外部                                    │
-│                    (HTTP, DB, etc.)                             │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │
-┌───────────────────────────▼─────────────────────────────────────┐
-│                      Routes 層                                  │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │  routes/songs.ts  │  routes/health.ts  │  middleware/    │   │
-│  │  (Zodバリデーション)                     │  (JWT認証)      │   │
-│  └─────────────────────────────────────────────────────────┘   │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │
-┌───────────────────────────▼─────────────────────────────────────┐
-│                     Service 層                                  │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │  services/song.service.ts                                │   │
-│  │  (ビジネスロジック・クエリ構築)                              │   │
-│  └─────────────────────────────────────────────────────────┘   │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │
-┌───────────────────────────▼─────────────────────────────────────┐
-│                       DB 層                                     │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │  db/schema.ts (Drizzle スキーマ)  │  db/index.ts (接続)  │   │
-│  └─────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph external["外部 (HTTP, DB, etc.)"]
+        direction LR
+        http["HTTP クライアント"]
+        pg["PostgreSQL (Neon)"]
+        clerk["Clerk (JWT / Webhook)"]
+    end
+
+    subgraph routes["Routes 層"]
+        direction TB
+        route_files["routes/songs.ts · routes/health.ts · routes/me.ts · webhooks.ts"]
+        validation["Zod バリデーション"]
+        auth["middleware/auth.ts (JWT 認証)"]
+    end
+
+    subgraph service["Service 層"]
+        song_service["services/song.service.ts<br/>ビジネスロジック・クエリ構築"]
+    end
+
+    subgraph db_layer["DB 層"]
+        direction LR
+        schema["db/schema.ts (Drizzle スキーマ)"]
+        db_conn["db/index.ts (接続)"]
+    end
+
+    http --> routes
+    clerk --> auth
+    routes --> service
+    service --> db_layer
+    db_layer --> pg
 ```
 
 ## ディレクトリ構成
@@ -172,41 +175,18 @@ export const songs = pgTable("Songs", {
 
 ## リクエスト処理フロー
 
-```
-HTTP Request
-    │
-    ▼
-┌─────────────────┐
-│   Middleware     │  CORS, Logger
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│   Auth          │  JWT 検証（必須 or オプション）
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│   Zod Validator │  リクエストボディのバリデーション
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│   Route Handler │  Service 呼び出し・レスポンス構築
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│   Service       │  ビジネスロジック
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│   Drizzle ORM   │  データベース操作
-└────────┬────────┘
-         │
-         ▼
-HTTP Response
+```mermaid
+flowchart TB
+    req["HTTP Request"]
+    mw["Middleware<br/>CORS, Logger"]
+    auth["Auth<br/>JWT 検証（必須 or オプション）"]
+    zod["Zod Validator<br/>リクエストボディのバリデーション"]
+    handler["Route Handler<br/>Service 呼び出し・レスポンス構築"]
+    service["Service<br/>ビジネスロジック"]
+    orm["Drizzle ORM<br/>データベース操作"]
+    res["HTTP Response"]
+
+    req --> mw --> auth --> zod --> handler --> service --> orm --> res
 ```
 
 ## 認証フロー

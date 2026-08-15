@@ -6,15 +6,23 @@ ChordBook プロジェクトの Git ブランチ戦略とワークフローで�
 
 `develop` をステージング、`main` を本番とする 2 段構成。作業ブランチは `develop` から切る。
 
-```
-main ─────────────────────────────────────────────▶ 本番（承認後にデプロイ）
-  ▲                                       ▲
-  │ PR（リリース）                          │ PR（hotfix）
-  │                                       │
-develop ──────────────────────────────────┴───────▶ ステージング（push で自動デプロイ）
-  ▲                       ▲
-  │ PR                    │ PR
-feature/add-share      fix/song-update
+```mermaid
+flowchart TB
+    subgraph work["作業ブランチ（develop から分岐）"]
+        feature["feature/*"]
+        fix["fix/*"]
+        docs["docs/*"]
+        refactor["refactor/*"]
+    end
+
+    develop["develop<br/>ステージング"]
+    main["main<br/>本番"]
+    hotfix["fix/*<br/>（main から分岐）"]
+
+    feature & fix & docs & refactor -->|PR| develop
+    develop -->|PR（リリース）| main
+    hotfix -->|PR（hotfix）| main
+    main -->|merge（先祖返り防止）| develop
 ```
 
 ## ブランチ種類
@@ -175,6 +183,43 @@ PR 作成時に確認:
 - [ ] 不要なコメントや console.log を削除した
 
 ## CI/CD
+
+```mermaid
+flowchart TB
+    subgraph ci["ci.yml — push / PR"]
+        direction LR
+        ci_audit["audit<br/>pnpm audit"]
+        ci_fe["frontend<br/>lint, build"]
+        ci_be["backend<br/>lint, build, test"]
+        ci_e2e["e2e<br/>Playwright（PR のみ）"]
+    end
+
+    subgraph staging["deploy-staging.yml — develop push"]
+        direction TB
+        stg_wf["deploy.yml"]
+        stg_be["BE: db:migrate → db:seed:demo<br/>→ wrangler deploy → health check"]
+        stg_fe["FE: next-on-pages → pages deploy<br/>→ pages secret put"]
+        stg_wf --> stg_be
+        stg_wf --> stg_fe
+    end
+
+    subgraph production["deploy-production.yml — main push"]
+        direction TB
+        verify["verify<br/>lint, test, build"]
+        approve["承認待ち<br/>Required reviewers"]
+        prod_wf["deploy.yml"]
+        prod_be["BE: db:migrate → db:seed:demo<br/>→ wrangler deploy → health check"]
+        prod_fe["FE: next-on-pages → pages deploy<br/>→ pages secret put"]
+        verify --> approve --> prod_wf
+        prod_wf --> prod_be
+        prod_wf --> prod_fe
+    end
+
+    push_pr["PR"] --> ci
+    push_any["push（任意のブランチ）"] --> ci
+    push_dev["develop push"] --> staging
+    push_main["main push"] --> production
+```
 
 GitHub Actions で自動チェック（`.github/workflows/ci.yml`）:
 
