@@ -180,9 +180,12 @@ GitHub Actions で自動チェック（`.github/workflows/ci.yml`）:
 
 | ジョブ   | 内容                                              |
 | -------- | ------------------------------------------------- |
+| audit    | pnpm audit（本番依存に high 以上があれば失敗）    |
 | frontend | pnpm lint, pnpm build                             |
 | backend  | pnpm lint, pnpm build, pnpm test                  |
 | e2e      | Playwright（PR 時のみ。結果を PR コメントに投稿） |
+
+依存パッケージと GitHub Actions の更新は Dependabot（`.github/dependabot.yml`）が毎週月曜に PR を作成する。
 
 自動デプロイ:
 

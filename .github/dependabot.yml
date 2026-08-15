@@ -1,0 +1,42 @@
+version: 2
+
+# 依存パッケージと GitHub Actions の更新を自動で追従する。
+# セキュリティ更新（Dependabot security updates）はリポジトリ設定側で有効化すること。
+updates:
+  # ---------------- npm / pnpm ----------------
+  # pnpm ワークスペースはルートの pnpm-lock.yaml を見れば全パッケージを解決できる。
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      # 開発・ビルドツールはまとめて 1 PR にして PR 数を抑える
+      dev-dependencies:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+      # 本番依存のパッチ更新もまとめる（メジャー・マイナーは個別 PR で影響を確認する）
+      production-patches:
+        dependency-type: production
+        update-types:
+          - patch
+
+  # ---------------- GitHub Actions ----------------
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Tokyo
+    commit-message:
+      prefix: chore
+      include: scope

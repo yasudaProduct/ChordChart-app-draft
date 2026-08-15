@@ -1,6 +1,6 @@
 # フロントエンドアーキテクチャ
 
-Next.js 14 を使用したフロントエンドの設計を説明します。
+Next.js 15 を使用したフロントエンドの設計を説明します。
 
 ## 技術スタック
 
@@ -58,7 +58,7 @@ apps/frontend/
 
 ## App Router
 
-Next.js 14 の App Router を採用しています。
+Next.js 15 の App Router を採用しています。
 
 ### ルーティング規則
 
