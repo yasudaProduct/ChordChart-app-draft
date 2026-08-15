@@ -188,6 +188,7 @@ PR 作成時に確認:
 flowchart TB
     subgraph ci["ci.yml — push / PR"]
         direction LR
+        ci_audit["audit<br/>pnpm audit"]
         ci_fe["frontend<br/>lint, build"]
         ci_be["backend<br/>lint, build, test"]
         ci_e2e["e2e<br/>Playwright（PR のみ）"]
@@ -224,9 +225,12 @@ GitHub Actions で自動チェック（`.github/workflows/ci.yml`）:
 
 | ジョブ   | 内容                                              |
 | -------- | ------------------------------------------------- |
+| audit    | pnpm audit（本番依存に high 以上があれば失敗）    |
 | frontend | pnpm lint, pnpm build                             |
 | backend  | pnpm lint, pnpm build, pnpm test                  |
 | e2e      | Playwright（PR 時のみ。結果を PR コメントに投稿） |
+
+依存パッケージと GitHub Actions の更新は Dependabot（`.github/dependabot.yml`）が毎週月曜に PR を作成する。
 
 自動デプロイ:
 

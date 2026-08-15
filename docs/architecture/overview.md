@@ -9,7 +9,7 @@ flowchart TB
     client["クライアント<br/>(ブラウザ / モバイル)"]
 
     subgraph cf_pages["Cloudflare Pages"]
-        subgraph nextjs["Next.js 14 (App Router)"]
+        subgraph nextjs["Next.js 15 (App Router)"]
             direction LR
             app_pages["Pages (app/)"]
             components["Components"]
