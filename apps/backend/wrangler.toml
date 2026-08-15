@@ -1,7 +1,7 @@
 # Cloudflare Workers 設定
 #
 # 環境は [env.staging] / [env.production] に分離している。
-# デプロイは必ず --env を付けること（付け忘れると top-level の "chordbook-api" が新規作成される）。
+# デプロイは必ず --env を付けること（付け忘れると トップレベル の "chordbook-api" が新規作成される）。
 #   pnpm deploy:staging     # = wrangler deploy --env staging
 #   pnpm deploy:production  # = wrangler deploy --env production
 #
@@ -27,8 +27,7 @@ DATABASE_DRIVER = "neon-http"
 name = "chordbook-api-production"
 
 [env.production.vars]
-# カスタムドメイン（chord-books.com）の割り当てが完了したら chordbook-frontend.pages.dev は削除してよい。
-ALLOWED_ORIGINS = "https://chord-books.com,https://chordbook-frontend.pages.dev"
+ALLOWED_ORIGINS = "https://chord-books.com"
 DATABASE_DRIVER = "neon-http"
 
 # 以下はシークレット。GitHub Actions（Environment secrets）または

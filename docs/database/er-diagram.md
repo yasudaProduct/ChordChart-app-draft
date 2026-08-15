@@ -4,51 +4,53 @@ ChordBook のデータベース設計を説明します。
 
 ## ER図
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                              Users                                  │
-├─────────────────────────────────────────────────────────────────────┤
-│ PK │ Id          : TEXT                                             │
-│    │ Email       : VARCHAR       NOT NULL                           │
-│    │ DisplayName : VARCHAR       NULL                               │
-│    │ AvatarUrl   : VARCHAR       NULL                               │
-│    │ CreatedAt   : TIMESTAMP     NOT NULL                           │
-│    │ UpdatedAt   : TIMESTAMP     NOT NULL                           │
-└────┴────────────────────────────────────────────────────────────────┘
-                    │
-                    │ 1
-                    │
-                    ▼ *
-┌─────────────────────────────────────────────────────────────────────┐
-│                              Songs                                  │
-├─────────────────────────────────────────────────────────────────────┤
-│ PK │ Id            : UUID                                           │
-│ FK │ UserId        : TEXT         NOT NULL  → Users.Id              │
-│    │ Title         : VARCHAR      NOT NULL                          │
-│    │ Artist        : VARCHAR      NULL                              │
-│    │ Key           : VARCHAR      NULL                              │
-│    │ Bpm           : INT          NULL                              │
-│    │ TimeSignature : VARCHAR      NULL                              │
-│    │ Content       : TEXT         NOT NULL  DEFAULT '{"sections":[]}' │
-│    │ Visibility    : visibility   NOT NULL  DEFAULT 'private'         │
-│    │ IsDemo        : BOOLEAN      NOT NULL  DEFAULT false           │
-│    │ CreatedAt     : TIMESTAMP    NOT NULL                          │
-│    │ UpdatedAt     : TIMESTAMP    NOT NULL                          │
-└────┴────────────────────────────────────────────────────────────────┘
-                    │                             │
-                    │ 1                           │ 1
-                    │                             │
-                    ▼ *                           ▼ *
-┌────────────────────────────────┐   ┌────────────────────────────────┐
-│           Bookmarks            │   │          SongShares            │
-├────────────────────────────────┤   ├────────────────────────────────┤
-│ PK │ Id        : UUID          │   │ PK │ Id         : UUID         │
-│ FK │ UserId    : TEXT → Users  │   │ FK │ SongId     : UUID → Songs │
-│ FK │ SongId    : UUID → Songs  │   │    │ ShareToken : VARCHAR      │
-│    │ CreatedAt : TIMESTAMP     │   │    │ ExpiresAt  : TIMESTAMP    │
-│    │ UpdatedAt : TIMESTAMP     │   │    │ CreatedAt  : TIMESTAMP    │
-└────┴───────────────────────────┘   │    │ UpdatedAt  : TIMESTAMP    │
-                                     └────┴───────────────────────────┘
+```mermaid
+erDiagram
+    Users ||--o{ Songs : "所有"
+    Users ||--o{ Bookmarks : "ブックマーク"
+    Songs ||--o{ Bookmarks : "対象"
+    Songs ||--o{ SongShares : "共有"
+
+    Users {
+        text Id PK "Clerk ユーザー ID"
+        text Email "NOT NULL"
+        text DisplayName
+        text AvatarUrl
+        timestamptz CreatedAt
+        timestamptz UpdatedAt
+    }
+
+    Songs {
+        uuid Id PK
+        text UserId FK "Users.Id (CASCADE)"
+        varchar Title "NOT NULL"
+        varchar Artist
+        varchar Key
+        int Bpm
+        varchar TimeSignature
+        text Content "JSON コード譜"
+        visibility Visibility "DEFAULT private"
+        boolean IsDemo "DEFAULT false"
+        timestamptz CreatedAt
+        timestamptz UpdatedAt
+    }
+
+    Bookmarks {
+        uuid Id PK
+        text UserId FK "Users.Id (CASCADE)"
+        uuid SongId FK "Songs.Id (CASCADE)"
+        timestamptz CreatedAt
+        timestamptz UpdatedAt
+    }
+
+    SongShares {
+        uuid Id PK
+        uuid SongId FK "Songs.Id (CASCADE)"
+        text ShareToken "UNIQUE"
+        timestamptz ExpiresAt "NULL=無期限"
+        timestamptz CreatedAt
+        timestamptz UpdatedAt
+    }
 ```
 
 ## リレーションシップ
