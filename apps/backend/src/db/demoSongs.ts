@@ -1,4 +1,4 @@
-import { sampleSongContents } from './seedContent'
+import { buildSongContent } from './seedContent'
 
 /**
  * デモ曲を保有する固定ユーザー。
@@ -16,27 +16,66 @@ export const DEMO_USER = {
  */
 export const demoSongs = [
   {
-    title: 'Demo Song - Acoustic Ballad',
-    artist: 'ChordBook',
-    key: 'C',
-    bpm: 72,
-    timeSignature: '4/4',
-    content: sampleSongContents[0],
-  },
-  {
-    title: 'Demo Song - Up-tempo Rock',
-    artist: 'ChordBook',
-    key: 'G',
-    bpm: 132,
-    timeSignature: '4/4',
-    content: sampleSongContents[1],
-  },
-  {
-    title: 'Demo Song - Jazz Standard',
-    artist: 'ChordBook',
+    title: '上を向いて歩こう',
+    artist: '坂本九',
     key: 'F',
-    bpm: 96,
-    timeSignature: '3/4',
-    content: sampleSongContents[2],
+    bpm: 104,
+    timeSignature: '4/4',
+    content: buildSongContent([
+      { prefix: 'ue-wo-muite-intro', name: 'Intro', chords: ['F', 'Am', 'Bb', 'C7'] },
+      {
+        prefix: 'ue-wo-muite-verse',
+        name: 'Verse',
+        chords: ['F', 'Am', 'Bb', 'C7', 'F', 'Dm', 'Gm', 'C7'],
+      },
+      {
+        prefix: 'ue-wo-muite-chorus',
+        name: 'Chorus',
+        chords: ['Bb', 'C7', 'F', 'Dm', 'Gm', 'C7', 'F'],
+      },
+    ]),
+  },
+  {
+    title: 'チェリー',
+    artist: 'スピッツ',
+    key: 'C',
+    bpm: 186,
+    timeSignature: '4/4',
+    content: buildSongContent([
+      {
+        prefix: 'cherry-intro',
+        name: 'Intro',
+        chords: ['C', 'G/B', 'Am', 'Em/G', 'F', 'C/E', 'Dm7', 'G'],
+      },
+      {
+        prefix: 'cherry-verse',
+        name: 'Verse',
+        chords: ['C', 'G/B', 'Am', 'Em/G', 'F', 'C/E', 'Dm7', 'G'],
+      },
+      {
+        prefix: 'cherry-chorus',
+        name: 'Chorus',
+        chords: ['F', 'C', 'Dm7', 'G', 'Em', 'Am', 'F', 'G'],
+      },
+    ]),
+  },
+  {
+    title: 'レット・イット・ビー',
+    artist: 'The Beatles',
+    key: 'C',
+    bpm: 73,
+    timeSignature: '4/4',
+    content: buildSongContent([
+      {
+        prefix: 'let-it-be-verse',
+        name: 'Verse',
+        chords: ['C', 'G', 'Am', 'F', 'C', 'G', 'F', 'C'],
+      },
+      {
+        prefix: 'let-it-be-chorus',
+        name: 'Chorus',
+        chords: ['Am', 'G', 'F', 'C', 'F', 'C', 'G', 'F'],
+      },
+    ]),
   },
 ] as const
