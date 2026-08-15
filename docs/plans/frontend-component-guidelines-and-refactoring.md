@@ -239,9 +239,9 @@ Phase 4  リファクタ（中・低）── R4〜R12（a11y統一・フック�
 
 ### Phase 1: 規約策定
 
-- [ ] `development/component-guidelines.md` を新規作成（§3.1 の目次に沿って）
-- [ ] `architecture/component-design.md` を更新（ディレクトリ実態反映・`type` 確定・相互リンク）
-- [ ] `development/coding-standards.md` の `interface`→`type` 修正・リンク追加
+- [x] `development/component-guidelines.md` を新規作成（§3.1 の目次に沿って）
+- [x] `architecture/component-design.md` を更新（ディレクトリ実態反映・`type` 確定・相互リンク）
+- [x] `development/coding-standards.md` の `interface`→`type` 修正・リンク追加
 
 ### Phase 2: テスト基盤
 
