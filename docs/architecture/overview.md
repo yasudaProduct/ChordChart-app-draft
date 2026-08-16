@@ -4,45 +4,40 @@ ChordBook のシステム全体構成を説明します。
 
 ## システム構成図
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         クライアント                              │
-│                     (ブラウザ / モバイル)                          │
-└─────────────────────────────────────────────────────────────────┘
-                                │
-                                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                     Cloudflare Pages                            │
-│  ┌───────────────────────────────────────────────────────────┐  │
-│  │                   Next.js 14 (App Router)                 │  │
-│  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────────────┐  │  │
-│  │  │   Pages     │ │ Components  │ │  State (Zustand)    │  │  │
-│  │  │  (app/)     │ │             │ │  - authStore        │  │  │
-│  │  │             │ │             │ │  - editorStore      │  │  │
-│  │  └─────────────┘ └─────────────┘ └─────────────────────┘  │  │
-│  └───────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
-                                │
-                    ┌───────────┴───────────┐
-                    ▼                       ▼
-┌────────────────┐   ┌───────────────────────────────┐
-│     Clerk      │   │     Cloudflare Workers        │
-│  ┌──────────┐  │   │  ┌─────────────────────────┐  │
-│  │   Auth   │  │   │  │    Hono (TypeScript)    │  │
-│  │ (認証・認可)│  │   │  │                         │  │
-│  └──────────┘  │   │  │  ┌───────────────────┐  │  │
-└────────────────┘   │  │  │     Routes        │  │  │
-                     │  │  └─────────┬─────────┘  │  │
-┌────────────────┐   │  │            │            │  │
-│      Neon      │   │  │  ┌─────────▼─────────┐  │  │
-│  ┌──────────┐  │   │  │  │    Services       │  │  │
-│  │PostgreSQL│◄─┼───┤  │  └─────────┬─────────┘  │  │
-│  │(データベース)│  │   │  │            │            │  │
-│  └──────────┘  │   │  │  ┌─────────▼─────────┐  │  │
-└────────────────┘   │  │  │   Drizzle ORM     │  │  │
-                     │  │  └───────────────────┘  │  │
-                     │  └─────────────────────────┘  │
-                     └───────────────────────────────┘
+```mermaid
+flowchart TB
+    client["クライアント<br/>(ブラウザ / モバイル)"]
+
+    subgraph cf_pages["Cloudflare Pages"]
+        subgraph nextjs["Next.js 15 (App Router)"]
+            direction LR
+            app_pages["Pages (app/)"]
+            components["Components"]
+            zustand["State (Zustand)<br/>authStore · editorStore"]
+        end
+    end
+
+    subgraph clerk["Clerk"]
+        clerk_auth["Auth (認証・認可)"]
+    end
+
+    subgraph cf_workers["Cloudflare Workers"]
+        subgraph hono["Hono (TypeScript)"]
+            routes["Routes"]
+            services["Services"]
+            drizzle["Drizzle ORM"]
+            routes --> services --> drizzle
+        end
+    end
+
+    subgraph neon["Neon"]
+        postgres["PostgreSQL (データベース)"]
+    end
+
+    client --> cf_pages
+    cf_pages --> clerk
+    cf_pages --> cf_workers
+    drizzle --> postgres
 ```
 
 ## 技術スタック

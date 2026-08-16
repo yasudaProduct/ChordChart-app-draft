@@ -44,7 +44,9 @@
       "Bash(curl -s -w \"\\\\nstatus: %{http_code}\\\\n\" http://localhost:8080/api/shares/verify-token-private)",
       "Bash(curl -s -w \"\\\\nstatus: %{http_code}\\\\n\" http://localhost:8080/api/shares/no-such-token)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(npx tsc *)",
+      "Bash(npx vitest *)"
     ]
   },
   "enableAllProjectMcpServers": true,

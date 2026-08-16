@@ -10,7 +10,7 @@
 
 | レイヤー       | 技術                                                       |
 | -------------- | ---------------------------------------------------------- |
-| フロントエンド | Next.js 14 (App Router), Tailwind CSS, SWR, Zustand, Clerk |
+| フロントエンド | Next.js 15 (App Router), Tailwind CSS, SWR, Zustand, Clerk |
 | バックエンド   | Hono, Drizzle ORM, Zod, jose (JWT検証)                     |
 | データベース   | PostgreSQL (Neon)                                          |
 | 認証           | Clerk                                                      |

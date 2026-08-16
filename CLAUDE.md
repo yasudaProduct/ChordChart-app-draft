@@ -12,7 +12,7 @@ ChordBook - コード譜を作成・管理・共有できるWebアプリケー�
 
 ## 技術スタック
 
-- **フロントエンド:** Next.js 14 (App Router) + React 18 + TypeScript + Tailwind CSS + Zustand + tonal (音楽理論)
+- **フロントエンド:** Next.js 15 (App Router) + React 19 + TypeScript + Tailwind CSS + Zustand + tonal (音楽理論)
 - **バックエンド:** Hono + Drizzle ORM + Zod + jose (JWT検証)
 - **データベース:** PostgreSQL (Neon)
 - **認証:** Clerk
