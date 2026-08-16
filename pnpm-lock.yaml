@@ -138,8 +138,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/prettier-config
       '@clerk/testing':
-        specifier: ^1.14.6
-        version: 1.14.9(@playwright/test@1.62.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: ^2.2.22
+        version: 2.2.22(@playwright/test@1.62.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@cloudflare/next-on-pages':
         specifier: ^1.13.16
         version: 1.13.16(next@15.5.23(@playwright/test@1.62.1)(@types/node@20.19.43)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(wrangler@4.123.0(@types/node@20.19.43))
@@ -216,6 +216,10 @@ packages:
     resolution: {integrity: sha512-5foMmTHEQFt4mDv7AN0RDwUHZhGcg/JYe5hnl9SU/LFS8ZHY29Z2HDtIBmzKgjRfOJTMKj1AM81LgK2UFsGm9Q==}
     engines: {node: '>=18.17.0'}
 
+  '@clerk/backend@3.16.6':
+    resolution: {integrity: sha512-8xyGRhMnfDOZhXJMa50qSG6RQYFNLtoXGVNwPRurcgS/0fBJNQq+CTMrw98GmswZRzUe6Sr2dvCxgWdLh/LjGA==}
+    engines: {node: '>=20.9.0'}
+
   '@clerk/clerk-react@5.61.9':
     resolution: {integrity: sha512-PRIodE1QVem/eV3wrjicJJiJ2pkGiZfI6t1vekE/+04cIHciXyvUezQ/468gGPl31xd7BiCNO3uKNM14TXEKZQ==}
     engines: {node: '>=18.17.0'}
@@ -243,12 +247,24 @@ packages:
       react-dom:
         optional: true
 
-  '@clerk/testing@1.14.9':
-    resolution: {integrity: sha512-257MbbKqj7s1p3MQO8dVecW4r0UyAaBnHveNtoe6tSGINTM1vIdQNTGq7Lb0WFl0k/mJ8Y+Q4hROHC+uq9MwIA==}
-    engines: {node: '>=18.17.0'}
+  '@clerk/shared@4.29.1':
+    resolution: {integrity: sha512-vl53gfMKHGhOskQgYfz7Qdkw0E/TYMCRuBkKRibi+8/Mz0JvR1yyVKA9k/w9CRvGfGLL9m/4/YDr1IlUJjx8ag==}
+    engines: {node: '>=20.9.0'}
+    peerDependencies:
+      react: ^18.0.0 || ~19.0.3 || ~19.1.4 || ~19.2.3 || ~19.3.0-0
+      react-dom: ^18.0.0 || ~19.0.3 || ~19.1.4 || ~19.2.3 || ~19.3.0-0
+    peerDependenciesMeta:
+      react:
+        optional: true
+      react-dom:
+        optional: true
+
+  '@clerk/testing@2.2.22':
+    resolution: {integrity: sha512-1SxfnCysXRtyxlEa4Qz1V5+QVOC93kjojumzm9iifoqqCKI1nRUurwt2vksYBhcO0/WWv21rE6dKiGNiTs8a6Q==}
+    engines: {node: '>=20.9.0'}
     peerDependencies:
       '@playwright/test': ^1
-      cypress: ^13 || ^14
+      cypress: ^13 || ^14 || ^15
     peerDependenciesMeta:
       '@playwright/test':
         optional: true
@@ -1013,6 +1029,9 @@ packages:
 
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
+
+  '@tanstack/query-core@5.101.4':
+    resolution: {integrity: sha512-gNwcvOJcRbLWPOLG/2OBm+zM+Yv+MKsXKEOWC57USuZDEsI71hEErQsiEGx5wX9rzWWkfwM0fVSPoiIFSsxfiw==}
 
   '@tonaljs/abc-notation@4.9.1':
     resolution: {integrity: sha512-2fDUdPsFDdgZgyIiZCTYGKy30QiwIQxSXCSN2thGrSMXbQKCp8iTC8haStYcrA+25MPWhWlmvC/pz3tGcTNAqQ==}
@@ -3338,6 +3357,15 @@ snapshots:
       - react
       - react-dom
 
+  '@clerk/backend@3.16.6(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+    dependencies:
+      '@clerk/shared': 4.29.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      standardwebhooks: 1.0.0
+      tslib: 2.8.1
+    transitivePeerDependencies:
+      - react
+      - react-dom
+
   '@clerk/clerk-react@5.61.9(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@clerk/shared': 3.47.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -3369,11 +3397,20 @@ snapshots:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
-  '@clerk/testing@1.14.9(@playwright/test@1.62.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@clerk/shared@4.29.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
-      '@clerk/backend': 2.33.6(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      '@clerk/shared': 3.47.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      '@clerk/types': 4.101.26(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@tanstack/query-core': 5.101.4
+      dequal: 2.0.3
+      glob-to-regexp: 0.4.1
+      js-cookie: 3.0.8
+    optionalDependencies:
+      react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
+
+  '@clerk/testing@2.2.22(@playwright/test@1.62.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+    dependencies:
+      '@clerk/backend': 3.16.6(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@clerk/shared': 4.29.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       dotenv: 17.2.2
     optionalDependencies:
       '@playwright/test': 1.62.1
@@ -3894,6 +3931,8 @@ snapshots:
   '@swc/helpers@0.5.15':
     dependencies:
       tslib: 2.8.1
+
+  '@tanstack/query-core@5.101.4': {}
 
   '@tonaljs/abc-notation@4.9.1':
     dependencies:
@@ -4805,7 +4844,7 @@ snapshots:
       eslint: 8.57.1
       eslint-import-resolver-node: 0.3.10
       eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1))(eslint@8.57.1)
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1))(eslint@8.57.1))(eslint@8.57.1)
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.1)
       eslint-plugin-jsx-a11y: 6.10.2(eslint@8.57.1)
       eslint-plugin-react: 7.37.5(eslint@8.57.1)
       eslint-plugin-react-hooks: 5.2.0(eslint@8.57.1)
@@ -4839,7 +4878,7 @@ snapshots:
       tinyglobby: 0.2.17
       unrs-resolver: 1.12.2
     optionalDependencies:
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1))(eslint@8.57.1))(eslint@8.57.1)
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -4854,7 +4893,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-import@2.32.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1))(eslint@8.57.1))(eslint@8.57.1):
+  eslint-plugin-import@2.32.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.1):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.9

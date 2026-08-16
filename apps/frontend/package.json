@@ -33,7 +33,7 @@
   "devDependencies": {
     "@chordbook/eslint-config": "workspace:*",
     "@chordbook/prettier-config": "workspace:*",
-    "@clerk/testing": "^1.14.6",
+    "@clerk/testing": "^2.2.22",
     "@cloudflare/next-on-pages": "^1.13.16",
     "@playwright/test": "^1.58.2",
     "@types/node": "^20.14.0",
