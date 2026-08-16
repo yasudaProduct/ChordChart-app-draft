@@ -26,7 +26,7 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "swr": "^2.4.0",
-    "tailwind-merge": "^2.3.0",
+    "tailwind-merge": "^3.6.0",
     "tonal": "^6.4.3",
     "zustand": "^4.5.2"
   },
