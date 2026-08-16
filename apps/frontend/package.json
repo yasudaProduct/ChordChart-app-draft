@@ -20,7 +20,7 @@
     "deploy:production": "wrangler pages deploy .vercel/output/static --project-name=chordbook-frontend --branch=main"
   },
   "dependencies": {
-    "@clerk/nextjs": "^6.39.3",
+    "@clerk/nextjs": "^7.7.4",
     "clsx": "^2.1.1",
     "next": "^15.5.23",
     "react": "^19.2.8",
