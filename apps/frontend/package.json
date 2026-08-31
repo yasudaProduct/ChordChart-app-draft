@@ -38,7 +38,7 @@
     "@playwright/test": "^1.58.2",
     "@types/node": "^20.14.0",
     "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.4",
+    "@types/react-dom": "^19.2.5",
     "autoprefixer": "^10.4.19",
     "dotenv": "^17.3.1",
     "eslint": "^8.57.0",
@@ -48,8 +48,8 @@
     "tailwindcss": "^3.4.4",
     "typescript": "^5.4.5",
     "vite": "^7.3.6",
-    "vitest": "^4.1.10",
-    "wrangler": "^4.100.0"
+    "vitest": "^4.1.11",
+    "wrangler": "^4.127.0"
   },
   "prettier": "@chordbook/prettier-config",
   "packageManager": "pnpm@10.30.0+sha512.2b5753de015d480eeb88f5b5b61e0051f05b4301808a82ec8b840c9d2adf7748eb352c83f5c1593ca703ff1017295bc3fdd3119abb9686efc96b9fcb18200937"
