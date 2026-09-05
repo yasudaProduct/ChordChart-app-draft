@@ -230,7 +230,19 @@ GitHub Actions で自動チェック（`.github/workflows/ci.yml`）:
 | backend  | pnpm lint, pnpm build, pnpm test                  |
 | e2e      | Playwright（PR 時のみ。結果を PR コメントに投稿） |
 
-依存パッケージと GitHub Actions の更新は Dependabot（`.github/dependabot.yml`）が毎週月曜に PR を作成する。
+依存パッケージと GitHub Actions の更新は**手動で行う**。以前は Dependabot が毎週 PR を作成していたが、
+PR 数に対して取り込める量が見合わなかったため廃止した（`.github/dependabot.yml` を削除）。
+
+既知の脆弱性は CI の `audit` ジョブ（`pnpm audit --prod --audit-level high`）が
+push / PR ごとに検出し、本番依存に high 以上があればビルドを失敗させる。
+
+更新する場合は `develop` から作業ブランチを切り、関連するものをまとめて 1 PR にする:
+
+```bash
+pnpm outdated -r          # 更新可能なパッケージを確認
+# package.json を編集して pnpm install
+pnpm lint && pnpm test && pnpm build   # 取り込み前に必ずローカル検証
+```
 
 自動デプロイ:
 
